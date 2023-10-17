@@ -1,6 +1,17 @@
 {
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./tests",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true,
+    "cmake.configureOnOpen": false,
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
-    "python.formatting.provider": "none"
+    // "python.envFile": "${workspaceFolder}/.vscode/.env",
+    "python.tensorBoard.logDirectory": "${workspaceFolder}/outputs/logs",
 }
