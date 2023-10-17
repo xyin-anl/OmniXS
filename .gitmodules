@@ -1,3 +1,6 @@
 [submodule "utils"]
 	path = utils
 	url = git@github.com:shubharajkharel/ai_utils.git
+[submodule "cfg"]
+	path = cfg
+	url = git@github.com:shubharajkharel/hydra_configs.git
