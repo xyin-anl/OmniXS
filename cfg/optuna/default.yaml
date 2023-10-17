@@ -1,0 +1,20 @@
+optimization:
+  run_distributed: false
+  n_trials: 1
+  timeout: null # 36000
+  n_jobs: 1
+  min_depth: 2
+  max_depth: 2
+  min_width: 100
+  max_width: 100
+
+study:
+  _target_: optuna.create_study
+  study_name: ${compound_name}-${simulation_type}
+  # storage: sqlite:///${study.study_name}.db # currently sqlite
+  direction: minimize # [minimize, minimize]
+  load_if_exists: False
+  sampler: null # None mean /NSGAII for single/mult-objective
+  # pruner: not useful for multi-objective
+  # _target_: optuna.pruners.MedianPruner
+# # devices: [0]
