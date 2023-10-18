@@ -1,8 +1,6 @@
 data_module:
   _target_: src.dataset.XASDataModule
-  compound: ${compound_name}
-  split: material-splits
-  task: train
+  data_dir: "dataset/ML-231009/${compound_name}_K-edge_${simulation_type}_XANES/material-splits/data"
   random_seed: 42
   batch_size: 128
   num_workers: 10
