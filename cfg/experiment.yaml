@@ -1,48 +1,20 @@
-# ================ DEFAULTS ================
 defaults:
-  - _self_
-  - trainer: mps
-  - callbacks: none
-  - logger: tensorboard
-  - hydra: default
-  - optuna: default
-  - paths: default
-  - debug:
-      - fdr
-      # - profiler
+  # - _self_
   - default
-# ===========================================
+  - mps # trainer is specified underneath
+  # - debug
 
+task_name: model_dev
 compound_name: Cu-O # Ti-O
 simulation_type: feff
-
-# class PLModule(pl.LightningModule):
-#     def __init__(
-#         self,
-#         model: nn.Module,
-#         learning_rate: Optional[float] = 0.0001,
-#         example_input_array: Optional[Any] = None,
-#         loss: Optional[nn.Module] = None,
-#         optimizer: Optional[torch.optim.Optimizer] = None,
-#         save_graph: bool = False,
-#     ):
-
-pl_module:
-  _target_: utils.src.lightning.pl_module.PLModule
-  model:
-    _target_: utils.src.optuna.dynamic_fc.PlDynamicFC
-    widths: [64]
-    output_size: 200
-
-# =====================  MISC =====================
-
 tags:
   - ${compound_name}
   - ${simulation_type}
 
-data_module:
-  num_workers: 0 # more than 0 causes error in mac
+trainer:
+  max_epochs: 5
 
+# TODO: move this to seperate
 hydra:
   searchpath:
     - pkg://utils/src/hydra/configs

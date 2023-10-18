@@ -1,0 +1,12 @@
+data_module:
+  _target_: src.dataset.XASDataModule
+  compound: ${compound_name}
+  split: material-splits
+  task: train
+  random_seed: 42
+  batch_size: 128
+  num_workers: 10
+  persistent_workers: true
+  use_cache: True
+  pin_memory: True
+  prefetch_factor: 4

@@ -1,0 +1,6 @@
+defaults:
+  - trainer: mps
+
+data_module:
+  num_workers: 0 # more than 0 causes error in mac
+  prefetch_factor: null # prefetch_factor cannot be specified if num_workers is 0

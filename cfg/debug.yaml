@@ -1,0 +1,6 @@
+defaults:
+  - debug: default
+
+debug:
+  - fdr
+  - profiler

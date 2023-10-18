@@ -9,7 +9,7 @@ from rich import print
 def main(cfg: DictConfig):
     print(cfg)
     data_module = instantiate(cfg.data_module)
-    model = instantiate(cfg.pl_module)
+    model = instantiate(cfg.model)
     trainer = instantiate(cfg.trainer)
     trainer.fit(model, data_module)
     trainer.test(model, datamodule=data_module)

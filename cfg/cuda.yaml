@@ -1,0 +1,10 @@
+defaults:
+  - trainer: cuda
+
+data_module:
+  num_workers: 10 # more than 0 causes error in mac
+  prefetch_factor: 4 # prefetch_factor cannot be specified if num_workers is 0
+
+trainer:
+  precision: "16-mixed" # faster in gpu with tensorcores
+
