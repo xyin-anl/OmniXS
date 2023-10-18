@@ -1,10 +1,15 @@
 defaults:
-  # - _self_
   - default
+  - debug
   - mps # trainer is specified underneath
-  # - debug
+  - callbacks
+  - _self_
 
-task_name: model_dev
+task_name: widhts_none
+model:
+  model:
+    widths: [64]
+
 compound_name: Cu-O # Ti-O
 simulation_type: feff
 tags:
@@ -12,7 +17,15 @@ tags:
   - ${simulation_type}
 
 trainer:
-  max_epochs: 5
+  max_epochs: 500
+  log_every_n_steps: 10
+
+callbacks:
+  early_stopping:
+    min_delta: 0.0001
+    verbose: True
+  model_summary:
+    max_depth: 10
 
 # TODO: move this to seperate
 hydra:
