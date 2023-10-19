@@ -5,10 +5,10 @@ defaults:
   - callbacks
   - _self_
 
-task_name: widhts_none
+task_name: ${model.model.widths}
 model:
   model:
-    widths: [64]
+    widths: [64] # [64, 100, 100, 100]
 
 compound_name: Cu-O # Ti-O
 simulation_type: feff
@@ -22,7 +22,7 @@ trainer:
 
 callbacks:
   early_stopping:
-    min_delta: 0.0001
+    min_delta: 0.
     verbose: True
   model_summary:
     max_depth: 10
