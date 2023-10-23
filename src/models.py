@@ -1,4 +1,4 @@
-from src.dataset import XASDataModule
+from src.xas_data import XASData
 from utils.src.optuna.dynamic_fc import PlDynamicFC
 # import pytorch_lightning as pl
 import lightning as pl
@@ -7,7 +7,7 @@ import torch
 
 if __name__ == "__main__":
     compound_name = "Cu-O"
-    data_module = XASDataModule(
+    data_module = XASData(
         dtype=torch.float32, num_workers=0, compound=compound_name
     )
     model = PlDynamicFC(widths=[64, 400], output_size=200)
