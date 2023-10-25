@@ -6,6 +6,7 @@ defaults:
       - tb_log_weights_hist
       - tb_log_model_graph
       - early_stopping
+      - model_checkpoint
 
 # callbacks:
 # - early_stopping:
