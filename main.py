@@ -18,9 +18,6 @@ def main(cfg: DictConfig):
 
     model.example_input_array = data_module.train_dataloader().dataset[0][0].to("mps")
 
-    # from utils.src.misc.model_adapters import PLAdapter
-    # print(PLAdapter(model).summary())
-
     trainer = instantiate(cfg.trainer)
     trainer.callbacks = instantiate(cfg.callbacks).values()
     trainer.fit(model, data_module)
@@ -32,7 +29,7 @@ class Optimizer:
         self.cfg = hydra_configs
 
     def optimize(self, trial):
-        depth = trial.suggest_categorical("depth", [1, 2, 3])
+        depth = trial.suggest_int("depth", 1, 3)
         widths = [
             trial.suggest_int(
                 f"width_{i}",
@@ -45,32 +42,29 @@ class Optimizer:
         widths = [64] + widths
         self.cfg["model"]["model"]["widths"] = widths
         learning_rate = trial.suggest_float("learning_rate", 1e-4, 1e-2, log=True)
-        # learning_rate = trial.suggest_loguniform("learning_rate", 1e-5, 1e-1)
         self.cfg["model"]["learning_rate"] = learning_rate
         model = instantiate(self.cfg.model)
 
-        # data
-        self.cfg["data_module"]["batch_size"] = trial.suggest_categorical(
-            "batch_size", [128]
-        )
+        # batch_exponent = trial.suggest_int("batch", 6, 9, 1)
+        # batch_size = 2**batch_exponent
+        # self.cfg["data_module"]["batch_size"] = batch_size
+
         data_module = instantiate(self.cfg.data_module)
         model.example_input_array = (
             data_module.train_dataloader().dataset[0][0].to("mps")
         )  # needed for loggers
 
         # traint and test
-        self.cfg["logger"]["tensorboard"]["save_dir"] = (
-            self.cfg["logger"]["tensorboard"]["save_dir"] + f"/{trial.number}"
-        )
         trainer = instantiate(self.cfg.trainer)
 
+        trainer.callbacks = []  # removes progressbar
         for cb_name, cb_cfg in self.cfg.callbacks.items():
             cb_instance = instantiate(cb_cfg)
             trainer.callbacks.append(cb_instance)
 
-        trainer.callbacks.append(
-            PyTorchLightningPruningCallback(trial, monitor="val_loss")
-        )
+        # trainer.callbacks.append(
+        #     PyTorchLightningPruningCallback(trial, monitor="val_loss")
+        # )
 
         trainer.fit(model, data_module)
 
@@ -91,8 +85,9 @@ def run_optmization(cfg: DictConfig):
     print("Best params: ", study.best_params)
     print("Best value: ", study.best_value)
     print("Best Trial: ", study.best_trial)
-    print("Trials: ", study.trials)
+    # print("Trials: ", study.trials)
 
 
 if __name__ == "__main__":
-    run_optmization()
+    # run_optmization()
+    main()

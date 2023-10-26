@@ -18,7 +18,7 @@ tags:
   - ${simulation_type}
 
 trainer:
-  max_epochs: 500
+  max_epochs: 100
   log_every_n_steps: 10
 
 optuna:
@@ -34,7 +34,7 @@ optuna:
 callbacks:
   early_stopping:
     min_delta: 0.
-    verbose: False
+    verbose: True
   model_summary:
     max_depth: 10
   model_checkpoint:

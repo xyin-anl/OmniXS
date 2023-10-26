@@ -43,8 +43,8 @@ def extract_widths_from_ckpt_path(checkpoint_path):
         raise ValueError("No widths found in checkpoint path")
 
 
-def load_model_from_ckpt(checkpoint_path):
-    widths = extract_widths_from_ckpt_path(checkpoint_path)
+def load_model_from_ckpt(checkpoint_path, widths):
+    # widths = extract_widths_from_ckpt_path(checkpoint_path)
     model = PlDynamicFC(widths=widths, output_size=200)
     checkpoint = torch.load(checkpoint_path)
     corrected_state_dict = {
@@ -55,8 +55,8 @@ def load_model_from_ckpt(checkpoint_path):
     return model
 
 
-def fc_ckpt_predictions(ckpt_path, data_module):
-    model = load_model_from_ckpt(ckpt_path)
+def fc_ckpt_predictions(ckpt_path, data_module, widths):
+    model = load_model_from_ckpt(ckpt_path, widths)
     predictions = torch.tensor([])
     data = torch.tensor([])
     for batch in data_module.test_dataloader():
