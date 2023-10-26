@@ -1,11 +1,12 @@
 defaults:
   - default
-  - debug
+  # - debug
   - mps # trainer is specified underneath
   - callbacks
   - _self_
 
-task_name: ${model.model.widths}
+# task_name: ${model.model.widths}
+task_name: ${compound_name}-${simulation_type}
 model:
   model:
     widths: [64] # [64, 100, 100, 100]
@@ -17,13 +18,23 @@ tags:
   - ${simulation_type}
 
 trainer:
-  max_epochs: 20
+  max_epochs: 500
   log_every_n_steps: 10
+
+optuna:
+  study_name: ${compound_name}-${simulation_type}
+  storage: sqlite:///${optuna.study_name}.db
+  params:
+    min_width: 10
+    max_width: 200
+    step_width: 10
+  load_if_exists: True
+  n_trials: 500
 
 callbacks:
   early_stopping:
     min_delta: 0.
-    verbose: True
+    verbose: False
   model_summary:
     max_depth: 10
   model_checkpoint:

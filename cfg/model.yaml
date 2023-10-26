@@ -5,3 +5,4 @@ model:
     widths:
       - 64
     output_size: 200
+  learning_rate: 0.001
