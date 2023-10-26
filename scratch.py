@@ -1,6 +1,8 @@
 # %%
 # %load_ext autoreload
 # %autoreload 2
+import scienceplots
+from src.model_report import linear_model_predictions
 from src.model_report import model_report
 import lightning as pl
 import ast
@@ -94,20 +96,105 @@ for sim in ["FEFF", "VASP"]:
     X_test, y_test = data["test"]["X"], data["test"]["y"]
     train_data_X.append(X_train)
     # heatmap_of_lines(X_train)
-
-
-# nohup python main.py compound_name=Cu-O simulation_type=feff model.model.widths=[64,180,200] trainer.max_epochs=500 model.learning_rate=0.000815876 >cu-o-feff.log &
-# nohup python main.py compound_name=Ti-O simulation_type=feff model.model.widths=[64,190,180] trainer.max_epochs=500 model.learning_rate=0.001069577 >ti-o-feff.log &
-# nohup python main.py compound_name=Ti-O simulation_type=vasp model.model.widths=[64,150,120,170] trainer.max_epochs=500 model.learning_rate=0.00436152122 >ti-o-vasp.log &
+# %%
+X1, x2 = train_data_X
 
 # %%
-# summary of train_data_X
-x1 = pd.DataFrame(train_data_X[0])
-x2 = pd.DataFrame(train_data_X[1])
-
-(x1.describe(percentiles=None))
+pd.DataFrame(x2).describe()
 
 # %%
 
-(x2.describe(percentiles=None))
+x1 = X1[: len(x2)]
+
+# %%
+
+heatmap_of_lines(x2)
+
+# %%
+
+# heatmap_of_lines(x1)
+# heatmap_of_lines(x1)
+# heatmap_of_lines(x2)
+
+heatmap_of_lines(x1 - x2, ylabel="tio_feff_train[:len(..)] - tio_vasp_train")
+
+
+# %%
+
+
+def plot_best_worst_residues(query, count=10):
+    model_name, y_test, predictions = linear_model_predictions(query)
+    data = XASData.load_data(query=query)
+    _, _ = data["train"]["X"], data["train"]["y"]
+    _, y_test = data["test"]["X"], data["test"]["y"]
+
+    y_residues = np.abs(y_test - predictions)
+    df_residues = pd.DataFrame(y_residues.mean(axis=1), columns=["residues"])
+    df_test_data = pd.DataFrame(y_test)
+    df_predictions = pd.DataFrame(predictions)
+    df_all = pd.concat([df_residues, df_test_data, df_predictions], axis=1)
+
+    column_names = (
+        ["residues"]
+        + [f"test_data_{i}" for i in range(y_test.shape[1])]
+        + [f"predictions_{i}" for i in range(y_test.shape[1])]
+    )
+
+    df_all.columns = column_names
+    df_all = df_all.sort_values(by="residues")
+
+    df_data = df_all[[col for col in column_names if "data" in col]]
+    df_predictions = df_all[[col for col in column_names if "predictions" in col]]
+
+    plt.style.use(["science", "notebook", "high-vis", "no-latex"])
+    fig, axes = plt.subplots(count, 2, figsize=(20, 20), sharex=True, sharey=True)
+
+    for i in range(count):
+        # Plot best on the left column
+        df_data.iloc[i].plot(ax=axes[i, 0], label="data")
+        df_predictions.iloc[i].plot(ax=axes[i, 0], label="predictions", linestyle="--")
+        axes[i, 0].set_title(f"MAE: {round(df_all.iloc[i]['residues'], 3)}")
+
+        # Plot worst on the right column
+        idx = len(df_all) - 1 - i
+        df_data.iloc[idx].plot(ax=axes[i, 1], label="data")
+        df_predictions.iloc[idx].plot(
+            ax=axes[i, 1], label="predictions", linestyle="--"
+        )
+        axes[i, 1].set_title(f"MAE: {round(df_all.iloc[idx]['residues'], 3)}")
+
+        # Remove ticks and labels
+        axes[i, 0].set_xticklabels([])
+        axes[i, 0].set_yticklabels([])
+        axes[i, 1].set_xticklabels([])
+        axes[i, 1].set_yticklabels([])
+
+    # Add common labels and titles
+    plt.suptitle(
+        f"{query['compound']}_{query['simulation_type']}",
+        fontsize=40,
+    )
+    fig.text(0.25, 0.98, "Best Residues", ha="center", fontsize=30, c="green")
+    fig.text(0.75, 0.98, "Worst Residues", ha="center", fontsize=30, c="red")
+    fig.text(0.5, 0.04, "Common X-axis", ha="center")
+    fig.text(0.04, 0.5, "Common Y-axis", va="center", rotation="vertical")
+
+    plt.tight_layout(rect=[0.03, 0.03, 1, 0.96])
+    plt.legend()
+    plt.savefig(f"{query['compound']}_{query['simulation_type']}_top_residues.pdf")
+
+
+for compound in ["Cu-O", "Ti-O"]:
+    for simulation_type in ["FEFF", "VASP"]:
+        if simulation_type == "VASP" and compound == "Cu-O":
+            continue
+        plot_best_worst_residues(
+            query={
+                "compound": compound,
+                "simulation_type": simulation_type,
+                "split": "material",
+            },
+            count=10,
+        )
+
 # %%

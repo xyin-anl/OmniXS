@@ -1,3 +1,4 @@
+from src.ckpt_predictions import fc_ckpt_predictions
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.linear_model import LinearRegression
@@ -36,15 +37,37 @@ def linear_model_predictions(query):
 
 
 if __name__ == "__main__":
+    base_dir = "results/oct_25/optimal_nn_tb_logs/"
+    optimal_widths = {
+        "Cu-O": {
+            "FEFF": [64, 180, 200],
+        },
+        "Fe-O": {
+            "VASP": [64, 190, 180],
+            "FEFF": [64, 150, 120, 170],
+        },
+    }
+
     for compound in ["Cu-O", "Ti-O"]:
         for simulation_type in ["FEFF", "VASP"]:
             if simulation_type == "VASP" and compound == "Cu-O":
                 continue
+            query = {
+                "compound": compound,
+                "simulation_type": simulation_type,
+                "split": "material",
+            }
             model_report(
-                query={
-                    "compound": compound,
-                    "simulation_type": simulation_type,
-                    "split": "material",
-                },
+                query=query,
                 model_fn=linear_model_predictions,
             )
+
+    data_module = XASData(query=query, batch_size=128, num_workers=0)
+    model_name, data, predictions = fc_ckpt_predictions(
+        query,
+        base_dir,
+        data_module,
+        widths=optimal_widths[query["compound"]][query["simulation_type"]],
+    )
+
+# %%
