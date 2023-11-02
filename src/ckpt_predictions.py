@@ -10,6 +10,22 @@ import re
 import scienceplots
 import torch
 from utils.src.optuna.dynamic_fc import PlDynamicFC
+import yaml
+
+
+def get_optimal_fc_predictions(
+    query,
+    base_dir="results/oct_26/optimal_nn_tb_logs/",
+):
+    optimal_fc = yaml.safe_load(open("cfg/misc.yaml", "r"))["optimal_fc_params"]
+    data_module = XASData(query=query, batch_size=128, num_workers=0)
+    model_name, data, predictions = fc_ckpt_predictions(
+        query=query,
+        data_module=data_module,
+        widths=optimal_fc[query["compound"]][query["simulation_type"]],
+        base_dir=base_dir,
+    )
+    return model_name, data, predictions
 
 
 def extract_widths_from_ckpt_path(checkpoint_path):
@@ -45,7 +61,12 @@ def find_ckpt_paths(query, base_dir):
     return ckpt_path
 
 
-def fc_ckpt_predictions(query, base_dir, data_module, widths):
+def fc_ckpt_predictions(
+    query,
+    data_module,
+    widths,
+    base_dir="results/oct_26/optimal_nn_tb_logs/",
+):
     ckpt_path = find_ckpt_paths(query, base_dir)
 
     if not ckpt_path:
@@ -74,21 +95,28 @@ if __name__ == "__main__":
         "simulation_type": "FEFF",
         "split": "material",
     }
-    optimal_widths = {
-        "Cu-O": {
-            "FEFF": [64, 180, 200],
-        },
-        "Fe-O": {
-            "VASP": [64, 190, 180],
-            "FEFF": [64, 150, 120, 170],
-        },
-    }
-    data_module = XASData(query=query, batch_size=128, num_workers=0)
-    model_name, data, predictions = fc_ckpt_predictions(
-        query,
-        base_dir,
-        data_module,
-        widths=optimal_widths[query["compound"]][query["simulation_type"]],
-    )
+
+    model_name, data, predictions = get_optimal_fc_predictions(query=query)
+    print(f"Model name: {model_name}")
+    print(f"Data shape: {data.shape}")
+    print(f"Predictions shape: {predictions.shape}")
+
+    # optimal_widths = {
+    #     "Cu-O": {
+    #         "FEFF": [64, 180, 200],
+    #     },
+    #     "Fe-O": {
+    #         "VASP": [64, 190, 180],
+    #         "FEFF": [64, 150, 120, 170],
+    #     },
+    # }
+    # data_module = XASData(query=query, batch_size=128, num_workers=0)
+    # model_name, data, predictions = fc_ckpt_predictions(
+    #     query,
+    #     base_dir,
+    #     data_module,
+    #     widths=optimal_widths[query["compound"]][query["simulation_type"]],
+    # )
+
 
 # %%
