@@ -6,4 +6,13 @@
 # nohup python main.py compound_name=Ti-O simulation_type=feff model.model.widths=[64,190,180] trainer.max_epochs=500 model.learning_rate=0.001069577 >ti-o-feff.log &
 # nohup python main.py compound_name=Ti-O simulation_type=vasp model.model.widths=[64,150,120,170] trainer.max_epochs=500 model.learning_rate=0.00436152122 >ti-o-vasp.log &
 
-python main.py compound_name=Ti-O simulation_type=vasp model.model.widths=[64,150,120,170] trainer.max_epochs=500 model.learning_rate=0.00436152122 callbacks.early_stopping.patience=100 >ti-o-vasp.log
+# python main.py compound_name=Ti-O simulation_type=vasp model.model.widths=[64,150,120,170] trainer.max_epochs=500 model.learning_rate=0.00436152122 callbacks.early_stopping.patience=100 >ti-o-vasp.log
+
+python main.py compound_name=Ti-O simulation_type=feff data_module.query.split=random trainer.max_epochs=500 callbacks.early_stopping.patience=3 >ti-o-vasp_random_split.log
+
+# optimal_fc_params:
+#   Cu-O:
+#     FEFF: [64, 180, 200]
+#   Ti-O:
+#     FEFF: [64, 190, 180]
+#     VASP: [64, 150, 120, 170]
