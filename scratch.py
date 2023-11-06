@@ -10,7 +10,6 @@ from src.model_report import linear_model_predictions
 from src.model_report import model_report
 import lightning as pl
 import ast
-import re
 from scripts.pca_plots import plot_pcas, linear_fit_of_pcas
 import pandas as pd
 import seaborn as sns
@@ -23,7 +22,6 @@ from utils.src.plots.heatmap_of_lines import heatmap_of_lines
 from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
-import numpy as np
 import scienceplots
 from scripts.plots_model_report import (
     plot_residue_quartiles,
@@ -38,5 +36,66 @@ import torch
 from pprint import pprint
 from utils.src.optuna.dynamic_fc import PlDynamicFC
 from src.ckpt_predictions import get_optimal_fc_predictions
+from typing import TypedDict, Union, Tuple
+from src.xas_data_raw import RAWData
 
+# %%
+data = RAWData("Cu", "VASP")
+
+# %%
+print("-" * 50)
+print(data._ids[:5])
+print(len(data._ids))
+print("-" * 50)
+
+# %%
+print("-" * 50)
+print(data._sites[data._ids[0]])
+print(len(data._sites[data._ids[0]]))
+print("-" * 50)
+
+# %%
+print("-" * 50)
+print(data._mu[data._ids[0], data._sites[data._ids[0]][0]])
+print(len(data._mu[data._ids[0], data._sites[data._ids[0]][0]]))
+print("-" * 50)
+
+# %%
+print("-" * 50)
+print(data._e_cbm[data._ids[0], data._sites[data._ids[0]][0]])
+print("-" * 50)
+
+
+# %%
+
+print("-" * 50)
+print(data._E_ch)
+print("-" * 50)
+
+# %%
+
+print(
+    data.missing_data
+    # data.missing_e_cbm,
+    # data.missing_E_ch,
+    # data.missing_E_GS,
+)
+
+
+# %%
+
+data._ids
+
+# %%
+data.missing_data
+
+# %%
+missing_ids = [id for id, site in data.missing_data]
+
+# %%
+set([1,2])
+
+
+# %%
+len(set(missing_ids))
 # %%

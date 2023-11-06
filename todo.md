@@ -1,6 +1,7 @@
 ## Urgent
 
-- [ ] Rescale the VASP data on theoretical basis
+- [ ] Rescale the VASP data on theoretical basis:
+    - [ ] make the ids, mu and such matchup in wrangling code
 - [ ] m3gnet retrain prelims
 
 ## Misc
@@ -10,6 +11,8 @@
 - [x] Comparisions with MPNN:
 
   - [x] Do random split for FC and LR
+
+## Git
 
 ## Overreach
 
