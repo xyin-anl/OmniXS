@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from typing import List, Literal, Optional, Dict, Set
 import warnings
+import logging
 
 
 @dataclass
@@ -15,37 +16,61 @@ class RAWData:
     compound: str
     simulation_type: Literal["VASP", "FEFF"]
     base_dir: Optional[str] = field(default=None, init=False)
-    e_core: Optional[float] = field(default=None, init=False)
-    missing_data: Optional[Set] = field(default_factory=set, init=False, repr=False)
-    ids: Optional[Set] = field(default_factory=set, init=False, repr=False)
-    site: Optional[Set] = field(default_factory=set, init=False, repr=False)
-    mu: Optional[Dict] = field(default_factory=dict, init=False, repr=False)
-    e_cbm: Optional[Dict] = field(default_factory=dict, init=False, repr=False)
-    E_ch: Optional[Dict] = field(default_factory=dict, init=False, repr=False)
-    E_GS: Optional[Dict] = field(default_factory=dict, init=False, repr=False)
+    missing_data: Optional[Set[str]] = field(default_factory=set, init=False)
 
     def __post_init__(self):
         if self.base_dir is None:
-            default_path = os.path.join(
-                "dataset",
-                f"{self.simulation_type}-raw-data",
-                f"{self.compound}",
-            )
-            self.base_dir = default_path
-        values = {
-            "Cu": -8850.2467,
-            "Ti": -4864.0371,
-        }
-        self.e_core = values[self.compound]
-        
-        # TODO
+            self.base_dir = self._default_base_dir()
+        self.parameters  # initialize cached_property
 
+    def _default_base_dir(self):
+        default_base_dir = os.path.join(  # default
+            "dataset",
+            f"{self.simulation_type}-raw-data",
+            f"{self.compound}",
+        )
+        if not os.path.exists(default_base_dir):
+            raise ValueError(f"{default_base_dir} does not exist")
+        return default_base_dir
+
+    @cached_property
+    def parameters(self):
+        """Parameters for each site in each id where all data is available"""
+        parameters = {}
+        for id in self._ids:
+            E_GS_val = self.E_GS(id)
+            if E_GS_val is None:
+                sites_with_id = [(id, site) for site in self._sites[id]]
+                self.missing_data.update(sites_with_id)
+                continue
+            for site in self._sites.get(id, []):
+                mu_val = self.mu(id, site)
+                e_cbm_val = self.e_cbm(id, site)
+                E_ch_val = self.E_ch(id, site)
+                if mu_val is None or e_cbm_val is None or E_ch_val is None:
+                    self.missing_data.add((id, site))
+                    continue
+                parameters[id, site] = {
+                    "mu": mu_val,
+                    "e_cbm": e_cbm_val,
+                    "E_ch": E_ch_val,
+                    "E_GS": E_GS_val,
+                    "e_core": self.e_core,
+                }
         if len(self.missing_data) > 0:
-            warnings.warn(
-                f"Missing {len(self.missing_data)} required files in {self.base_dir}"
-            )
+            warnings.warn(f"{len(self.missing_data)} missing data for {self.compound}")
+        return parameters
 
+    @cached_property
+    def total_sites(self):
+        return len([s for sites in self._sites.values() for s in sites])
+
+    def __len__(self):
+        return self.total_sites
+
+    @cached_property
     def _ids(self):
+        """Can include ids with missing data"""
         ids = os.listdir(self.base_dir)
         id_filter = re.compile(r"mp-\d+")
         ids = list(filter(lambda x: id_filter.match(x), ids))
@@ -53,7 +78,9 @@ class RAWData:
             raise ValueError(f"No ids found for {self.compound}")
         return ids
 
+    @cached_property
     def _sites(self):
+        """Can include sites with missing data"""
         sites = {}
         for id in self._ids:
             dir_path = os.path.join(self.base_dir, id, self.simulation_type)
@@ -61,55 +88,19 @@ class RAWData:
             pattern = r"(\d+)_" + self.compound
             site_list = list(filter(lambda x: re.match(pattern, x), folders))
             if len(site_list) == 0:
-                raise ValueError(f"No sites found for {id} at {folders}")
+                warnings.warn(f"No sites found for {id} at {folders}")
             sites[id] = site_list
         return sites
 
-    def _mu(self):
-        mu = {}
-        for id in self._ids:
-            for site in self._sites[id]:
-                mu_val = self._mu_site(id, site)
-                if mu_val is None:
-                    self.missing_data.add((id, site))
-                else:
-                    mu[id, site] = self._mu_site(id, site)
-        return mu
+    @cached_property
+    def e_core(self):
+        values = {
+            "Cu": -8850.2467,
+            "Ti": -4864.0371,
+        }
+        return values[self.compound]
 
-    def _e_cbm(self):
-        e_cbm = {}
-        for id in self._ids:
-            for site in self._sites[id]:
-                e_cbm_val = self._e_cbm_site(id, site)
-                if e_cbm_val is None:
-                    self.missing_data.add((id, site))
-                else:
-                    e_cbm[id, site] = self._e_cbm_site(id, site)
-        return e_cbm
-
-    def _E_ch(self):
-        E_ch = {}
-        for id in self._ids:
-            for site in self._sites[id]:
-                E_ch_val = self._E_ch_site(site, id)
-                if E_ch_val is None:
-                    self.missing_data.add((id, site))
-                else:
-                    E_ch[id, site] = self._E_ch_site(site, id)
-        return E_ch
-
-    def _E_GS(self):
-        E_GS = {}
-        for id in self._ids:
-            E_GS_val = self._E_GS_site(id)
-            if E_GS_val is None:
-                update_pairs = [(id, site) for site in self._sites[id]]
-                self.missing_data.update(update_pairs)
-            else:
-                E_GS[id] = self._E_GS_site(id)
-        return E_GS
-
-    def _mu_site(self, id, site):
+    def mu(self, id, site):
         file_path = os.path.join(
             self.base_dir,
             id,
@@ -127,7 +118,7 @@ class RAWData:
                 raise ValueError(f"mu2.txt is empty for {file_path}")
             return mu
 
-    def _e_cbm_site(self, id, site):
+    def e_cbm(self, id, site):
         file_path = os.path.join(
             self.base_dir,
             id,
@@ -143,11 +134,7 @@ class RAWData:
                 return None
             return float(e_cbm)
 
-    def _E0(self, dir_path, file_name):
-        file_path = os.path.join(
-            dir_path,
-            file_name,
-        )
+    def E0(self, file_path):
         if not os.path.exists(file_path):
             return None
         with open(file_path, "r") as f:
@@ -161,37 +148,33 @@ class RAWData:
                 return None
             return float(match.group(1))
 
-    def _E_ch_site(self, site, id):
-        return self._E0(
+    def E_ch(self, id, site):
+        return self.E0(
             os.path.join(
                 self.base_dir,
                 id,
                 self.simulation_type,
                 site,
-            ),
-            "OSZICAR",
+                "OSZICAR",
+            )
         )
 
-    def _E_GS_site(self, id):
-        return self._E0(
+    def E_GS(self, id):
+        return self.E0(
             os.path.join(
                 self.base_dir,
                 id,
                 self.simulation_type,
                 "SCF",
-            ),
-            "OSZICAR",
+                "OSZICAR",
+            )
         )
 
 
 if __name__ == "__main__":
-    data = RAWData("Cu", "VASP")
-    # print(data)
-    # print(data.ids)
-    # print(data.sites)
-    # print(data.mu)
-    # print(data.e_cbm)
-    # print(data.E_ch)
-    # print(data.E_GS)
+    # data = RAWData("Cu", "VASP")
+    # data.parameters
 
-    print("dummy")
+    data = RAWData("Ti", "VASP")
+    data.parameters
+    print(f"data: {len(data)}, missing: {len(data.missing_data)}")

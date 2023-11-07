@@ -2,6 +2,10 @@
 
 - [ ] Rescale the VASP data on theoretical basis:
     - [ ] make the ids, mu and such matchup in wrangling code
+    - Missing data:
+      - RAW VASP data for Ti: 3792, 92 (missing)
+      - RAW VASP data for Cu: 3090, 227 (missing)
+      - Location of full list : dataset/VASP-raw-data
 - [ ] m3gnet retrain prelims
 
 ## Misc

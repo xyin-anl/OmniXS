@@ -40,62 +40,15 @@ from typing import TypedDict, Union, Tuple
 from src.xas_data_raw import RAWData
 
 # %%
-data = RAWData("Cu", "VASP")
 
-# %%
-print("-" * 50)
-print(data._ids[:5])
-print(len(data._ids))
-print("-" * 50)
+for compound in ["Ti", "Cu"]:
+    data = RAWData(compound, "VASP")
+    print(
+        f"RAW VASP data for {compound}: \
+            {len(data)}, {len(data.missing_data)} (missing)"
+    )
+    with open(f"missing_VASP_data_{compound}.txt", "w") as f:
+        for d in data.missing_data:
+            f.write(f"{d}\n")
 
-# %%
-print("-" * 50)
-print(data._sites[data._ids[0]])
-print(len(data._sites[data._ids[0]]))
-print("-" * 50)
-
-# %%
-print("-" * 50)
-print(data._mu[data._ids[0], data._sites[data._ids[0]][0]])
-print(len(data._mu[data._ids[0], data._sites[data._ids[0]][0]]))
-print("-" * 50)
-
-# %%
-print("-" * 50)
-print(data._e_cbm[data._ids[0], data._sites[data._ids[0]][0]])
-print("-" * 50)
-
-
-# %%
-
-print("-" * 50)
-print(data._E_ch)
-print("-" * 50)
-
-# %%
-
-print(
-    data.missing_data
-    # data.missing_e_cbm,
-    # data.missing_E_ch,
-    # data.missing_E_GS,
-)
-
-
-# %%
-
-data._ids
-
-# %%
-data.missing_data
-
-# %%
-missing_ids = [id for id, site in data.missing_data]
-
-# %%
-set([1,2])
-
-
-# %%
-len(set(missing_ids))
 # %%
