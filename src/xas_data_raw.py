@@ -47,7 +47,13 @@ class RAWData:
                 mu_val = self.mu(id, site)
                 e_cbm_val = self.e_cbm(id, site)
                 E_ch_val = self.E_ch(id, site)
-                if mu_val is None or e_cbm_val is None or E_ch_val is None:
+                volume_val = self.volume(id, site)
+                if (
+                    mu_val is None
+                    or e_cbm_val is None
+                    or E_ch_val is None
+                    or volume_val is None
+                ):
                     self.missing_data.add((id, site))
                     continue
                 parameters[id, site] = {
@@ -56,10 +62,38 @@ class RAWData:
                     "E_ch": E_ch_val,
                     "E_GS": E_GS_val,
                     "e_core": self.e_core,
+                    "volume": volume_val,
                 }
         if len(self.missing_data) > 0:
             warnings.warn(f"{len(self.missing_data)} missing data for {self.compound}")
         return parameters
+
+    def volume(self, id, site):
+        file_path = os.path.join(
+            self.base_dir,
+            id,
+            self.simulation_type,
+            site,
+            "POSCAR",
+        )
+        with open(file_path, "r") as f:
+            lines = f.readlines()
+            if len(lines) < 5:
+                warnings.warn(f"Not enough data in {file_path} to calculate volume")
+                return None
+            vx, vy, vz = lines[2:5]
+            vx, vy, vz = tuple(
+                map(
+                    lambda x: np.array(x.strip().split(), dtype=float),
+                    [vx, vy, vz],
+                )
+            )
+            if len(vx) != 3 or len(vy) != 3 or len(vz) != 3:
+                raise ValueError(f"Invalid lattice vectors in {file_path}")
+            volume = np.abs(np.dot(vx, np.cross(vy, vz)))
+            if volume == 0:
+                raise ValueError(f"Volume is zero for {file_path}")
+            return volume
 
     @cached_property
     def total_sites(self):

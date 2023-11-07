@@ -1,9 +1,14 @@
 ## Urgent
-
+- [ ] ask chuntian
+  - [ ] "new_amplitude = (omega x big_omega / alpha) x original_amplitude"
+    - [ ] how to get omega, alpha, big_omega (volume)
 - [ ] Rescale the VASP data on theoretical basis:
     - [ ] make the ids, mu and such matchup in wrangling code
     - Missing data:
       - RAW VASP data for Ti: 3792, 92 (missing)
+      - 3448 (non-zero), 399 (zero),  3847 (total)
+Lenght of Non-zero spectra: 3448
+Lenght of Zero spectra: 399- 
       - RAW VASP data for Cu: 3090, 227 (missing)
       - Location of full list : dataset/VASP-raw-data
 - [ ] m3gnet retrain prelims
