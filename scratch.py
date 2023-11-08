@@ -3,6 +3,7 @@
 # %autoreload 2
 
 # from scripts.plots_model_report import plot_residue_histogram
+import warnings
 from scipy.stats import cauchy
 import numpy as np
 from scipy.signal import convolve
@@ -62,133 +63,123 @@ from src.xas_data_raw import RAWData
 
 # compound = "Ti"
 compound = "Cu"
-data = RAWData(compound, "VASP")
+simulation_type = "VASP"
+data = RAWData(compound, simulation_type)
 
-# %%
+
 id = next(iter(data.parameters))
 single_spectra = data.parameters[id]["mu"]
-energy = single_spectra[:, 0]
-spectra = single_spectra[:, 1]
+energy_full = single_spectra[:, 0]
+spectra_full = single_spectra[:, 1]
 e_core = data.parameters[id]["e_core"]
 e_cbm = data.parameters[id]["e_cbm"]
 E_ch = data.parameters[id]["E_ch"]
 E_GS = data.parameters[id]["E_GS"]
 volume = data.parameters[id]["volume"]
 
-print("-" * 80)
-print(f"compound: {compound}")
-print("simulation_type: VASP")
-print(f"e_core: {e_core}")
-print(f"e_cbm: {e_cbm}")
-print(f"E_ch: {E_ch}")
-print(f"E_GS: {E_GS}")
-print(f"volume: {volume}")
-print("-" * 80)
 
+# E_min is based on theory with arbitary min_offset
+min_offset = 5
+theory_min = (e_cbm - e_core) - min_offset
+energy_min_idx = np.where(energy_full >= theory_min)[0][0]
+energy_min = energy_full[energy_min_idx]
+# E_max is last non-zero value
+energy_max_idx = np.where(spectra_full != 0)[0][-1]
+energy_max = energy_full[energy_max_idx]
+# spectra and energy are now trimmed
+spectra = spectra_full[energy_min_idx : energy_max_idx + 1]
+energy = energy_full[energy_min_idx : energy_max_idx + 1]
 
-# %%
-
-print(f"Lenght of spectra: {len(spectra)}")
-print(f"Lenght of Non-zero spectra: {len(spectra[spectra != 0])}")
-print(f"Lenght of Zero spectra: {len(spectra[spectra == 0])}")
-
-# %%
-
-plt.plot(spectra[spectra != 0], label="Non-zero")
-plt.plot(spectra, label="All")
-plt.legend()
-
-# TODO: double check this
-
-# %%
-
-first_non_zero_idx = np.where(spectra != 0)[0][0]
-last_non_zero_idx = np.where(spectra != 0)[0][-1]
-offset = 200
-non_zero_idx = np.arange(
-    first_non_zero_idx + offset,
-    last_non_zero_idx - offset,
-    dtype=int,
+plot_legend_non_zero = r"Non-zero E range\\ "
+plot_legend_non_zero += (
+    r"$E_{\text{min}} = e_{\text{cbm}} - e_{\text{core}} - \Delta E_0$ \\ "
 )
-assert np.all(np.diff(non_zero_idx) == 1), "non_zero_idx is not continuous"
-spectra = spectra[non_zero_idx]
-energy = energy[non_zero_idx]
-
-# check if there are zeros in between
-
-# %%
-
-## ALIGNMENT
-# offset = (e_core - e_cbm) + (E_ch - E_GS)
-offset = (0 - e_cbm) + (E_ch - E_GS)
-# TODO: e_core might be wrong
-print(f"Energy Offset: {offset}")
-energy_aligned = energy + offset
-plt.plot(energy_aligned, spectra, label="Aligned")
-plt.legend()
-
-# %%
+plot_legend_non_zero += (
+    r"$E_{\text{min}} ="
+    + f"{e_cbm:.2f} - {e_core:.2f} - {min_offset} "
+    + r"\ \text{eV}$\\ "
+)
+plot_legend_non_zero += (
+    r"$E_{\text{min}} = " + f"{energy_min:.2f}" + r"\ \text{eV}$" + " (available)\n"
+)
+plot_legend_non_zero += r"$E_{\text{max}} = " + f"{energy_max:.2f}" + r"\ \text{eV}$"
 
 ## SCALING
-omega = spectra * energy_aligned
+omega = spectra * energy
 big_omega = volume
 alpha = 1 / 137  # TODO: ask if it is fine-structure constant or something else
-scaled_amplitude = (omega * big_omega) / alpha  # ASK if alpha is mul or div
-plt.plot(energy_aligned, scaled_amplitude, label="Scaled and Aligned")
-plt.legend()
+spectra_scaled = (omega * big_omega) / alpha  # ASK if alpha is mul or div
 
 
-# %%
-
-
-# %%
+plot_legend_scaling = r"Scaling: \\ "
+plot_legend_scaling += r"$\omega' = \omega \cdot \Omega / \alpha$ \\ "
+plot_legend_scaling += r"$\omega = y \cdot E$ \\ "
+plot_legend_scaling += f"${{\\Omega}}= {big_omega:.2f}$ \n "
+plot_legend_scaling += f"${{\\alpha}}= {alpha:.3f}$"
 
 
 ## BRODENING
 # Source: https://github.com/AI-multimodal/Lightshow/blob/mc-broadening-revisions/lightshow/postprocess/broaden.py
+# fixed gamma by half
 def lorentz_broaden(x, xin, yin, gamma):
-    """Lorentzian broadening function
-
-    Parameters
-    ----------
-    x : numpy.ndarray
-        The output energy grid.
-    xin : numpy.ndarray
-        The input energy grid.
-    yin : numpy.ndarray
-        The input spectrum.
-    gamma : float
-        Lorentzian broadening gamma.
-
-    Returns
-    -------
-    numpy.ndarray
-        Broadened spectrum.
-    """
-
     x1, x2 = np.meshgrid(x, xin)
     dx = xin[-1] - xin[0]
     return np.dot(cauchy.pdf(x1, x2, gamma).T, yin) / len(xin) * dx
 
 
+Gamma = 0.89
+gamma = Gamma/2
 broadened_amplitude = lorentz_broaden(
-    energy_aligned,
-    energy_aligned,
-    scaled_amplitude,
-    gamma=0.89 / 2,  # TODO: mention this
+    energy,
+    energy,
+    spectra_scaled,
+    gamma=gamma,  # TODO: mention this
+)
+plot_legend_broadening = r"Broadening: \\ "
+plot_legend_broadening += r"Lorentzian broadening: PDF of Cauchy distribution \\ "
+plot_legend_broadening += r"$f(x, k) = \frac{1}{2^{k/2-1} \gamma \left( k/2 \right)}$"
+plot_legend_broadening += r"$x^{k-1} \exp \left( -x^2/2 \right)$ \\ "
+plot_legend_broadening += r"$\gamma = \Gamma / 2$ \\ "
+plot_legend_broadening += r"$\Gamma = 0.89$"
+
+
+## ALIGNMENT
+offset = (e_core - e_cbm) + (E_ch - E_GS)
+plot_legend_alignment = r"Alignment: \\ "
+plot_legend_alignment += (
+    r"$\Delta E = (\epsilon_{\text{core}} - \epsilon_{\text{cbm}})$"
+)
+plot_legend_alignment += r"$+ (E_{\text{ch}} - E_{\text{GS}})$ \\ "
+plot_legend_alignment += (
+    f"$\\Delta E = ({e_core:.2f} - {e_cbm:.2f}) + ({E_ch:.2f} - {E_GS:.2f})$ \n "
+)
+plot_legend_alignment += r"$\Delta E = $" f"{offset:.2f} \n"
+# plot_legend_alignment += r"$e_{{\text{{core}}}}$" + f"={e_core:.2f}\n"
+energy_aligned = energy + offset
+
+
+plt.style.use(["science", "vibrant"])
+fig, ax = plt.subplots(6, 1, figsize=(15, 15))
+ax[0].plot(energy_full, spectra_full, label="Raw")
+ax[1].plot(energy, spectra, label=plot_legend_non_zero)
+ax[2].plot(energy, spectra_scaled, label=plot_legend_scaling)
+ax[3].plot(energy, broadened_amplitude, label=plot_legend_broadening)
+ax[4].plot(energy_aligned, broadened_amplitude, label=plot_legend_alignment)
+ax[5].plot(energy_aligned, broadened_amplitude, label="aligned, scaled, broadened")
+ax[5].plot(energy_aligned, spectra_scaled, label="aligned, scaled, not broadened")
+# ax[3].sharex(ax[2])
+# ax[4].sharex(ax[2])
+for axis in ax:
+    axis.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize=13)
+fig.suptitle(
+    f"Scaling, Alignment, Broadening: {simulation_type} {compound} {id}",
+    fontsize=18,
+    color="red",
+)
+plt.tight_layout()
+plt.savefig(
+    f"scaling_alignment_broadening_{simulation_type}_{compound}_{id}.pdf",
+    dpi=300,
 )
 
-# %%
 
-plt.plot(energy_aligned, scaled_amplitude, label="Scaled and Aligned")
-plt.plot(energy_aligned, broadened_amplitude, label="Scaled, Aligned and Broadened 2")
-plt.legend()
-# %%
-
-fig, ax = plt.subplots(4, 1)
-ax[0].plot(energy, spectra, label="Raw +- 200 (non-zero)")
-ax[1].plot(energy_aligned, scaled_amplitude, label="Scaled and Aligned")
-ax[2].plot(energy_aligned, broadened_amplitude, label="Scaled, Aligned and Broadened")
-ax[1].sharex(ax[2])
-
-# %%
