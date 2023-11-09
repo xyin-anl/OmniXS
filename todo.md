@@ -1,3 +1,8 @@
+
+do not forget to put all spectra in same range
+fenchen did 35ev range..
+
+
 ## Urgent
 - [ ] ask chuntian
   - [ ] "new_amplitude = (omega x big_omega / alpha) x original_amplitude"
