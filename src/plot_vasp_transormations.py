@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-from src.VASPDataModifier import VASPDataModifier
+from src.vasp_data_transformations import VASPDataModifier
 
 
 class VASPDataTransformationPlotter(VASPDataModifier):
@@ -100,11 +100,11 @@ class VASPDataTransformationPlotter(VASPDataModifier):
 
 
 if __name__ == "__main__":
-    from src.xas_data_raw import RAWData
+    from src.raw_data_vasp import RAWDataVASP
 
     compound = "Ti"
     simulation_type = "VASP"
-    data = RAWData(compound, simulation_type)
+    data = RAWDataVASP(compound, simulation_type)
 
     # id = next(iter(data.parameters))
     id = ("mp-390", "000_Ti")  # reference to another paper data

@@ -1,7 +1,7 @@
 # %%
 import numpy as np
 from scipy.stats import cauchy
-from src.xas_data_raw import RAWData
+from src.raw_data_vasp import RAWDataVASP
 
 
 class VASPDataModifier:
@@ -73,7 +73,7 @@ class VASPDataModifier:
 if __name__ == "__main__":
     compound = "Ti"
     simulation_type = "VASP"
-    data = RAWData(compound, simulation_type)
+    data = RAWDataVASP(compound, simulation_type)
 
     # id = next(iter(data.parameters))
     id = ("mp-390", "000_Ti")  # reference to another paper data

@@ -3,11 +3,15 @@
 # %autoreload 2
 
 # from scripts.plots_model_report import plot_residue_histogram
+from functools import cached_property
+import os
+from dataclasses import dataclass, field
 import warnings
 from scipy.signal import convolve
+from typing import Literal, Optional, Set
 
-from src.VASPDataModifier import VASPDataModifier
-from src.VASPDataTransformationPlotter import VASPDataTransformationPlotter
+from src.vasp_data_transformations import VASPDataModifier
+from src.plot_vasp_transormations import VASPDataTransformationPlotter
 from utils.src.plots.highlight_tick import highlight_tick
 import yaml
 import scienceplots
@@ -41,7 +45,6 @@ from pprint import pprint
 from utils.src.optuna.dynamic_fc import PlDynamicFC
 from src.ckpt_predictions import get_optimal_fc_predictions
 from typing import TypedDict, Union, Tuple
-from src.xas_data_raw import RAWData
 
 
 # %%
@@ -56,23 +59,5 @@ from src.xas_data_raw import RAWData
 #     with open(f"missing_VASP_data_{compound}.txt", "w") as f:
 #         for d in data.missing_data:
 #             f.write(f"{d}\n")
-
-# %%
-
-# compound = "Ti"
-compound = "Ti"
-simulation_type = "VASP"
-data = RAWData(compound, simulation_type)
-
-
-# id = next(iter(data.parameters))
-id = ("mp-390", "000_Ti")  # reference to another paper data
-transform = VASPDataModifier(data.parameters[id])
-plt.plot(transform.energy, transform.spectra)
-
-# %%
-id = ("mp-390", "000_Ti")  # reference to another paper data
-plotter = VASPDataTransformationPlotter(data.parameters[id], compound, simulation_type)
-plotter.plot()
 
 # %%

@@ -1,37 +1,26 @@
-import numpy as np
-from collections import deque
-
-
 import os
 import re
+import warnings
+from collections import deque
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import List, Literal, Optional, Dict, Set
-import warnings
-import logging
+from typing import Literal, Optional
+
+import numpy as np
+
+from src.raw_data import RAWData
 
 
 @dataclass
-class RAWData:
+class RAWDataVASP(RAWData):
     compound: str
-    simulation_type: Literal["VASP", "FEFF"]
     base_dir: Optional[str] = field(default=None, init=False)
-    missing_data: Optional[Set[str]] = field(default_factory=set, init=False)
+    simulation_type: Literal["VASP"] = field(default="VASP", init=True)
 
     def __post_init__(self):
         if self.base_dir is None:
             self.base_dir = self._default_base_dir()
-        self.parameters  # initialize cached_property
-
-    def _default_base_dir(self):
-        default_base_dir = os.path.join(  # default
-            "dataset",
-            f"{self.simulation_type}-raw-data",
-            f"{self.compound}",
-        )
-        if not os.path.exists(default_base_dir):
-            raise ValueError(f"{default_base_dir} does not exist")
-        return default_base_dir
+        self.parameters  # initialize cached property
 
     @cached_property
     def parameters(self):
@@ -94,37 +83,6 @@ class RAWData:
             if volume == 0:
                 raise ValueError(f"Volume is zero for {file_path}")
             return volume
-
-    @cached_property
-    def total_sites(self):
-        return len([s for sites in self._sites.values() for s in sites])
-
-    def __len__(self):
-        return self.total_sites
-
-    @cached_property
-    def _ids(self):
-        """Can include ids with missing data"""
-        ids = os.listdir(self.base_dir)
-        id_filter = re.compile(r"mp-\d+")
-        ids = list(filter(lambda x: id_filter.match(x), ids))
-        if len(ids) == 0:
-            raise ValueError(f"No ids found for {self.compound}")
-        return ids
-
-    @cached_property
-    def _sites(self):
-        """Can include sites with missing data"""
-        sites = {}
-        for id in self._ids:
-            dir_path = os.path.join(self.base_dir, id, self.simulation_type)
-            folders = os.listdir(dir_path)
-            pattern = r"(\d+)_" + self.compound
-            site_list = list(filter(lambda x: re.match(pattern, x), folders))
-            if len(site_list) == 0:
-                warnings.warn(f"No sites found for {id} at {folders}")
-            sites[id] = site_list
-        return sites
 
     @cached_property
     def e_core(self):
@@ -206,9 +164,13 @@ class RAWData:
 
 
 if __name__ == "__main__":
-    # data = RAWData("Cu", "VASP")
-    # data.parameters
-
-    data = RAWData("Ti", "VASP")
+    data = RAWDataVASP(compound="Cu")
     data.parameters
     print(f"data: {len(data)}, missing: {len(data.missing_data)}")
+    from matplotlib import pyplot as plt
+
+    id = next(iter(data._ids))
+    site = next(iter(data._sites[id]))
+
+    plt.plot(data.parameters[(id, site)]["mu"][:, 1])
+    plt.show()

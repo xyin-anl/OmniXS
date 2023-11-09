@@ -1,0 +1,55 @@
+import os
+import re
+import warnings
+from abc import ABC
+from dataclasses import dataclass, field
+from functools import cached_property
+from typing import Optional, Set
+
+
+@dataclass
+class RAWData(ABC):
+    compound: str = field(default=None, init=False)
+    simulation_type: str = field(default=None, init=False)
+    missing_data: Optional[Set[str]] = field(default_factory=set, init=False)
+
+    def _default_base_dir(self):
+        default_base_dir = os.path.join(  # default
+            "dataset",
+            f"{self.simulation_type}-raw-data",
+            f"{self.compound}",
+        )
+        if not os.path.exists(default_base_dir):
+            raise ValueError(f"{default_base_dir} does not exist")
+        return default_base_dir
+
+    @cached_property
+    def _ids(self):
+        """Can include ids with missing data"""
+        ids = os.listdir(self.base_dir)
+        id_filter = re.compile(r"mp-\d+")
+        ids = list(filter(lambda x: id_filter.match(x), ids))
+        if len(ids) == 0:
+            raise ValueError(f"No ids found for {self.compound}")
+        return ids
+
+    @cached_property
+    def _sites(self):
+        """Can include sites with missing data"""
+        sites = {}
+        for id in self._ids:
+            dir_path = os.path.join(self.base_dir, id, self.simulation_type)
+            folders = os.listdir(dir_path)
+            pattern = r"(\d+)_" + self.compound
+            site_list = list(filter(lambda x: re.match(pattern, x), folders))
+            if len(site_list) == 0:
+                warnings.warn(f"No sites found for {id} at {folders}")
+            sites[id] = site_list
+        return sites
+
+    @cached_property
+    def total_sites(self):
+        return len([s for sites in self._sites.values() for s in sites])
+
+    def __len__(self):
+        return self.total_sites
