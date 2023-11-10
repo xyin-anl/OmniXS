@@ -1,14 +1,13 @@
-from src.raw_data import RAWData
-
-
-import numpy as np
-
-
 import os
 import warnings
 from dataclasses import dataclass, field
 from functools import cached_property
 from typing import Literal, Optional
+
+import numpy as np
+from scipy.stats import cauchy
+
+from src.raw_data import RAWData
 
 
 @dataclass
@@ -44,7 +43,7 @@ class RAWDataFEFF(RAWData):
             if mu is None:
                 warnings.warn(f"Missing mu for {id} at {site}")
                 return None
-            return np.array([energy, mu])
+            return np.array([energy, mu]).T
 
     @cached_property
     def parameters(self):
@@ -73,8 +72,8 @@ if __name__ == "__main__":
     from matplotlib import pyplot as plt
 
     plt.plot(
-        data.parameters[id]["mu"][0],
-        data.parameters[id]["mu"][1],
+        data.parameters[id]["mu"][:, 0],
+        data.parameters[id]["mu"][:, 1],
     )
     plt.show()
 

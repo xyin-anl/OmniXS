@@ -1,9 +1,5 @@
-
-do not forget to put all spectra in same range
-fenchen did 35ev range..
-
-
 ## Urgent
+- [ ]do not forget to put all spectra in same range.fenchen did 35ev range..
 - [ ] ask chuntian
   - [ ] "new_amplitude = (omega x big_omega / alpha) x original_amplitude"
     - [ ] how to get omega, alpha, big_omega (volume)

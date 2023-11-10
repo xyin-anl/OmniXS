@@ -62,17 +62,17 @@ class VASPDataTransformationPlotter(VASPDataModifier):
         )
         ax[3].plot(
             self.energy_trunc,
-            self.broadened_amplitude,
+            self.spectra_boardened,
             label=self.legend_broadening(),
         )
         ax[4].plot(
             self.energy_aligned,
-            self.broadened_amplitude,
+            self.spectra_boardened,
             label=self.legend_alignment(),
         )
         ax[5].plot(
             self.energy_aligned,
-            self.broadened_amplitude,
+            self.spectra_boardened,
             label="brodened",
             linewidth=2,
         )
