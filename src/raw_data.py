@@ -1,7 +1,7 @@
 import os
 import re
 import warnings
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from functools import cached_property
 from typing import Optional, Set
@@ -12,6 +12,7 @@ class RAWData(ABC):
     compound: str = field(default=None, init=False)
     simulation_type: str = field(default=None, init=False)
     missing_data: Optional[Set[str]] = field(default_factory=set, init=False)
+    intermediate_dir: str = field(default=None, init=False)
 
     def _default_base_dir(self):
         default_base_dir = os.path.join(  # default
@@ -38,7 +39,7 @@ class RAWData(ABC):
         """Can include sites with missing data"""
         sites = {}
         for id in self._ids:
-            dir_path = os.path.join(self.base_dir, id, self.simulation_type)
+            dir_path = os.path.join(self.base_dir, id, self.intermediate_dir)
             folders = os.listdir(dir_path)
             pattern = r"(\d+)_" + self.compound
             site_list = list(filter(lambda x: re.match(pattern, x), folders))
@@ -53,3 +54,11 @@ class RAWData(ABC):
 
     def __len__(self):
         return self.total_sites
+
+    @abstractmethod
+    def mu(self, id, site):
+        pass
+
+    @abstractmethod
+    def parameters(self):
+        pass

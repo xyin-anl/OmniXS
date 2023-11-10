@@ -16,6 +16,7 @@ class RAWDataVASP(RAWData):
     compound: str
     base_dir: Optional[str] = field(default=None, init=False)
     simulation_type: Literal["VASP"] = field(default="VASP", init=True)
+    intermediate_dir: Literal["VASP"] = field(default="VASP", init=True)
 
     def __post_init__(self):
         if self.base_dir is None:
@@ -164,13 +165,12 @@ class RAWDataVASP(RAWData):
 
 
 if __name__ == "__main__":
-    data = RAWDataVASP(compound="Cu")
+    data = RAWDataVASP(compound="Ti")
     data.parameters
     print(f"data: {len(data)}, missing: {len(data.missing_data)}")
     from matplotlib import pyplot as plt
 
-    id = next(iter(data._ids))
-    site = next(iter(data._sites[id]))
+    id = ("mp-390", "000_Ti")  # reference to another paper data
 
-    plt.plot(data.parameters[(id, site)]["mu"][:, 1])
+    plt.plot(data.parameters[id]["mu"][:, 1])
     plt.show()

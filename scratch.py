@@ -3,12 +3,8 @@
 # %autoreload 2
 
 # from scripts.plots_model_report import plot_residue_histogram
-from functools import cached_property
-import os
-from dataclasses import dataclass, field
-import warnings
 from scipy.signal import convolve
-from typing import Literal, Optional, Set
+from src.raw_data_feff import RAWDataFEFF
 
 from src.vasp_data_transformations import VASPDataModifier
 from src.plot_vasp_transormations import VASPDataTransformationPlotter
@@ -59,5 +55,26 @@ from typing import TypedDict, Union, Tuple
 #     with open(f"missing_VASP_data_{compound}.txt", "w") as f:
 #         for d in data.missing_data:
 #             f.write(f"{d}\n")
+
+# %%
+
+
+
+# %%
+
+
+data = RAWDataFEFF(compound="Ti")
+data.parameters
+print(f"data: {len(data)}, missing: {len(data.missing_data)}")
+
+id = next(iter(data._ids))
+site = next(iter(data._sites[id]))
+id = ("mp-390", "000_Ti")  # reference to another paper data
+
+plt.plot(
+    data.parameters[id]["mu"][0],
+    data.parameters[id]["mu"][1],
+)
+plt.show()
 
 # %%
