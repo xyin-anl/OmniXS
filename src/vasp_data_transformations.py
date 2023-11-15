@@ -18,7 +18,7 @@ class VASPDataModifier:
         self.start_offset = 5
         self.end_offset = 5
         self.energy, self.spectra = None, None
-        self.Gamma = 0.89
+        # self.Gamma = 0.89
         # more attributes inside functions for plot
         self.transform()
 
@@ -44,20 +44,22 @@ class VASPDataModifier:
 
     def scale(self):
         omega = self.spectra * self.energy
+        omega /= 13.6056980659 * 2  # eV to Hartree
         self.big_omega = self.volume
-        self.alpha = 1 / 137
+        self.alpha = 137.036
         spectra_scaled = (omega * self.big_omega) / self.alpha
         self.spectra_scaled = spectra_scaled  # for plot
         return spectra_scaled
 
-    def _lorentz_broaden(self, x, xin, yin, gamma):
+    @classmethod
+    def lorentz_broaden(self, x, xin, yin, gamma):
         x1, x2 = np.meshgrid(x, xin)
         dx = xin[-1] - xin[0]
         return np.dot(cauchy.pdf(x1, x2, gamma).T, yin) / len(xin) * dx
 
-    def broaden(self):
-        gamma = self.Gamma / 2
-        broadened_amplitude = self._lorentz_broaden(
+    def broaden(self, gamma=0.89 / 2):
+        # gamma = self.Gamma / 2
+        broadened_amplitude = self.lorentz_broaden(
             self.energy, self.energy, self.spectra_scaled, gamma=gamma
         )
         self.spectra_boardened = broadened_amplitude  # for plot

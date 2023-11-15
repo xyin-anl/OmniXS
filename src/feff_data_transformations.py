@@ -1,6 +1,7 @@
 # %%
 import numpy as np
 from scipy.stats import cauchy
+from src.vasp_data_transformations import VASPDataModifier
 
 
 class FEFFDataModifier:
@@ -12,14 +13,16 @@ class FEFFDataModifier:
         self.start_offset = 5
         self.end_offset = 5
         self.energy, self.spectra = None, None
-        self.Gamma = 0.89
+        # self.Gamma = 0.89
         self.transform()
 
     def transform(self):
+        # pass
         self.energy, self.spectra = self.truncate()
         self.spectra = self.broaden()
 
     def truncate(self):
+        # return self.spectra_full, self.energy_full
         minimum_spectra = np.median(self.spectra_full) * 0.01
         # minimum_energy = 0  # TODO: remove this later
         # min_idx = np.where(self.energy_full > minimum_energy)[0][0]
@@ -34,14 +37,8 @@ class FEFFDataModifier:
         self.energy_trunc, self.spectra_trunc = energy, spectra  # plot
         return energy, spectra
 
-    def _lorentz_broaden(self, x, xin, yin, gamma):
-        x1, x2 = np.meshgrid(x, xin)
-        dx = xin[-1] - xin[0]
-        return np.dot(cauchy.pdf(x1, x2, gamma).T, yin) / len(xin) * dx
-
-    def broaden(self):
-        gamma = self.Gamma / 2
-        broadened_amplitude = self._lorentz_broaden(
+    def broaden(self, gamma=0.89 / 2):
+        broadened_amplitude = VASPDataModifier.lorentz_broaden(
             self.energy,
             self.energy,
             self.spectra,

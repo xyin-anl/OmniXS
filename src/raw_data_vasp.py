@@ -83,6 +83,7 @@ class RAWDataVASP(RAWData):
             volume = np.abs(np.dot(vx, np.cross(vy, vz)))
             if volume == 0:
                 raise ValueError(f"Volume is zero for {file_path}")
+            volume /= 0.529177**3
             return volume
 
     @cached_property
