@@ -32,16 +32,30 @@ class VASPDataModifier:
     def truncate(self):
         minimum_spectra = np.median(self.spectra_full) * 0.01
         minimum_energy = (self.e_cbm - self.e_core) - self.start_offset
-        min_idx = np.where(self.energy_full > minimum_energy)[0][0]
-        energy, spectra = self.energy_full[min_idx:], self.spectra_full[min_idx:]
-        min_idx = np.where(spectra > minimum_spectra)[0][0]
-        energy, spectra = energy[min_idx:], spectra[min_idx:]
-        max_idx = np.where(spectra > minimum_spectra)[0][-1]
-        energy, spectra = energy[:max_idx], spectra[:max_idx]
-        max_idx = np.where(energy < energy[-1] - self.end_offset)[0][-1]
-        energy, spectra = energy[:max_idx], spectra[:max_idx]
-        self.energy_trunc, self.spectra_trunc = energy, spectra  # plot
+        valid_energy = self.energy_full > minimum_energy
+        valid_spectra = self.spectra_full[valid_energy] > minimum_spectra
+        energy, spectra = (
+            self.energy_full[valid_energy][valid_spectra],
+            self.spectra_full[valid_energy][valid_spectra],
+        )
+        max_energy_index = np.where(energy < energy[-1] - self.end_offset)[0][-1]
+        energy, spectra = energy[:max_energy_index], spectra[:max_energy_index]
+        self.energy_trunc, self.spectra_trunc = energy, spectra
         return energy, spectra
+
+    # def truncate(self):
+    #     minimum_spectra = np.median(self.spectra_full) * 0.01
+    #     minimum_energy = (self.e_cbm - self.e_core) - self.start_offset
+    #     min_idx = np.where(self.energy_full > minimum_energy)[0][0]
+    #     energy, spectra = self.energy_full[min_idx:], self.spectra_full[min_idx:]
+    #     min_idx = np.where(spectra > minimum_spectra)[0][0]
+    #     energy, spectra = energy[min_idx:], spectra[min_idx:]
+    #     max_idx = np.where(spectra > minimum_spectra)[0][-1]
+    #     energy, spectra = energy[:max_idx], spectra[:max_idx]
+    #     max_idx = np.where(energy < energy[-1] - self.end_offset)[0][-1]
+    #     energy, spectra = energy[:max_idx], spectra[:max_idx]
+    #     self.energy_trunc, self.spectra_trunc = energy, spectra  # plot
+    #     return energy, spectra
 
     def scale(self):
         omega = self.spectra * self.energy
@@ -54,9 +68,16 @@ class VASPDataModifier:
 
     @classmethod
     def lorentz_broaden(self, x, xin, yin, gamma):
-        x1, x2 = np.meshgrid(x, xin)
         dx = xin[-1] - xin[0]
-        return np.dot(cauchy.pdf(x1, x2, gamma / 2).T, yin) / len(xin) * dx
+        differences = x[:, np.newaxis] - xin
+        lorentzian = cauchy.pdf(differences, 0, gamma / 2)
+        return np.dot(lorentzian, yin) / len(xin) * dx
+
+    # @classmethod
+    # def lorentz_broaden(self, x, xin, yin, gamma):
+    #     x1, x2 = np.meshgrid(x, xin)
+    #     dx = xin[-1] - xin[0]
+    #     return np.dot(cauchy.pdf(x1, x2, gamma / 2).T, yin) / len(xin) * dx
 
     def broaden(self, gamma=0.89 * 2):
         # gamma = self.Gamma / 2
