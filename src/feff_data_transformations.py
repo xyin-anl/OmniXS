@@ -1,7 +1,5 @@
-# %%
 import numpy as np
-from scipy.stats import cauchy
-from src.vasp_data_transformations import VASPDataModifier
+from src.compare_utils import compare_between_spectra
 
 
 class FEFFDataModifier:
@@ -16,7 +14,6 @@ class FEFFDataModifier:
 
     def transform(self):
         self.energy, self.spectra = self.truncate()
-        self.spectra = self.broaden()
 
     def truncate(self):
         minimum_spectra = np.median(self.spectra_raw) * 0.01
@@ -30,15 +27,17 @@ class FEFFDataModifier:
         self.energy_trunc, self.spectra_trunc = energy, spectra  # plot
         return energy, spectra
 
-    def broaden(self, gamma=0.89 / 2):
-        broadened_amplitude = VASPDataModifier.lorentz_broaden(
-            self.energy,
-            self.energy,
-            self.spectra,
-            gamma=gamma,
-        )
-        self.broadened_amplitude = broadened_amplitude  # for plot
-        return broadened_amplitude
+    def align_to_spectra(self, target_spectra):
+        # useful to align feff with vasp spectra
+        def obj_to_array(obj):
+            return np.array([obj.energy, obj.spectra]).T
+
+        spectra_1 = obj_to_array(self)
+        target_spectra = obj_to_array(target_spectra)
+        shift, _ = compare_between_spectra(spectra_1, target_spectra)
+        aligned_energy = self.energy - shift
+        self.energy = aligned_energy
+        return self
 
     def scale(self):
         pass
@@ -57,5 +56,3 @@ if __name__ == "__main__":
 
     plt.plot(transform.energy, transform.spectra)
     plt.show()
-
-# %%

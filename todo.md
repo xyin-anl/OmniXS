@@ -1,3 +1,4 @@
+- sperate alignment for vasp and feff to different class
 - make new file for vasp for average of mu named: xmu_avg.dat for all dataset.
 - scale feff by constant for transfer learning : maybe np.pi
 - make sure to shift all vasp (not feff) by : 5114.089730000899
