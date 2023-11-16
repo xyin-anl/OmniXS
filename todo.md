@@ -1,3 +1,7 @@
+- make new file for vasp for average of mu named: xmu_avg.dat for all dataset.
+- scale feff by constant for transfer learning : maybe np.pi
+- make sure to shift all vasp (not feff) by : 5114.089730000899
+
 - for the test use broadening is 0.89 \*2 (ONLY FOR THE TEST)
 - look at the spectre and the vasp should align with it
 - for feff just match maximum

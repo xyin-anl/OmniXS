@@ -55,7 +55,7 @@ class VASPDataModifier:
     def lorentz_broaden(self, x, xin, yin, gamma):
         x1, x2 = np.meshgrid(x, xin)
         dx = xin[-1] - xin[0]
-        return np.dot(cauchy.pdf(x1, x2, gamma).T, yin) / len(xin) * dx
+        return np.dot(cauchy.pdf(x1, x2, gamma / 2).T, yin) / len(xin) * dx
 
     def broaden(self, gamma=0.89 / 2):
         # gamma = self.Gamma / 2

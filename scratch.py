@@ -56,8 +56,12 @@ feff_spectra = FEFFDataModifier(feff.parameters[id])
 
 # %%
 
+plt.plot(vasp_spectra.energy_full, vasp_spectra.spectra_full / 3)
 
-def align_to_vasp(source, target):
+# %%
+
+
+def scale_to_vasp(source, target):
     # source = source - np.min(source)
     source = source / np.max(source)
     # source = source + np.min(target)
@@ -89,34 +93,35 @@ e_vasp_max = vasp_spectra.energy[np.argmax(vasp_spectra.spectra)]
 
 feff_spectra.energy, feff_spectra.spectra = None, None
 feff_spectra.energy, feff_spectra.spectra = feff_spectra.truncate()
-feff_spectra.spectra -= np.min(feff_spectra.spectra)
+# feff_spectra.spectra -= np.min(feff_spectra.spectra)
 feff_spectra_transformed = np.array([feff_spectra.energy, feff_spectra.spectra]).T
 feff_spectra.energy -= shift_energy(feff_spectra_transformed, vasp_spectra_transformed)
 feff_spectra.energy, feff_spectra.spectra = filter_range(
     feff_spectra.energy, feff_spectra.spectra, vasp_spectra.energy
 )
 # feff_spectra.spectra = feff_spectra.broaden(gamma=0.89)
-feff_spectra.spectra = align_to_vasp(feff_spectra.spectra, vasp_spectra.spectra)
+# feff_spectra.spectra = align_to_vasp(feff_spectra.spectra, vasp_spectra.spectra)
 feff_label = "feff_truc_minSetZero_alignedToVASP_scaledToVASP"
 
 xs_mp_390 = np.load("dataset/xs-mp-390.npy")
 xs_energy, xs_spectra = xs_mp_390[0], xs_mp_390[1]
-xs_spectra -= np.min(xs_spectra)
+# xs_spectra -= np.min(xs_spectra)
 xs_energy -= xs_energy[np.argmax(xs_spectra)] - e_vasp_max
 xs_energy, xs_spectra = filter_range(xs_energy, xs_spectra, vasp_spectra.energy)
-xs_spectra = VASPDataModifier.lorentz_broaden(xs_energy, xs_energy, xs_spectra, 0.89)
-xs_spectra = align_to_vasp(xs_spectra, vasp_spectra.spectra)
+# xs_spectra = VASPDataModifier.lorentz_broaden(xs_energy, xs_energy, xs_spectra, 0.89)
+# xs_spectra = align_to_vasp(xs_spectra, vasp_spectra.spectra)
 xs_label = "xs_minSetZero_alignedToVASP_broadedned0.89_scaledToVASP"
 
 anatase = np.loadtxt("dataset/anatase.txt")
 anatase_energy = anatase[:, 0]
 anatase_spectra = anatase[:, 1]
-anatase_spectra -= np.min(anatase_spectra)
+# anatase_spectra -= np.min(anatase_spectra)
+print(anatase_energy[np.argmax(anatase_spectra)] - e_vasp_max)
 anatase_energy -= anatase_energy[np.argmax(anatase_spectra)] - e_vasp_max
 anatase_energy, anatase_spectra = filter_range(
     anatase_energy, anatase_spectra, vasp_spectra.energy
 )
-anatase_spectra = align_to_vasp(anatase_spectra, vasp_spectra.spectra)
+# anatase_spectra = scale_to_vasp(anatase_spectra, vasp_spectra.spectra/3)
 anatase_label = "anatase_minSetZero_alignedToVASP_scaledToVASP"
 
 import scienceplots
@@ -126,11 +131,11 @@ import matplotlib as mpl
 # mpl.rcParams.update(mpl.rcParamsDefault)
 plt.style.use(["vibrant", "no-latex"])
 plt.figure(figsize=(8, 5))
-plt.plot(vasp_spectra.energy, vasp_spectra.spectra, label=vasp_label)
-plt.plot(feff_spectra.energy, feff_spectra.spectra, label=feff_label)
-plt.plot(xs_energy, xs_spectra, label=xs_label)
-plt.plot(anatase_energy, anatase_spectra, label=anatase_label)
-plt.xlim(vasp_spectra.energy[0], vasp_spectra.energy[-1])
+plt.plot(vasp_spectra.energy, vasp_spectra.spectra/3, label=vasp_label, c="green") # TODO: why /3?
+plt.plot(feff_spectra.energy, feff_spectra.spectra*np.pi, label=feff_label)
+plt.plot(xs_energy, xs_spectra, label=xs_label, color="orange")
+# plt.plot(anatase_energy, anatase_spectra, label=anatase_label, color="red")
+# plt.xlim(vasp_spectra.energy[0], vasp_spectra.energy[-1])
 # legend outside the figure
 plt.legend(fontsize=14, loc="lower left", bbox_to_anchor=(0, 1.01))
 plt.savefig("alignments.pdf", bbox_inches="tight", dpi=300)
