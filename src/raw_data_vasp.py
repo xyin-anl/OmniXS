@@ -83,7 +83,7 @@ class RAWDataVASP(RAWData):
             volume = np.abs(np.dot(vx, np.cross(vy, vz)))
             if volume == 0:
                 raise ValueError(f"Volume is zero for {file_path}")
-            volume /= 0.529177**3 # in bohr^3 units
+            volume /= 0.529177**3  # in bohr^3 units
             return volume
 
     @cached_property
@@ -94,23 +94,35 @@ class RAWDataVASP(RAWData):
         }
         return values[self.compound]
 
-    def mu(self, id, site):
-        file_path = os.path.join(
-            self.base_dir,
-            id,
-            self.simulation_type,
-            site,
-            "mu2.txt",
-        )
-        if not os.path.exists(file_path):
-            return None
+    def _read_mu_file(self, file_path):
         with open(file_path, "r") as f:
             mu = f.readlines()
             mu = list(map(lambda x: x.strip().split(), mu))
             mu = np.array(mu, dtype=float)
             if len(mu) == 0:
-                raise ValueError(f"mu2.txt is empty for {file_path}")
+                raise ValueError(f"File is empty: {file_path}")
             return mu
+
+    def _generate_xmu_avg(self, mu_avg_file_path, mu_sum_file_path):
+        # because simulation data was saved as sum instead of avg
+        mu_sum = self._read_mu_file(mu_sum_file_path)
+        mu_avg = np.array([mu_sum[:, 0], mu_sum[:, 1] / 3]).T
+        with open(mu_avg_file_path, "w") as f:
+            for row in mu_avg:
+                f.write(f"{row[0]} {row[1]}\n")
+            print(f"Generated {mu_avg_file_path}")
+
+    def mu(self, id, site):
+        dir_path = os.path.join(self.base_dir, id, self.simulation_type, site)
+        avg_path = os.path.join(dir_path, "xmu_avg.dat")
+        sum_path = os.path.join(dir_path, "mu2.txt")
+        if not os.path.exists(avg_path):
+            if os.path.exists(sum_path):
+                self._generate_xmu_avg(avg_path, sum_path)
+                self.mu(id, site)
+            else:
+                return None
+        return self._read_mu_file(avg_path)
 
     def e_cbm(self, id, site):
         file_path = os.path.join(

@@ -43,7 +43,9 @@ class RAWDataFEFF(RAWData):
             if mu is None:
                 warnings.warn(f"Missing mu for {id} at {site}")
                 return None
-            return np.array([energy, mu]).T
+            data = np.array([energy, mu]).T
+            data.setflags(write=False)
+            return data
 
     @cached_property
     def parameters(self):
@@ -54,6 +56,7 @@ class RAWDataFEFF(RAWData):
                 if mu_val is None:
                     self.missing_data.add((id, site))
                     continue
+                mu_val.setflags(write=False)  # redundant but clearer
                 parameters[id, site] = {"mu": mu_val}
         if len(self.missing_data) > 0:
             warnings.warn(f"{len(self.missing_data)} missing data for {self.compound}")

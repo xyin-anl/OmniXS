@@ -7,27 +7,20 @@ from src.vasp_data_transformations import VASPDataModifier
 class FEFFDataModifier:
     def __init__(self, spectra_params):
         self.parameters = spectra_params  # for single spectra
-        self.parsed_data = self.parameters["mu"]
-        self.energy_full = self.parsed_data[:, 0]
-        self.spectra_full = self.parsed_data[:, 1]
+        self.energy_raw = self.parameters["mu"][:, 0]
+        self.spectra_raw = self.parameters["mu"][:, 1]
         self.start_offset = 5
         self.end_offset = 5
         self.energy, self.spectra = None, None
-        # self.Gamma = 0.89
         self.transform()
 
     def transform(self):
-        # pass
         self.energy, self.spectra = self.truncate()
         self.spectra = self.broaden()
 
     def truncate(self):
-        # return self.spectra_full, self.energy_full
-        minimum_spectra = np.median(self.spectra_full) * 0.01
-        # minimum_energy = 0  # TODO: remove this later
-        # min_idx = np.where(self.energy_full > minimum_energy)[0][0]
-        # energy, spectra = self.energy_full[min_idx:], self.spectra_full[min_idx:]
-        spectra, energy = self.spectra_full, self.energy_full
+        minimum_spectra = np.median(self.spectra_raw) * 0.01
+        spectra, energy = self.spectra_raw, self.energy_raw
         min_idx = np.where(spectra > minimum_spectra)[0][0]
         energy, spectra = energy[min_idx:], spectra[min_idx:]
         max_idx = np.where(spectra > minimum_spectra)[0][-1]

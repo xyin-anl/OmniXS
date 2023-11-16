@@ -25,8 +25,9 @@ class VASPDataModifier:
     def transform(self):
         self.energy, self.spectra = self.truncate()
         self.spectra = self.scale()
-        self.spectra = self.broaden()
-        self.energy = self.align()
+        self.spectra = self.broaden(gamma=0.89 * 2)
+        self.energy = self.align(experimental_shift=5114.08973)
+        return self
 
     def truncate(self):
         minimum_spectra = np.median(self.spectra_full) * 0.01
@@ -57,7 +58,7 @@ class VASPDataModifier:
         dx = xin[-1] - xin[0]
         return np.dot(cauchy.pdf(x1, x2, gamma / 2).T, yin) / len(xin) * dx
 
-    def broaden(self, gamma=0.89 / 2):
+    def broaden(self, gamma=0.89 * 2):
         # gamma = self.Gamma / 2
         broadened_amplitude = self.lorentz_broaden(
             self.energy, self.energy, self.spectra_scaled, gamma=gamma
@@ -65,10 +66,11 @@ class VASPDataModifier:
         self.spectra_boardened = broadened_amplitude  # for plot
         return broadened_amplitude
 
-    def align(self):
+    def align(self, experimental_shift=5114.08973):
         self.align_offset = (self.e_core - self.e_cbm) + (self.E_ch - self.E_GS)
         energy_aligned = self.energy + self.align_offset
         self.energy_aligned = energy_aligned  # for plot
+        self.energy_aligned += experimental_shift
         return energy_aligned
 
 
