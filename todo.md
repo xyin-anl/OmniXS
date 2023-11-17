@@ -1,3 +1,10 @@
+- trunc of vasp and feff in range: 4960 + 40(or 45) eV
+- make sure that 0.89 * 2 to be for alignment comparision only
+- for feff to vasp alignment, use constant shift for now so that we do not introduce any uncertatinly
+- try scipy constatn so that no can be hardcoded
+
+
+
 - sperate alignment for vasp and feff to different class
 - make new file for vasp for average of mu named: xmu_avg.dat for all dataset.
 - scale feff by constant for transfer learning : maybe np.pi

@@ -13,6 +13,12 @@ if __name__ == "__main__":
     vasp = RAWDataVASP(compound=compound)
     vasp_spectra = VASPDataModifier(vasp.parameters[id])
 
+    vasp_spectra.energy, vasp_spectra.spectra = None, None
+    vasp_spectra.energy, vasp_spectra.spectra = vasp_spectra.truncate()
+    vasp_spectra.spectra = vasp_spectra.scale()
+    vasp_spectra.spectra = vasp_spectra.broaden(gamma=0.89 * 2)
+    vasp_spectra.energy = vasp_spectra.align(experimental_shift=5114.08973)
+
     feff = RAWDataFEFF(compound=compound)
     feff_spectra = FEFFDataModifier(feff.parameters[id])
     feff_spectra.align_to_spectra(vasp_spectra)
@@ -28,7 +34,12 @@ if __name__ == "__main__":
     plt.style.use(["vibrant", "no-latex"])
     plt.figure(figsize=(8, 5))
     plt.plot(vasp_spectra.energy, vasp_spectra.spectra, label="vasp", c="green")
-    plt.plot(feff_spectra.energy, feff_spectra.spectra, label="feff")
+    # plt.plot(feff_spectra.energy, feff_spectra.spectra , label="feff")
+    plt.plot(
+        feff_spectra.energy,
+        feff_spectra.spectra / (0.529177**2),
+        label="feff",
+    )
     plt.plot(xs_energy, xs_spectra, label="xs", color="orange")
     plt.title(f"XAS of {id}")
     plt.legend()
