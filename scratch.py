@@ -63,8 +63,8 @@ for spectra_data in vasp.parameters.values():
     if count > 100:
         break
     modifier = VASPDataModifier(spectra_data)
-    start_energy = modifier.energy[0]
-    end_energy = modifier.energy[-1]
+    start_energy = modifier._energy[0]
+    end_energy = modifier._energy[-1]
     energy_values.append((start_energy, end_energy))
 
     # Print the current state
@@ -90,3 +90,6 @@ print(f"maximum start energy: {np.max(energy_start_list)}")
 print(f"minimum end energy: {np.min(energy_end_list)}")
 
 # %%
+from scipy import constants
+print(constants.value("Bohr radius"))
+print(contanst.)

@@ -17,8 +17,8 @@ class VASPDataTransformationPlotter(VASPDataModifier):
         l_trunc += f"{self.e_cbm:.2f} - {self.e_core:.2f} - {self.start_offset} "
         l_trunc += r"\text{eV}$\\ "
         l_trunc += r"$E_{\text{min}} = "
-        l_trunc += f"{self.energy[0]:.2f}" + r"\ \text{eV}$" + " (available)\n"
-        l_trunc += r"$E_{\text{max}} = " + f"{self.energy[-1]:.2f}" + r"\ \text{eV}$"
+        l_trunc += f"{self._energy[0]:.2f}" + r"\ \text{eV}$" + " (available)\n"
+        l_trunc += r"$E_{\text{max}} = " + f"{self._energy[-1]:.2f}" + r"\ \text{eV}$"
         return l_trunc
 
     def legend_scaling(self):
