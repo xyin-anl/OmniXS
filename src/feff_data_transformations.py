@@ -1,5 +1,6 @@
 import numpy as np
 from src.compare_utils import compare_between_spectra
+from scipy import constants
 
 
 class FEFFDataModifier:
@@ -62,7 +63,9 @@ class FEFFDataModifier:
         return self
 
     def scale(self):
-        self._spectra = self.spectra / (0.529177**2)
+        bohrs_radius = constants.physical_constants["Bohr radius"][0]
+        bohrs_radius /= constants.angstrom
+        self._spectra = self.spectra / (bohrs_radius**2)
         return self
 
     def align(self):

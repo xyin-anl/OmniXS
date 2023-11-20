@@ -1,4 +1,4 @@
-from scipy import constants
+from scipy.constants import physical_constants
 import warnings
 import numpy as np
 from scipy.stats import cauchy
@@ -67,10 +67,11 @@ class VASPDataModifier:
 
     def scale(self):
         omega = self._spectra * self._energy
-        omega /= 13.6056980659 * 2  # eV to Hartree
+        rydbrg_constant = physical_constants["Rydberg constant times hc in eV"][0]
+        omega /= rydbrg_constant * 2
         self.big_omega = self.volume
-        self.alpha = 137.036
-        spectra_scaled = (omega * self.big_omega) / self.alpha
+        alpha = physical_constants["inverse fine-structure constant"][0]
+        spectra_scaled = (omega * self.big_omega) / alpha
         self.spectra_scaled = spectra_scaled  # for plot
         self._spectra = spectra_scaled
         return self
