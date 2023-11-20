@@ -30,8 +30,8 @@ class VASPDataModifier:
 
     def filter(self, energy_range):
         """Filter energy and spectra based on energy range"""
-        energy_filter = (self.energy > energy_range[0]) & (
-            self.energy < energy_range[1]
+        energy_filter = (self.energy >= energy_range[0]) & (
+            self.energy <= energy_range[1]
         )
         self._energy = self.energy[energy_filter]
         self._spectra = self.spectra[energy_filter]
@@ -65,6 +65,7 @@ class VASPDataModifier:
         """Apply truncation, scaling, broadening, and alignment."""
         return self.truncate().scale().broaden().align()
 
+    # TODO: change median_fraction
     def truncate(self, median_fraction=0.01, start_offset=0, end_offset=0):
         """Truncate the energy and spectra based on theory, emperical offset
         and low spectra values"""

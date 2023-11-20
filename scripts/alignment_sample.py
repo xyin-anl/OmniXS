@@ -21,7 +21,7 @@ if __name__ == "__main__":
     feff_spectra = FEFFDataModifier(feff.parameters[id])
     feff_spectra.truncate().align()
     feff_spectra.scale()
-    feff_spectra.align_to_spectra(vasp_spectra)
+    feff_spectra.spearman_align(vasp_spectra)
 
     xs_mp_390 = np.load("dataset/misc/xs-mp-390.npy")
     xs_energy, xs_spectra = xs_mp_390[0], xs_mp_390[1]

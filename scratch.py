@@ -1,6 +1,10 @@
 # %%
 # %load_ext autoreload
 # %autoreload 2
+from utils.src.plots.highlight_tick import highlight_tick
+from matplotlib import pyplot as plt
+from src.raw_data_feff import RAWDataFEFF
+
 import random
 from copy import deepcopy
 import scienceplots
@@ -39,7 +43,6 @@ from scripts.plots_model_report import (
 )
 from src.ckpt_predictions import get_optimal_fc_predictions
 from src.model_report import linear_model_predictions, model_report
-from scripts.plot_vasp_transormations import VASPDataTransformationPlotter
 from src.raw_data_feff import RAWDataFEFF
 from src.vasp_data_transformations import VASPDataModifier
 from src.xas_data import XASData
@@ -51,35 +54,107 @@ from utils.src.plots.highlight_tick import highlight_tick
 # %%
 
 
-compound = "Ti"
-id = ("mp-390", "000_Ti")
-vasp_raw_data = RAWDataVASP(compound=compound)
-processed_vasp_spectra = VASPDataModifier(vasp_raw_data.parameters[id])
+# compound = "Ti"
+# id = ("mp-390", "000_Ti")
+# vasp_raw_data = RAWDataVASP(compound=compound)
+# processed_vasp_spectra = VASPDataModifier(vasp_raw_data.parameters[id])
 
 # %%
 
-# ==============================================================================
-# RANDOM SMAPLES OF FINAL PROCESSED VASP DATA WITH FILTERED ENERGY RANGE
-# ==============================================================================
+# # ==============================================================================
+# # RANDOM SMAPLES OF FINAL PROCESSED VASP DATA WITH FILTERED ENERGY RANGE
+# # ==============================================================================
+# sample_size = 5
+# ids = random.choices(list(vasp_raw_data.parameters.keys()), k=sample_size)
+# # 4960 + 40(or 45) eV:
+# energy_range = [4960, 4960 + 50]
+# plt.style.use(["default", "science", "grid"])
+# fig, axs = plt.subplots(len(ids), 1, figsize=(8, 2 * len(ids)))
+# for ax, id in zip(axs, ids):
+#     processed_vasp_spectra = VASPDataModifier(vasp_raw_data.parameters[id])
+#     full_spectra = deepcopy(processed_vasp_spectra)
+#     ax.plot(full_spectra.energy, full_spectra.spectra, label="full", linestyle="--")
+#     chopped_spectra = deepcopy(processed_vasp_spectra).filter(energy_range=energy_range)
+#     ax.plot(chopped_spectra.energy, chopped_spectra.spectra, label="chopped")
+#     ax.legend()
+#     ax.sharex(axs[0])
+# plt.suptitle(f"Random sample for VASP spectra for {compound}")
+# plt.tight_layout()
+# plt.savefig(f"vasp_range_filter_examples_{compound}.pdf", bbox_inches="tight", dpi=300)
+# # ==============================================================================
+
+# %%
+
+# %%
+
+compound = "Ti"
+feff_raw_data = RAWDataFEFF(compound=compound)
+vasp_raw_data = RAWDataVASP(compound=compound)
+
+
+# %%
+
+seed = 42
 sample_size = 5
-ids = random.choices(list(vasp_raw_data.parameters.keys()), k=sample_size)
+per_spectra_energy_alignment = False
+common_ids = set(feff_raw_data.parameters.keys()).intersection(
+    set(vasp_raw_data.parameters.keys())
+)
+random.seed(seed)
+ids = random.choices(list(common_ids), k=sample_size)
+# ids = random.choices(list(vasp_raw_data.parameters.keys()), k=sample_size)
 # 4960 + 40(or 45) eV:
 energy_range = [4960, 4960 + 50]
 plt.style.use(["default", "science", "grid"])
+
+sup_title = f"Random sample of processed spectras for {compound}"
+
+if per_spectra_energy_alignment:
+    sup_title += "\neach spectra shifted by different amount to align with VASP"
+else:
+    sup_title += "\nall spectra shifted by same amount to align with VASP"
+
 fig, axs = plt.subplots(len(ids), 1, figsize=(8, 2 * len(ids)))
-for ax, id in zip(axs, ids):
-    processed_vasp_spectra = VASPDataModifier(vasp_raw_data.parameters[id])
-    full_spectra = deepcopy(processed_vasp_spectra)
-    ax.plot(full_spectra.energy, full_spectra.spectra, label="full", linestyle="--")
-    chopped_spectra = deepcopy(processed_vasp_spectra).filter(energy_range=energy_range)
-    ax.plot(chopped_spectra.energy, chopped_spectra.spectra, label="chopped")
-    ax.legend()
-    ax.sharex(axs[0])
-plt.suptitle(f"Random sample for VASP spectra for {compound}")
+for simulation_type in ["FEFF", "VASP"]:
+    raw_data = vasp_raw_data if simulation_type == "VASP" else feff_raw_data
+    data_modifier = VASPDataModifier if simulation_type == "VASP" else FEFFDataModifier
+    for ax, id in zip(axs, ids):
+        processed_spectra = data_modifier(raw_data.parameters[id])
+        if simulation_type == "FEFF" and per_spectra_energy_alignment:
+            processed_spectra._energy = (
+                processed_spectra.energy
+                - processed_spectra.spearman_align(
+                    VASPDataModifier(vasp_raw_data.parameters[id])
+                )
+            )
+        full_spectra = deepcopy(processed_spectra)
+        chopped_spectra = deepcopy(processed_spectra).filter(energy_range=energy_range)
+        ax.plot(
+            full_spectra.energy,
+            full_spectra.spectra,
+            label=f"{simulation_type} full",
+            linestyle="--",
+        )
+        ax.plot(
+            chopped_spectra.energy,
+            chopped_spectra.spectra,
+            label=f"{simulation_type} chopped",
+        )
+        ax.legend()
+        ax.sharex(axs[0])
+plt.suptitle(sup_title)
 plt.tight_layout()
-plt.savefig(f"vasp_range_filter_examples_{compound}.pdf", bbox_inches="tight", dpi=300)
+plt.savefig(
+    f"range_filter_examples_{compound}_{per_spectra_energy_alignment}.pdf",
+    bbox_inches="tight",
+    dpi=300,
+)
 # ==============================================================================
 
 # %%
 
+# temp = pearson_alignments
+# plt.hist(temp)
 # %%
+
+np.load("pearson_shifts.npy").mean()

@@ -1,32 +1,34 @@
-- trunc of vasp and feff in range: 4960 + 40(or 45) eV:
-  - fenchen did 35ev range..
-- for feff to vasp alignment, use constant shift for now so that we do not
-  introduce any uncertatinly
-- [ ] refactor plot alignment based on new changes
+## Talk these with Deyu
 
+- [ ] double check enery filter from deyu:
+  - This doesn't seem to be good looking at the plot
+  - what was discussed in meeting: 4960 + 40(or 45) eV:
+  - fenchen did 35ev range
+  - what seems to be from plot is different
+- [ ] for feff to vasp alignment, use constant shift for now so that we do not
+      introduce any uncertatinly:
+  - This makes a lot of difference in the alignment when compared with per
+    spectra alignment
+
+- [ ] try alignment using dynamic time wrapping
+
+## Misc
+
+- [ ] Do decile split
+- [ ] m3gnet retrain prelims
+
+## Done
+
+- [x] Comparisions with MPNN:
+  - [x] Do random split for FC and LR
+- [x] refactor plot alignment based on new changes:
+  - removed out. use bottom script in vasp_data_tranformations.py
 - [x] make sure to shift all vasp (not feff) by : 5114.089730000899
 - [x] try scipy constatn so that no can be hardcoded
 - [x] make sure that 0.89 \* 2 to be for alignment comparision only
 - [x] sperate alignment for vasp and feff to different class
 - [x] make new file for vasp for average of mu named: xmu_avg.dat for all dataset.
 - [x] for the test use broadening is 0.89 \*2 (ONLY FOR THE TEST)
-
-## Urgent
-
-- [ ] Rescale the VASP data on theoretical basis: - [ ] make the ids, mu and
-      such matchup in wrangling code - Missing data: - RAW VASP data for Ti:
-      3792, 92 (missing) - 3448 (non-zero), 399 (zero), 3847 (total) Lenght of
-      Non-zero spectra: 3448 Lenght of Zero spectra: 399- - RAW VASP data for
-      Cu: 3090, 227 (missing) - Location of full list : dataset/VASP-raw-data
-- [ ] m3gnet retrain prelims
-
-## Misc
-
-- [ ] Do decile split
-
-- [x] Comparisions with MPNN:
-
-  - [x] Do random split for FC and LR
 
 ## Git
 
