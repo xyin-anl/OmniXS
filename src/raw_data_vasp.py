@@ -23,6 +23,9 @@ class RAWDataVASP(RAWData):
             self.base_dir = self._default_base_dir()
         self.parameters  # initialize cached property
 
+    def __len__(self):
+        return len(self.parameters)
+
     @cached_property
     def parameters(self):
         """Parameters for each site in each id where all data is available"""

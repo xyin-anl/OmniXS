@@ -18,8 +18,8 @@ class VASPDataModifier:
         self.E_ch = self.parameters["E_ch"]
         self.E_GS = self.parameters["E_GS"]
         self.volume = self.parameters["volume"]
-        self.start_offset = 0  # TODO: remove this emperical value
-        self.end_offset = 0
+        # self.start_offset = 0  # TODO: remove this emperical value
+        # self.end_offset = 0
         self._energy, self._spectra = None, None
         if transform:
             self.transform()
@@ -27,6 +27,21 @@ class VASPDataModifier:
     def reset(self):
         self._energy, self._spectra = None, None
         return self
+
+    def filter(self, energy_range):
+        """Filter energy and spectra based on energy range"""
+        energy_filter = (self.energy > energy_range[0]) & (
+            self.energy < energy_range[1]
+        )
+        self._energy = self.energy[energy_filter]
+        self._spectra = self.spectra[energy_filter]
+        return self
+
+    def __repr__(self):
+        string = "VASP data post transformations:\n"
+        string += f"energy: {self.energy}\n"
+        string += f"spectra: {self.spectra}\n"
+        return string
 
     @property
     def energy(self):
@@ -50,29 +65,33 @@ class VASPDataModifier:
         """Apply truncation, scaling, broadening, and alignment."""
         return self.truncate().scale().broaden().align()
 
-    def truncate(self):
-        minimum_spectra = np.median(self.spectra_full) * 0.01
-        minimum_energy = (self.e_cbm - self.e_core) - self.start_offset
-        valid_energy = self.energy_full > minimum_energy
-        valid_spectra = self.spectra_full[valid_energy] > minimum_spectra
+    def truncate(self, median_fraction=0.01, start_offset=0, end_offset=0):
+        """Truncate the energy and spectra based on theory, emperical offset
+        and low spectra values"""
+        # chop on front based on theory and any provided offset
+        minimum_energy = (self.e_cbm - self.e_core) - start_offset
+        energy_filter = self.energy_full > minimum_energy
+        # remove energy values with low spectra values based on median
+        minimum_spectra = np.median(self.spectra_full) * median_fraction
+        spectra_filter = self.spectra_full[energy_filter] > minimum_spectra
         energy, spectra = (
-            self.energy_full[valid_energy][valid_spectra],
-            self.spectra_full[valid_energy][valid_spectra],
+            self.energy_full[energy_filter][spectra_filter],
+            self.spectra_full[energy_filter][spectra_filter],
         )
-        max_energy_index = np.where(energy < energy[-1] - self.end_offset)[0][-1]
+        # chop end of energy if any offset is provided
+        max_energy_index = np.where(energy < energy[-1] - end_offset)[0][-1]
         energy, spectra = energy[:max_energy_index], spectra[:max_energy_index]
-        self.energy_trunc, self.spectra_trunc = energy, spectra
         self._energy, self._spectra = energy, spectra
         return self
 
     def scale(self):
+        """Scale spectra bsed on theory"""
         omega = self._spectra * self._energy
         rydbrg_constant = physical_constants["Rydberg constant times hc in eV"][0]
         omega /= rydbrg_constant * 2
         self.big_omega = self.volume
         alpha = physical_constants["inverse fine-structure constant"][0]
         spectra_scaled = (omega * self.big_omega) / alpha
-        self.spectra_scaled = spectra_scaled  # for plot
         self._spectra = spectra_scaled
         return self
 
@@ -85,17 +104,19 @@ class VASPDataModifier:
 
     def broaden(self, gamma=0.89):
         broadened_amplitude = self.lorentz_broaden(
-            self._energy, self._energy, self.spectra_scaled, gamma=gamma
+            self._energy,
+            self._energy,
+            self._spectra,
+            gamma=gamma,
         )
-        self.spectra_boardened = broadened_amplitude  # for plot
         self._spectra = broadened_amplitude
         return self
 
-    def align(self, energy_offset=EXPERIMENTAL_ENERGY_OFFSET):
-        self.align_offset = (self.e_core - self.e_cbm) + (self.E_ch - self.E_GS)
-        energy_aligned = self._energy + self.align_offset
-        self.energy_aligned = energy_aligned  # for plot
-        self.energy_aligned += energy_offset
+    def align(self, emperical_offset=EXPERIMENTAL_ENERGY_OFFSET):
+        """Align energy based on theory and emperical offset"""
+        self.thoeretical_offset = (self.e_core - self.e_cbm) + (self.E_ch - self.E_GS)
+        energy_aligned = self._energy + self.thoeretical_offset
+        energy_aligned += emperical_offset
         self._energy = energy_aligned
         return self
 
@@ -106,10 +127,23 @@ if __name__ == "__main__":
     data = RAWDataVASP(compound, simulation_type)
 
     id = ("mp-390", "000_Ti")  # reference to another paper data
-    transform = VASPDataModifier(data.parameters[id])
+    data = VASPDataModifier(data.parameters[id])
 
     from matplotlib import pyplot as plt
+    import scienceplots
 
-    plt.plot(transform._energy, transform._spectra)
-    plt.plot(transform._energy, transform.spectra_scaled, alpha=0.5)
+    plt.style.use(["default", "science"])
+    fig = plt.figure(figsize=(8, 6))
+    data.truncate()
+    plt.plot(data.energy, data.spectra, label="truncated")
+    data.scale()
+    plt.plot(data.energy, data.spectra, label="trucated and scaled")
+    data.broaden()
+    plt.plot(data.energy, data.spectra, label="truncated, scaled, and broadened")
+    data.align()
+    plt.plot(data.energy, data.spectra, label="truncated, scaled, broadened, aligned")
+    plt.xlabel("Energy (eV)")
+    plt.legend()
+    plt.title(f"VASP spectra for {id}")
+    # plt.savefig("vasp_transformations.pdf", bbox_inches="tight", dpi=300)
     plt.show()

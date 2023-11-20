@@ -1,22 +1,18 @@
-- trunc of vasp and feff in range: 4960 + 40(or 45) eV
-- make sure that 0.89 * 2 to be for alignment comparision only
-- for feff to vasp alignment, use constant shift for now so that we do not introduce any uncertatinly
-- try scipy constatn so that no can be hardcoded
+- trunc of vasp and feff in range: 4960 + 40(or 45) eV:
+  - fenchen did 35ev range..
+- for feff to vasp alignment, use constant shift for now so that we do not
+  introduce any uncertatinly
+- [ ] refactor plot alignment based on new changes
 
-
-
-- sperate alignment for vasp and feff to different class
-- make new file for vasp for average of mu named: xmu_avg.dat for all dataset.
-- scale feff by constant for transfer learning : maybe np.pi
-- make sure to shift all vasp (not feff) by : 5114.089730000899
-
-- for the test use broadening is 0.89 \*2 (ONLY FOR THE TEST)
-- look at the spectre and the vasp should align with it
-- for feff just match maximum
+- [x] make sure to shift all vasp (not feff) by : 5114.089730000899
+- [x] try scipy constatn so that no can be hardcoded
+- [x] make sure that 0.89 \* 2 to be for alignment comparision only
+- [x] sperate alignment for vasp and feff to different class
+- [x] make new file for vasp for average of mu named: xmu_avg.dat for all dataset.
+- [x] for the test use broadening is 0.89 \*2 (ONLY FOR THE TEST)
 
 ## Urgent
 
-- [ ]do not forget to put all spectra in same range.fenchen did 35ev range..
 - [ ] Rescale the VASP data on theoretical basis: - [ ] make the ids, mu and
       such matchup in wrangling code - Missing data: - RAW VASP data for Ti:
       3792, 92 (missing) - 3448 (non-zero), 399 (zero), 3847 (total) Lenght of

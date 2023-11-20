@@ -1,6 +1,8 @@
 # %%
 # %load_ext autoreload
 # %autoreload 2
+import random
+from copy import deepcopy
 import scienceplots
 import matplotlib as mpl
 
@@ -37,7 +39,7 @@ from scripts.plots_model_report import (
 )
 from src.ckpt_predictions import get_optimal_fc_predictions
 from src.model_report import linear_model_predictions, model_report
-from src.plot_vasp_transormations import VASPDataTransformationPlotter
+from scripts.plot_vasp_transormations import VASPDataTransformationPlotter
 from src.raw_data_feff import RAWDataFEFF
 from src.vasp_data_transformations import VASPDataModifier
 from src.xas_data import XASData
@@ -46,50 +48,38 @@ from utils.src.optuna.dynamic_fc import PlDynamicFC
 from utils.src.plots.highlight_tick import highlight_tick
 
 
+# %%
+
+
 compound = "Ti"
 id = ("mp-390", "000_Ti")
-vasp = RAWDataVASP(compound=compound)
-vasp_spectra = VASPDataModifier(vasp.parameters[id])
-
-# feff = RAWDataFEFF(compound=compound)
-# feff_spectra = FEFFDataModifier(feff.parameters[id])
-# feff_spectra.align_to_spectra(vasp_spectra)
-
-
-energy_values = []
-count = 0
-for spectra_data in vasp.parameters.values():
-    count += 1
-    if count > 100:
-        break
-    modifier = VASPDataModifier(spectra_data)
-    start_energy = modifier._energy[0]
-    end_energy = modifier._energy[-1]
-    energy_values.append((start_energy, end_energy))
-
-    # Print the current state
-    print(
-        f"Processed {len(energy_values)} out of {len(vasp.parameters)}: Start energy = {start_energy}, End energy = {end_energy}"
-    )
-
-energy_start_list, energy_end_list = zip(*energy_values)
-energy_start_list = np.array(energy_start_list)
-energy_end_list = np.array(energy_end_list)
-
-energy_start_list, energy_end_list = zip(*energy_values)
-energy_start_list = np.array(energy_start_list)
-energy_end_list = np.array(energy_end_list)
-
-np.save("energy_start_list.npy", energy_start_list)
-np.save("energy_end_list.npy", energy_end_list)
-
-
-plt.hist(energy_start_list, bins=100)
-plt.hist(energy_end_list, bins=100)
-print(f"maximum start energy: {np.max(energy_start_list)}")
-print(f"minimum end energy: {np.min(energy_end_list)}")
+vasp_raw_data = RAWDataVASP(compound=compound)
+processed_vasp_spectra = VASPDataModifier(vasp_raw_data.parameters[id])
 
 # %%
-from scipy import constants
-print(constants.value("Bohr radius"))
-print(contanst.)
+
+# ==============================================================================
+# RANDOM SMAPLES OF FINAL PROCESSED VASP DATA WITH FILTERED ENERGY RANGE
+# ==============================================================================
+sample_size = 5
+ids = random.choices(list(vasp_raw_data.parameters.keys()), k=sample_size)
+# 4960 + 40(or 45) eV:
+energy_range = [4960, 4960 + 50]
+plt.style.use(["default", "science", "grid"])
+fig, axs = plt.subplots(len(ids), 1, figsize=(8, 2 * len(ids)))
+for ax, id in zip(axs, ids):
+    processed_vasp_spectra = VASPDataModifier(vasp_raw_data.parameters[id])
+    full_spectra = deepcopy(processed_vasp_spectra)
+    ax.plot(full_spectra.energy, full_spectra.spectra, label="full", linestyle="--")
+    chopped_spectra = deepcopy(processed_vasp_spectra).filter(energy_range=energy_range)
+    ax.plot(chopped_spectra.energy, chopped_spectra.spectra, label="chopped")
+    ax.legend()
+    ax.sharex(axs[0])
+plt.suptitle(f"Random sample for VASP spectra for {compound}")
+plt.tight_layout()
+plt.savefig(f"vasp_range_filter_examples_{compound}.pdf", bbox_inches="tight", dpi=300)
+# ==============================================================================
+
+# %%
+
+# %%
