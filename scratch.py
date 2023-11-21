@@ -96,15 +96,14 @@ vasp_raw_data = RAWDataVASP(compound=compound)
 
 seed = 42
 sample_size = 5
-per_spectra_energy_alignment = False
+per_spectra_energy_alignment = True
 common_ids = set(feff_raw_data.parameters.keys()).intersection(
     set(vasp_raw_data.parameters.keys())
 )
 random.seed(seed)
 ids = random.choices(list(common_ids), k=sample_size)
-# ids = random.choices(list(vasp_raw_data.parameters.keys()), k=sample_size)
-# 4960 + 40(or 45) eV:
-energy_range = [4960, 4960 + 50]
+energy_range = [4960, 4960 + 40]  # Ti
+energy_range = [4600, 4600 + 40]  # Cu
 plt.style.use(["default", "science", "grid"])
 
 sup_title = f"Random sample of processed spectras for {compound}"
@@ -120,6 +119,8 @@ for simulation_type in ["FEFF", "VASP"]:
     data_modifier = VASPDataModifier if simulation_type == "VASP" else FEFFDataModifier
     for ax, id in zip(axs, ids):
         processed_spectra = data_modifier(raw_data.parameters[id])
+        if compound == "Cu" and simulation_type == "VASP":  # TODO: change this
+            processed_spectra.reset().truncate().scale().broaden(gamma=1.19).align()
         if simulation_type == "FEFF" and per_spectra_energy_alignment:
             processed_spectra._energy = (
                 processed_spectra.energy
