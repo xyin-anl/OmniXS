@@ -8,7 +8,7 @@ from typing import Literal, Optional
 
 import numpy as np
 
-from src.raw_data import RAWData
+from src.data.raw_data import RAWData
 
 
 @dataclass

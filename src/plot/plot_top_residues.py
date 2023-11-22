@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 import scienceplots
 
-from src.model_report import linear_model_predictions
-from src.xas_data import XASData
+from src.plot.model_report import linear_model_predictions
+from src.pl_data import XASData
 from src.ckpt_predictions import fc_ckpt_predictions
 
 

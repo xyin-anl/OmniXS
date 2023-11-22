@@ -1,6 +1,6 @@
 import pandas as pd
 import seaborn as sns
-from src.xas_data import XASData
+from src.pl_data import XASData
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from itertools import combinations_with_replacement
 from sklearn.linear_model import LinearRegression

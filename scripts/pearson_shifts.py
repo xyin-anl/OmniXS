@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import pyplot as plt
 
-from src.feff_data_transformations import FEFFDataModifier
-from src.raw_data_feff import RAWDataFEFF
+from src.data.feff_data_transformations import FEFFDataModifier
+from src.data.raw_data_feff import RAWDataFEFF
 
-from src.raw_data_vasp import RAWDataVASP
-from src.vasp_data_transformations import VASPDataModifier
+from src.data.raw_data_vasp import RAWDataVASP
+from src.data.vasp_data_transformations import VASPDataModifier
 from utils.src.plots.highlight_tick import highlight_tick
 
 
