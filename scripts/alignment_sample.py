@@ -1,25 +1,25 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from src.data.feff_data_transformations import FEFFDataModifier
-from src.data.raw_data_feff import RAWDataFEFF
-from src.data.raw_data_vasp import RAWDataVASP
-from src.data.vasp_data_transformations import VASPDataModifier
+from src.data.feff_data import FEFFData
+from src.data.feff_data_raw import RAWDataFEFF
+from src.data.vasp_data_raw import RAWDataVASP
+from src.data.vasp_data import VASPData
 import scienceplots
 
 if __name__ == "__main__":
     compound = "Ti"
     id = ("mp-390", "000_Ti")
     vasp = RAWDataVASP(compound=compound)
-    vasp_spectra = VASPDataModifier(vasp.parameters[id])
+    vasp_spectra = VASPData(vasp.parameters[id])
     vasp_spectra.truncate().scale()
     # gamma values is only for comparision with experimental data
     vasp_spectra.broaden(gamma=0.89 * 2)
-    vasp_spectra.align()
+    vasp_spectra.align_energy()
 
     feff = RAWDataFEFF(compound=compound)
-    feff_spectra = FEFFDataModifier(feff.parameters[id])
-    feff_spectra.truncate().align()
+    feff_spectra = FEFFData(feff.parameters[id])
+    feff_spectra.truncate().align_energy()
     feff_spectra.scale()
     # shift_val = feff_spectra.spearman_align(vasp_spectra)
     shift_val = 0

@@ -5,7 +5,7 @@ import warnings
 from abc import ABC, abstractmethod
 
 
-class DataModifier(ABC):
+class ProcessedData(ABC):
     def __init__(self, spectra_params, transform=True):
         self.parameters = spectra_params
         self.energy_full = self.parameters["mu"][:, 0]
@@ -76,6 +76,6 @@ class DataModifier(ABC):
     def scale(self):
         pass
 
-    def align(self, energy_offset=0):
+    def align_energy(self, energy_offset=0):
         self._energy = self._energy + energy_offset
         return self

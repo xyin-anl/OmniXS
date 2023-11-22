@@ -2,11 +2,11 @@ from scipy.constants import physical_constants
 import warnings
 import numpy as np
 from scipy.stats import cauchy
-from src.data.raw_data_vasp import RAWDataVASP
-from src.data.data_transformations import DataModifier
+from src.data.vasp_data_raw import RAWDataVASP
+from src.data.data import ProcessedData
 
 
-class VASPDataModifier(DataModifier):
+class VASPData(ProcessedData):
     # EXPERIMENTAL_ENERGY_OFFSET = 5114.08973  # based on comparison with xs_mp_390
 
     def __init__(self, spectra_params, transform=True):
@@ -19,7 +19,7 @@ class VASPDataModifier(DataModifier):
 
     def transform(self):
         """Apply truncation, scaling, broadening, and alignment."""
-        return self.truncate().scale().broaden().align()
+        return self.truncate().scale().broaden().align_energy()
 
     def truncate(self, start_offset=10):
         min_energy = (self.e_cbm - self.e_core) - start_offset
@@ -55,8 +55,8 @@ class VASPDataModifier(DataModifier):
 
     def align(self, emperical_offset=5114.08973):
         thoeretical_offset = (self.e_core - self.e_cbm) + (self.E_ch - self.E_GS)
-        super().align(thoeretical_offset)
-        super().align(emperical_offset)
+        super().align_energy(thoeretical_offset)
+        super().align_energy(emperical_offset)
         return self
 
 
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     data = RAWDataVASP(compound, simulation_type)
 
     id = ("mp-390", "000_Ti")  # reference to another paper data
-    data = VASPDataModifier(data.parameters[id])
+    data = VASPData(data.parameters[id])
 
     from matplotlib import pyplot as plt
     import scienceplots
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     plt.plot(data.energy, data.spectra, label="trucated and scaled")
     data.broaden()
     plt.plot(data.energy, data.spectra, label="truncated, scaled, and broadened")
-    data.align()
+    data.align_energy()
     plt.plot(data.energy, data.spectra, label="truncated, scaled, broadened, aligned")
     plt.xlabel("Energy (eV)")
     plt.legend()

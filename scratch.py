@@ -3,7 +3,7 @@
 # %autoreload 2
 from utils.src.plots.highlight_tick import highlight_tick
 from matplotlib import pyplot as plt
-from src.raw_data_feff import RAWDataFEFF
+from src.data.feff_data_raw import RAWDataFEFF
 
 import random
 from copy import deepcopy
@@ -11,10 +11,10 @@ import scienceplots
 import matplotlib as mpl
 
 import numpy as np
-from src.feff_data_transformations import FEFFDataModifier
+from src.data.feff_data import FEFFData
 
 # from scripts.plots_model_report import plot_residue_histogram
-from src.raw_data_vasp import RAWDataVASP
+from src.data.vasp_data_raw import RAWDataVASP
 from itertools import combinations_with_replacement
 from pprint import pprint
 from typing import Tuple, TypedDict, Union
@@ -42,10 +42,10 @@ from scripts.plots_model_report import (
     plot_residue_quartiles,
 )
 from src.ckpt_predictions import get_optimal_fc_predictions
-from src.model_report import linear_model_predictions, model_report
-from src.raw_data_feff import RAWDataFEFF
-from src.vasp_data_transformations import VASPDataModifier
-from src.xas_data import XASData
+from src.plot.model_report import linear_model_predictions, model_report
+from src.data.feff_data_raw import RAWDataFEFF
+from src.data.vasp_data import VASPData
+from src.pl_data import XASData
 from utils.src.lightning.pl_module import PLModule
 from utils.src.optuna.dynamic_fc import PlDynamicFC
 from utils.src.plots.highlight_tick import highlight_tick

@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import pyplot as plt
 
-from src.data.feff_data_transformations import FEFFDataModifier
-from src.data.raw_data_feff import RAWDataFEFF
+from src.data.feff_data import FEFFData
+from src.data.feff_data_raw import RAWDataFEFF
 
-from src.data.raw_data_vasp import RAWDataVASP
-from src.data.vasp_data_transformations import VASPDataModifier
+from src.data.vasp_data_raw import RAWDataVASP
+from src.data.vasp_data import VASPData
 from utils.src.plots.highlight_tick import highlight_tick
 
 
@@ -24,9 +24,9 @@ def compute_pearson_energy_shifts(compound="Ti", sample_size=50):
     pearson_alignments = []
     for id in ids:
         print(id)
-        feff_data = FEFFDataModifier(feff_raw_data.parameters[id])
-        vasp_data = VASPDataModifier(vasp_raw_data.parameters[id])
-        shift = feff_data.spearman_align(vasp_data)
+        feff_data = FEFFData(feff_raw_data.parameters[id])
+        vasp_data = VASPData(vasp_raw_data.parameters[id])
+        shift = feff_data.spearman_alignment_shift(vasp_data)
         pearson_alignments.append(shift)
     pearson_alignments = np.array(pearson_alignments)
     return pearson_alignments
