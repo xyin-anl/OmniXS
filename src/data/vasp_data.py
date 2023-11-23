@@ -9,13 +9,13 @@ from src.data.data import ProcessedData
 class VASPData(ProcessedData):
     # EXPERIMENTAL_ENERGY_OFFSET = 5114.08973  # based on comparison with xs_mp_390
 
-    def __init__(self, spectra_params, transform=True):
-        self.e_core = spectra_params["e_core"]
-        self.e_cbm = spectra_params["e_cbm"]
-        self.E_ch = spectra_params["E_ch"]
-        self.E_GS = spectra_params["E_GS"]
-        self.volume = spectra_params["volume"]
-        super().__init__(spectra_params, transform=transform)
+    def __init__(self, compound, params):
+        self.e_core = params["e_core"]
+        self.e_cbm = params["e_cbm"]
+        self.E_ch = params["E_ch"]
+        self.E_GS = params["E_GS"]
+        self.volume = params["volume"]
+        super().__init__(compound, simulation_type="VASP", params=params)
 
     def transform(self):
         """Apply truncation, scaling, broadening, and alignment."""
@@ -23,8 +23,7 @@ class VASPData(ProcessedData):
 
     def truncate(self, start_offset=10):
         min_energy = (self.e_cbm - self.e_core) - start_offset
-        self.filter(energy_range=[min_energy, None])
-        self.filter(spectral_range=[0, None])
+        self.filter(energy_range=[min_energy, None], spectral_range=[0, None])
         return self
 
     def scale(self):
@@ -43,7 +42,8 @@ class VASPData(ProcessedData):
         lorentzian = cauchy.pdf(differences, 0, gamma / 2)
         return np.dot(lorentzian, yin) / len(xin) * dx
 
-    def broaden(self, gamma=0.89):
+    def broaden(self):
+        gamma = self.configs()["VASP"][self.compound]["gamma"]
         broadened_amplitude = self.lorentz_broaden(
             self._energy,
             self._energy,
@@ -55,34 +55,34 @@ class VASPData(ProcessedData):
 
     def align(self, emperical_offset=5114.08973):
         thoeretical_offset = (self.e_core - self.e_cbm) + (self.E_ch - self.E_GS)
-        super().align_energy(thoeretical_offset)
+        # super().align_energy(thoeretical_offset)
         super().align_energy(emperical_offset)
         return self
 
 
-if __name__ == "__main__":
-    compound = "Ti"
-    simulation_type = "VASP"
-    data = RAWDataVASP(compound, simulation_type)
+# if __name__ == "__main__":
+#     compound = "Ti"
+#     simulation_type = "VASP"
+#     data = RAWDataVASP(compound, simulation_type)
 
-    id = ("mp-390", "000_Ti")  # reference to another paper data
-    data = VASPData(data.parameters[id])
+#     id = ("mp-390", "000_Ti")  # reference to another paper data
+#     data = VASPData(data.parameters[id])
 
-    from matplotlib import pyplot as plt
-    import scienceplots
+#     from matplotlib import pyplot as plt
+#     import scienceplots
 
-    plt.style.use(["default", "science"])
-    fig = plt.figure(figsize=(8, 6))
-    data.truncate()
-    plt.plot(data.energy, data.spectra, label="truncated")
-    data.scale()
-    plt.plot(data.energy, data.spectra, label="trucated and scaled")
-    data.broaden()
-    plt.plot(data.energy, data.spectra, label="truncated, scaled, and broadened")
-    data.align_energy()
-    plt.plot(data.energy, data.spectra, label="truncated, scaled, broadened, aligned")
-    plt.xlabel("Energy (eV)")
-    plt.legend()
-    plt.title(f"VASP spectra for {id}")
-    # plt.savefig("vasp_transformations.pdf", bbox_inches="tight", dpi=300)
-    plt.show()
+#     plt.style.use(["default", "science"])
+#     fig = plt.figure(figsize=(8, 6))
+#     data.truncate()
+#     plt.plot(data.energy, data.spectra, label="truncated")
+#     data.scale()
+#     plt.plot(data.energy, data.spectra, label="trucated and scaled")
+#     data.broaden()
+#     plt.plot(data.energy, data.spectra, label="truncated, scaled, and broadened")
+#     data.align_energy()
+#     plt.plot(data.energy, data.spectra, label="truncated, scaled, broadened, aligned")
+#     plt.xlabel("Energy (eV)")
+#     plt.legend()
+#     plt.title(f"VASP spectra for {id}")
+#     # plt.savefig("vasp_transformations.pdf", bbox_inches="tight", dpi=300)
+#     plt.show()

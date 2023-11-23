@@ -1,0 +1,11 @@
+# energy_range = [4970, 4970 + 40] if compound == "Ti" else [4602, 4602 + 40]
+# vasp cu broadeening gamma=1.19
+# vasp Ti boradening gamma=0.89
+
+VASP:
+  Cu:
+    e_range: [4602, 4642] # 40 ev
+    gamma: 1.19
+  Ti:
+    e_range: [4970, 5010] # 40 ev
+    gamma: 0.89

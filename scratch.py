@@ -1,24 +1,18 @@
 # %%
-# %load_ext autoreload
-# %autoreload 2
+
 from utils.src.plots.highlight_tick import highlight_tick
 from matplotlib import pyplot as plt
 from src.data.feff_data_raw import RAWDataFEFF
-
 import random
 from copy import deepcopy
 import scienceplots
 import matplotlib as mpl
-
 import numpy as np
 from src.data.feff_data import FEFFData
-
-# from scripts.plots_model_report import plot_residue_histogram
 from src.data.vasp_data_raw import RAWDataVASP
 from itertools import combinations_with_replacement
 from pprint import pprint
 from typing import Tuple, TypedDict, Union
-
 import lightning as pl
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -31,7 +25,6 @@ from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.preprocessing import MinMaxScaler
-
 from scripts.pca_plots import linear_fit_of_pcas, plot_pcas
 from scripts.plots_model_report import (
     heatmap_of_lines,
@@ -43,15 +36,11 @@ from scripts.plots_model_report import (
 )
 from src.ckpt_predictions import get_optimal_fc_predictions
 from src.plot.model_report import linear_model_predictions, model_report
-from src.data.feff_data_raw import RAWDataFEFF
 from src.data.vasp_data import VASPData
 from src.pl_data import XASData
 from utils.src.lightning.pl_module import PLModule
 from utils.src.optuna.dynamic_fc import PlDynamicFC
 from utils.src.plots.highlight_tick import highlight_tick
-
-
-# %%
 
 
 # compound = "Ti"
@@ -87,75 +76,96 @@ from utils.src.plots.highlight_tick import highlight_tick
 
 # %%
 
-compound = "Ti"
+compound = "Cu"
 feff_raw_data = RAWDataFEFF(compound=compound)
 vasp_raw_data = RAWDataVASP(compound=compound)
-
 
 # %%
 
 seed = 42
-sample_size = 5
-per_spectra_energy_alignment = True
-common_ids = set(feff_raw_data.parameters.keys()).intersection(
-    set(vasp_raw_data.parameters.keys())
-)
+# seed = random.randint(0, 1000)
+sample_size = 3
+per_spectra_energy_alignment = False
+feff_ids = set(feff_raw_data.parameters.keys())
+vasp_ids = set(vasp_raw_data.parameters.keys())
+common_ids = feff_ids.intersection(vasp_ids)
 random.seed(seed)
 ids = random.choices(list(common_ids), k=sample_size)
-energy_range = [4960, 4960 + 40]  # Ti
-energy_range = [4600, 4600 + 40]  # Cu
+
+
+# %%
+
 plt.style.use(["default", "science", "grid"])
 
-sup_title = f"Random sample of processed spectras for {compound}"
-
-if per_spectra_energy_alignment:
-    sup_title += "\neach spectra shifted by different amount to align with VASP"
-else:
-    sup_title += "\nall spectra shifted by same amount to align with VASP"
-
 fig, axs = plt.subplots(len(ids), 1, figsize=(8, 2 * len(ids)))
-for simulation_type in ["FEFF", "VASP"]:
+for simulation_type in ["VASP"]:
     raw_data = vasp_raw_data if simulation_type == "VASP" else feff_raw_data
-    data_modifier = VASPDataModifier if simulation_type == "VASP" else FEFFDataModifier
+    data_class = VASPData if simulation_type == "VASP" else FEFFData
     for ax, id in zip(axs, ids):
-        processed_spectra = data_modifier(raw_data.parameters[id])
-        if compound == "Cu" and simulation_type == "VASP":  # TODO: change this
-            processed_spectra.reset().truncate().scale().broaden(gamma=1.19).align()
-        if simulation_type == "FEFF" and per_spectra_energy_alignment:
-            processed_spectra._energy = (
-                processed_spectra.energy
-                - processed_spectra.spearman_align(
-                    VASPDataModifier(vasp_raw_data.parameters[id])
-                )
-            )
-        full_spectra = deepcopy(processed_spectra)
-        chopped_spectra = deepcopy(processed_spectra).filter(energy_range=energy_range)
+        data = data_class(
+            compound=compound,
+            params=raw_data.parameters[id],
+        )
+        if data.simulation_type == "FEFF" and per_spectra_energy_alignment:
+            data.align(VASPData(vasp_raw_data.parameters[id]))
+
         ax.plot(
-            full_spectra.energy,
-            full_spectra.spectra,
-            label=f"{simulation_type} full",
+            data.energy,
+            data.spectra,
+            label=f"{data.simulation_type} full",
             linestyle="--",
         )
+        data.truncate_emperically()
         ax.plot(
-            chopped_spectra.energy,
-            chopped_spectra.spectra,
-            label=f"{simulation_type} chopped",
+            data.energy,
+            data.spectra,
+            label=f"{data.simulation_type} chopped",
         )
+
         ax.legend()
         ax.sharex(axs[0])
-plt.suptitle(sup_title)
 plt.tight_layout()
-plt.savefig(
-    f"range_filter_examples_{compound}_{per_spectra_energy_alignment}.pdf",
-    bbox_inches="tight",
-    dpi=300,
-)
 # ==============================================================================
 
 # %%
 
-# temp = pearson_alignments
-# plt.hist(temp)
 # %%
 
-np.load("pearson_shifts.npy").mean()
+compound = "Cu"
+simulation_type = "VASP"
+raw_data = (
+    RAWDataVASP(compound=compound) if simulation_type == "VASP" else feff_raw_data
+)
+data_class = VASPData if simulation_type == "VASP" else FEFFData
+
+energy_start_list = []
+count = 0
+for id in raw_data.parameters.keys():
+    print(count)
+    count += 1
+    if count > 200:
+        break
+    data = data_class(raw_data.parameters[id])
+    energy_start = data.energy[0]
+    energy_start_list.append(energy_start)
+energy_start_list = np.array(energy_start_list)
+
+# %%
+
+fig = plt.figure(figsize=(8, 6))
+plt.style.use(["default", "science"])
+plt.rcParams["font.size"] = 16
+plt.hist(
+    energy_start_list, bins=20, facecolor="green", edgecolor="tab:green", alpha=0.5
+)
+plt.xlabel("Energy_start after truncation (eV)")
+plt.ylabel("Count")
+plt.title(
+    f"Energy_start distribution for {compound} fot {simulation_type} \n Min: {min(energy_start_list):.2f} eV, Max: {max(energy_start_list):.2f} eV \n sample_size: {len(energy_start_list)} \n Median: {np.median(energy_start_list):.2f} eV"
+)
+plt.savefig(
+    f"energy_start_distribution_{compound}_{simulation_type}.pdf",
+    bbox_inches="tight",
+    dpi=300,
+)
+# %%

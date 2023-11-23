@@ -5,12 +5,8 @@ from scipy import constants
 
 
 class FEFFData(ProcessedData):
-    def __init__(
-        self,
-        spectra_params,
-        transform=True,
-    ):
-        super().__init__(spectra_params, transform=transform)
+    def __init__(self, compound, params):
+        super().__init__(compound, simulation_type="FEFF", params=params)
 
     def transform(self):
         return self.truncate().scale()

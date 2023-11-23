@@ -1,13 +1,17 @@
-## TODO
-
 **Truncation**
 
-- [ ] Change the start cutoff in VASP truncation so that startin of VASP is not
-      higher than feff
-- [ ] take 40ev cutoff for both Cu and Ti:
+- [x] take 40ev cutoff for both Cu and Ti:
+- [ ] fix the tructaion problem that is putting things out of range
+
+  **Suggestions**
 
   - energy_range = [4960, 4960 + 40] # Ti
   - energy_range = [4600, 4600 + 40] # Cu
+
+  **Current**
+
+  - energy_range = [4970, 4970 + 40] # Ti
+  - energy_range = [4602, 4602 + 40] # Cu
 
 **Broadening**
 
@@ -26,8 +30,10 @@
 
 **Transfer Learning**
 
-- [ ] make it such that we can do feff -> vasp with and without the shift (
-      two models)
+- [ ] make it such that we can do feff -> vasp with and without the shift ( two
+      models)
+- [ ] Check the talk on domain adaptation which includes transfer learning and
+      if it can be used for our task
 
 **Misc**
 
