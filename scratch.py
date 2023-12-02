@@ -1,6 +1,5 @@
 # %%
 
-# %%
 import pickle
 import importlib
 import src
@@ -47,86 +46,90 @@ from utils.src.lightning.pl_module import PLModule
 from utils.src.optuna.dynamic_fc import PlDynamicFC
 from utils.src.plots.highlight_tick import highlight_tick
 
+imports_1 = [
+    "src",
+    "utils.src.misc",
+    "utils.src.plots.highlight_tick",
+    "matplotlib.pyplot",
+    "src.data.feff_data_raw",
+    "scienceplots",
+    "matplotlib",
+    "src.data.feff_data",
+    "src.data.vasp_data_raw",
+    "scripts.pca_plots",
+    "scripts.plots_model_report",
+    "src.ckpt_predictions",
+    "src.plot.model_report",
+    "src.data.vasp_data",
+    "src.pl_data",
+    "utils.src.lightning.pl_module",
+    "utils.src.optuna.dynamic_fc",
+]
 
-# compound = "Ti"
+
+imports_2 = {
+    "utils.src.misc": ["icecream"],
+    "utils.src.plots.highlight_tick": ["highlight_tick"],
+    "src.data.feff_data_raw": ["RAWDataFEFF"],
+    "src.data.feff_data": ["FEFFData"],
+    "src.data.vasp_data_raw": ["RAWDataVASP"],
+    "src.data.vasp_data": ["VASPData"],
+    "src.pl_data": ["XASData"],
+    "utils.src.lightning.pl_module": ["PLModule"],
+    "utils.src.optuna.dynamic_fc": ["PlDynamicFC"],
+    "scripts.pca_plots": ["linear_fit_of_pcas", "plot_pcas"],
+    "scripts.plots_model_report": [
+        "heatmap_of_lines",
+        "plot_predictions",
+        "plot_residue_cv",
+        "plot_residue_heatmap",
+        "plot_residue_quartiles",
+    ],
+    "src.ckpt_predictions": ["get_optimal_fc_predictions"],
+    "src.plot.model_report": ["linear_model_predictions", "model_report"],
+}
+
+
+def reimport_modules_and_functions():
+    import importlib
+
+    # Reimport non-standard modules
+    for module in imports_1:
+        importlib.reload(importlib.import_module(module))
+
+    # Reimport specific functions/classes
+    for module, items in imports_2.items():
+        reloaded_module = importlib.import_module(module)
+        globals().update({item: getattr(reloaded_module, item) for item in items})
+
+
+reimport_modules_and_functions()
+
+# %%
+
 # id = ("mp-390", "000_Ti")
 # vasp_raw_data = RAWDataVASP(compound=compound)
 # processed_vasp_spectra = VASPDataModifier(vasp_raw_data.parameters[id])
 
 # %%
 
-# # ==============================================================================
-# # RANDOM SMAPLES OF FINAL PROCESSED VASP DATA WITH FILTERED ENERGY RANGE
-# # ==============================================================================
-# sample_size = 5
-# ids = random.choices(list(vasp_raw_data.parameters.keys()), k=sample_size)
-# # 4960 + 40(or 45) eV:
-# energy_range = [4960, 4960 + 50]
-# plt.style.use(["default", "science", "grid"])
-# fig, axs = plt.subplots(len(ids), 1, figsize=(8, 2 * len(ids)))
-# for ax, id in zip(axs, ids):
-#     processed_vasp_spectra = VASPDataModifier(vasp_raw_data.parameters[id])
-#     full_spectra = deepcopy(processed_vasp_spectra)
-#     ax.plot(full_spectra.energy, full_spectra.spectra, label="full", linestyle="--")
-#     chopped_spectra = deepcopy(processed_vasp_spectra).filter(energy_range=energy_range)
-#     ax.plot(chopped_spectra.energy, chopped_spectra.spectra, label="chopped")
-#     ax.legend()
-#     ax.sharex(axs[0])
-# plt.suptitle(f"Random sample for VASP spectra for {compound}")
-# plt.tight_layout()
-# plt.savefig(f"vasp_range_filter_examples_{compound}.pdf", bbox_inches="tight", dpi=300)
-# # ==============================================================================
 
-# %%
+compound = "Cu"
+feff_raw_data = RAWDataFEFF(compound=compound)
+vasp_raw_data = RAWDataVASP(compound=compound)
 
-
-# %%
-
-compound = "Ti"
-
-# feff_raw_data = RAWDataFEFF(compound=compound)
-# vasp_raw_data = RAWDataVASP(compound=compound)
-# import pickle
-## Disable reimport of classes when saving
-# with open(f"feff_raw_data_{compound}.pkl", "wb") as file:
-#     pickle.dump(feff_raw_data, file)
-# with open(f"vasp_raw_data_{compound}.pkl", "wb") as file:
-#     pickle.dump(vasp_raw_data, file)
-
-
-# %%
-
-cfg = yaml.load(open("cfg/transformations.yaml"), Loader=yaml.FullLoader)
-
-file_path = cfg["VASP"][compound]["raw-data-cleaned"]
-vasp_raw_data = pickle.load(open(file_path, "rb"))
-
-file_path = cfg["FEFF"][compound]["raw-data-cleaned"]
-feff_raw_data = pickle.load(open(file_path, "rb"))
-
-
-# %%
-
-
-# %%
-
+sample_size = 5
 seed = 42
-# seed = random.randint(0, 1000)
-sample_size = 3
-per_spectra_energy_alignment = False
+
 feff_ids = set(feff_raw_data.parameters.keys())
 vasp_ids = set(vasp_raw_data.parameters.keys())
 common_ids = feff_ids.intersection(vasp_ids)
-random.seed(seed)
-ids = random.choices(list(common_ids), k=sample_size)
-
-
-# %%
 
 plt.style.use(["default", "science", "grid"])
-
+random.seed(seed)
+ids = random.choices(list(common_ids), k=sample_size)
 fig, axs = plt.subplots(len(ids), 1, figsize=(8, 2 * len(ids)))
-for simulation_type in ["VASP"]:
+for simulation_type in ["VASP", "FEFF"]:
     raw_data = vasp_raw_data if simulation_type == "VASP" else feff_raw_data
     data_class = VASPData if simulation_type == "VASP" else FEFFData
     for ax, id in zip(axs, ids):
@@ -134,66 +137,26 @@ for simulation_type in ["VASP"]:
             compound=compound,
             params=raw_data.parameters[id],
         )
-        if data.simulation_type == "FEFF" and per_spectra_energy_alignment:
-            data.align(VASPData(vasp_raw_data.parameters[id]))
+
+        if data.simulation_type == "FEFF":
+            data.align(VASPData(compound, vasp_raw_data.parameters[id]))
 
         ax.plot(
             data.energy,
             data.spectra,
             label=f"{data.simulation_type} full",
             linestyle="--",
+            color="red",
         )
-        data.truncate_emperically()
-        ax.plot(
-            data.energy,
-            data.spectra,
-            label=f"{data.simulation_type} chopped",
-        )
-
         ax.legend()
         ax.sharex(axs[0])
+axs[-1].set_xlabel("Energy (eV)", fontsize=18)
+
+plt.suptitle(f"VASP truncation samples: {compound}", fontsize=18)
 plt.tight_layout()
+plt.savefig(f"vasp_truncation_examples_{compound}.pdf", bbox_inches="tight", dpi=300)
+plt.show()
+
 # ==============================================================================
 
-# %%
-
-# %%
-
-compound = "Cu"
-simulation_type = "VASP"
-raw_data = (
-    RAWDataVASP(compound=compound) if simulation_type == "VASP" else feff_raw_data
-)
-data_class = VASPData if simulation_type == "VASP" else FEFFData
-
-energy_start_list = []
-count = 0
-for id in raw_data.parameters.keys():
-    print(count)
-    count += 1
-    if count > 200:
-        break
-    data = data_class(raw_data.parameters[id])
-    energy_start = data.energy[0]
-    energy_start_list.append(energy_start)
-energy_start_list = np.array(energy_start_list)
-
-# %%
-
-fig = plt.figure(figsize=(8, 6))
-plt.style.use(["default", "science"])
-plt.rcParams["font.size"] = 16
-plt.hist(
-    energy_start_list, bins=20, facecolor="green", edgecolor="tab:green", alpha=0.5
-)
-plt.xlabel("Energy_start after truncation (eV)")
-plt.ylabel("Count")
-plt.title(
-    f"Energy_start distribution for {compound} fot {simulation_type} \n Min: {min(energy_start_list):.2f} eV, Max: {max(energy_start_list):.2f} eV \n sample_size: {len(energy_start_list)} \n Median: {np.median(energy_start_list):.2f} eV"
-)
-plt.savefig(
-    f"energy_start_distribution_{compound}_{simulation_type}.pdf",
-    bbox_inches="tight",
-    dpi=300,
-)
 # %%

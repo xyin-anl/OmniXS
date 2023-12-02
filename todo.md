@@ -1,7 +1,15 @@
+Why is vasp overfitting?
+
+**Universal XAS model**
+
+- (paper)[https://www.nature.com/articles/s41467-022-30687-9]
+
 **Truncation**
 
 - [x] take 40ev cutoff for both Cu and Ti:
-- [ ] fix the tructaion problem that is putting things out of range
+- [x] fix the tructaion problem that is putting things out of range
+  - [ ] issue was with offset not including theoretical offset
+- [ ] refactor `scripts/truncation_samples.py` after maiking the emperical truncation standard
 
   **Suggestions**
 
@@ -90,3 +98,7 @@
   - [ ] Do prediction using describ model without GNN and compare:
     - [ ] Important one is LMBTR
     - [ ] https://github.com/SINGROUP/dscribe
+
+## Code
+
+- [x] icecream

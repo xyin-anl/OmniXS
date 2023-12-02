@@ -19,7 +19,7 @@ class VASPData(ProcessedData):
 
     def transform(self):
         """Apply truncation, scaling, broadening, and alignment."""
-        return self.truncate().scale().broaden().align_energy()
+        return self.truncate().scale().broaden().align()
 
     def truncate(self, start_offset=10):
         min_energy = (self.e_cbm - self.e_core) - start_offset
@@ -42,8 +42,9 @@ class VASPData(ProcessedData):
         lorentzian = cauchy.pdf(differences, 0, gamma / 2)
         return np.dot(lorentzian, yin) / len(xin) * dx
 
-    def broaden(self):
-        gamma = self.configs()["VASP"][self.compound]["gamma"]
+    def broaden(self, gamma: float = None):
+        if gamma is None:
+            gamma = self.configs()["VASP"][self.compound]["gamma"]
         broadened_amplitude = self.lorentz_broaden(
             self._energy,
             self._energy,
@@ -54,8 +55,8 @@ class VASPData(ProcessedData):
         return self
 
     def align(self, emperical_offset=5114.08973):
-        thoeretical_offset = (self.e_core - self.e_cbm) + (self.E_ch - self.E_GS)
-        # super().align_energy(thoeretical_offset)
+        theoretical_offset = (self.e_core - self.e_cbm) + (self.E_ch - self.E_GS)
+        super().align_energy(theoretical_offset)
         super().align_energy(emperical_offset)
         return self
 
