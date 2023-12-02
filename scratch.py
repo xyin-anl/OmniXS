@@ -1,5 +1,10 @@
 # %%
 
+# %%
+import pickle
+import importlib
+import src
+from utils.src.misc import icecream
 from utils.src.plots.highlight_tick import highlight_tick
 from matplotlib import pyplot as plt
 from src.data.feff_data_raw import RAWDataFEFF
@@ -74,11 +79,34 @@ from utils.src.plots.highlight_tick import highlight_tick
 
 # %%
 
+
 # %%
 
-compound = "Cu"
-feff_raw_data = RAWDataFEFF(compound=compound)
-vasp_raw_data = RAWDataVASP(compound=compound)
+compound = "Ti"
+
+# feff_raw_data = RAWDataFEFF(compound=compound)
+# vasp_raw_data = RAWDataVASP(compound=compound)
+# import pickle
+## Disable reimport of classes when saving
+# with open(f"feff_raw_data_{compound}.pkl", "wb") as file:
+#     pickle.dump(feff_raw_data, file)
+# with open(f"vasp_raw_data_{compound}.pkl", "wb") as file:
+#     pickle.dump(vasp_raw_data, file)
+
+
+# %%
+
+cfg = yaml.load(open("cfg/transformations.yaml"), Loader=yaml.FullLoader)
+
+file_path = cfg["VASP"][compound]["raw-data-cleaned"]
+vasp_raw_data = pickle.load(open(file_path, "rb"))
+
+file_path = cfg["FEFF"][compound]["raw-data-cleaned"]
+feff_raw_data = pickle.load(open(file_path, "rb"))
+
+
+# %%
+
 
 # %%
 
