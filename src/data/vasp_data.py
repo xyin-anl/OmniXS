@@ -7,15 +7,15 @@ from src.data.data import ProcessedData
 
 
 class VASPData(ProcessedData):
-    # EXPERIMENTAL_ENERGY_OFFSET = 5114.08973  # based on comparison with xs_mp_390
-
-    def __init__(self, compound, params):
-        self.e_core = params["e_core"]
-        self.e_cbm = params["e_cbm"]
-        self.E_ch = params["E_ch"]
-        self.E_GS = params["E_GS"]
-        self.volume = params["volume"]
-        super().__init__(compound, simulation_type="VASP", params=params)
+    def __init__(self, compound, params=None, id=None):
+        if params is not None:
+            self.e_core = params["e_core"]
+            self.e_cbm = params["e_cbm"]
+            self.E_ch = params["E_ch"]
+            self.E_GS = params["E_GS"]
+            self.volume = params["volume"]
+        # note: init includes call to transform()
+        super().__init__(compound, simulation_type="VASP", params=params, id=id)
 
     def transform(self):
         """Apply truncation, scaling, broadening, and alignment."""

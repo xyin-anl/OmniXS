@@ -1,5 +1,7 @@
 # %%
-
+from tqdm import tqdm
+import os
+import time
 import pickle
 import importlib
 import src
@@ -93,11 +95,8 @@ imports_2 = {
 def reimport_modules_and_functions():
     import importlib
 
-    # Reimport non-standard modules
     for module in imports_1:
         importlib.reload(importlib.import_module(module))
-
-    # Reimport specific functions/classes
     for module, items in imports_2.items():
         reloaded_module = importlib.import_module(module)
         globals().update({item: getattr(reloaded_module, item) for item in items})
@@ -113,50 +112,115 @@ reimport_modules_and_functions()
 
 # %%
 
-
-compound = "Cu"
-feff_raw_data = RAWDataFEFF(compound=compound)
+compound = "Ti"
+raw_data = RAWDataFEFF(compound=compound)
 vasp_raw_data = RAWDataVASP(compound=compound)
 
-sample_size = 5
-seed = 42
 
-feff_ids = set(feff_raw_data.parameters.keys())
+# %%
+
+# seed = 42
+# random.seed(seed)
+sample_size = 10
+ids = set(raw_data.parameters.keys())
 vasp_ids = set(vasp_raw_data.parameters.keys())
-common_ids = feff_ids.intersection(vasp_ids)
+common_ids = ids.intersection(vasp_ids)
 
-plt.style.use(["default", "science", "grid"])
-random.seed(seed)
+plt.style.use(["default", "science"])
 ids = random.choices(list(common_ids), k=sample_size)
-fig, axs = plt.subplots(len(ids), 1, figsize=(8, 2 * len(ids)))
+fig, axs = plt.subplots(len(ids), 1, figsize=(6, 3 * len(ids)))
+time_corr = []
+time_dtw = []
 for simulation_type in ["VASP", "FEFF"]:
-    raw_data = vasp_raw_data if simulation_type == "VASP" else feff_raw_data
+    raw_data = vasp_raw_data if simulation_type == "VASP" else raw_data
     data_class = VASPData if simulation_type == "VASP" else FEFFData
     for ax, id in zip(axs, ids):
         data = data_class(
             compound=compound,
             params=raw_data.parameters[id],
         )
+        # data.transform()
 
         if data.simulation_type == "FEFF":
+            t1 = time.time()
             data.align(VASPData(compound, vasp_raw_data.parameters[id]))
-
+            del_t = time.time() - t1
+            time_corr.append(del_t)
+            ic(del_t)
+        data.truncate_emperically()
         ax.plot(
             data.energy,
             data.spectra,
-            label=f"{data.simulation_type} full",
-            linestyle="--",
-            color="red",
+            label=f"{data.simulation_type}_{id}",
+            linestyle="-",
         )
+
+        # doing again for dtw based
+        if data.simulation_type == "FEFF":
+            data = data_class(
+                compound=compound,
+                params=raw_data.parameters[id],
+            )
+            t1 = time.time()
+            shift = data_class.dtw_shift(
+                data,
+                VASPData(compound, vasp_raw_data.parameters[id]),
+            )
+            del_t = time.time() - t1
+            time_dtw.append(del_t)
+            ic(del_t)
+            data.align_energy(-shift)
+            data.truncate_emperically()
+            ax.plot(
+                data.energy,
+                data.spectra,
+                label=f"{data.simulation_type}_{id}_dtw",
+                linestyle="--",
+            )
+
         ax.legend()
         ax.sharex(axs[0])
+
 axs[-1].set_xlabel("Energy (eV)", fontsize=18)
 
-plt.suptitle(f"VASP truncation samples: {compound}", fontsize=18)
+plt.suptitle(f"Per-spectra alignment samples: {compound}", fontsize=18)
 plt.tight_layout()
-plt.savefig(f"vasp_truncation_examples_{compound}.pdf", bbox_inches="tight", dpi=300)
+# plt.savefig(f"vasp_truncation_examples_{compound}.pdf", bbox_inches="tight", dpi=300)
 plt.show()
 
 # ==============================================================================
+
+# %%
+
+# compound = "Ti"
+# simulation_type = "FEFF"
+# raw_data_class = RAWDataFEFF if simulation_type == "FEFF" else RAWDataVASP
+# raw_data = raw_data_class(compound=compound)
+# ids = raw_data.parameters.keys()
+# ids = tqdm(ids)  # progress bar
+# for id in ids:
+#     data_class = FEFFData if simulation_type == "FEFF" else VASPData
+#     data = data_class(
+#         compound=compound,
+#         params=raw_data.parameters[id],
+#         id=id,
+#     )
+#     data.save()
+#     # plt.plot(data.energy, data.spectra, label=id)
+#     # plt.legend()
+# # plt.show()
+
+# %%
+
+# %%
+
+data_vasp = VASPData(compound).load(id=("mp-390", "000_Ti"))
+data_feff = FEFFData(compound).load(id=("mp-390", "000_Ti"))
+
+plt.plot(data_vasp.energy, data_vasp.spectra, label="VASP")
+plt.plot(data_feff.energy, data_feff.spectra, label="FEFF")
+plt.legend()
+plt.show()
+
 
 # %%

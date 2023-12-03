@@ -1,8 +1,18 @@
-Why is vasp overfitting?
+- [ ] document process in pdf
+- [ ] run full compilations:
+  - [ ] decide if breaking of data is needed
+  - [ ] run for all
+  - [ ] seperate outliers
+  - [ ] upload after organizing
+- [ ] benchmark after transformations
+- [ ] how things changed?
+  - [ ] better/worse?
+  - [ ] architechtural differences
+  - [ ] is vasp still overfitting?
+  - [ ] are there training differences
+- [ ] transfer learning
 
-**Universal XAS model**
-
-- (paper)[https://www.nature.com/articles/s41467-022-30687-9]
+## Done for data transformation
 
 **Truncation**
 
@@ -25,13 +35,11 @@ Why is vasp overfitting?
 
 **Alignment**
 
-- [ ] Make feff alignment with VASP to be per spectra based on:
+- [x] Make feff alignment with VASP to be per spectra based on:
 
-  - [ ] correlation
-  - [ ] DTW:
-  - [ ] see where DTW and prev method disagree the most on the shift
-
-- [ ] make sure to store the shift values for each spectra:
+  - [x] correlation
+  - [x] DTW:
+  - [x] see where DTW and prev method disagree the most on the shift
 
 **Transfer Learning**
 
@@ -96,6 +104,9 @@ Why is vasp overfitting?
     - [ ] Important one is LMBTR
     - [ ] https://github.com/SINGROUP/dscribe
 
-## Code
+## Unanswered Questions
 
-- [x] icecream
+- why was vasp overfitting?
+- information leakage for m3gnet training?
+
+- (paper)[https://www.nature.com/articles/s41467-022-30687-9]
