@@ -6,35 +6,32 @@ Why is vasp overfitting?
 
 **Truncation**
 
-- [x] take 40ev cutoff for both Cu and Ti:
 - [x] fix the tructaion problem that is putting things out of range
-  - [ ] issue was with offset not including theoretical offset
-- [ ] refactor `scripts/truncation_samples.py` after maiking the emperical truncation standard
 
-  **Suggestions**
+  - [x] issue was with offset not including theoretical offset
 
-  - energy_range = [4960, 4960 + 40] # Ti
-  - energy_range = [4600, 4600 + 40] # Cu
+  **Final filter**
 
-  **Current**
-
+  - based on histogram of energy_start and energy_end
+  - and meeting
+  - take 40ev cutoff for both Cu and Ti:
   - energy_range = [4970, 4970 + 40] # Ti
   - energy_range = [4602, 4602 + 40] # Cu
+  - implemented in `vasp_data.emperical_truncation()` that is not on by default
 
 **Broadening**
 
-- [ ] refactor code so that vasp boradening happens based on the compound
+- [x] refactor code so that vasp boradening happens based on the compound
 
 **Alignment**
 
-- [ ] make sure to store the shift values for each spectra:
-  - [ ] refactor the alignment function in feff so that it not just return the
-        shift
 - [ ] Make feff alignment with VASP to be per spectra based on:
 
   - [ ] correlation
   - [ ] DTW:
   - [ ] see where DTW and prev method disagree the most on the shift
+
+- [ ] make sure to store the shift values for each spectra:
 
 **Transfer Learning**
 

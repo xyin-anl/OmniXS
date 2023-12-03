@@ -1,5 +1,6 @@
 import yaml
 import numpy as np
+from dtw import dtw
 
 
 import warnings
@@ -62,6 +63,20 @@ class ProcessedData(ABC):
         with open(cfg_path) as file:
             cfg = yaml.load(file, Loader=yaml.FullLoader)
         return cfg
+
+    @staticmethod
+    def dtw_shift(source: "ProcessedData", target: "ProcessedData"):
+        # 4x faster than compare_between_spectra
+        # not consistently better compare_between_spectra
+        # sometime worse
+        d, cost_matrix, acc_cost_matrix, path = dtw(
+            source.spectra,
+            target.spectra,
+            dist=lambda x, y: np.abs(x - y),  # euclidean norm
+        )
+        shifts = source.energy[path[0]] - target.energy[path[1]]
+        dominant_shift = np.round(np.median(shifts)).astype(int)
+        return dominant_shift
 
     @abstractmethod
     def transform(self):
