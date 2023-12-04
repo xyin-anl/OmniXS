@@ -25,7 +25,8 @@ class FEFFData(ProcessedData):
         source = np.array([self.energy, self.spectra]).T
         target = np.array([target.energy, target.spectra]).T
         shift, _ = compare_between_spectra(source, target)
-        return self.align_energy(-shift)
+        self.align_energy(-shift)
+        return shift
 
 
 if __name__ == "__main__":
