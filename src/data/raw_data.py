@@ -28,7 +28,7 @@ class RAWData(ABC):
     def _ids(self):
         """Can include ids with missing data"""
         ids = os.listdir(self.base_dir)
-        id_filter = re.compile(r"mp-\d+")
+        id_filter = re.compile(r"(mp-\d+|mvc-\d+)")
         ids = list(filter(lambda x: id_filter.match(x), ids))
         if len(ids) == 0:
             raise ValueError(f"No ids found for {self.compound}")

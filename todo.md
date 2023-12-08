@@ -1,7 +1,25 @@
+- [ ] extract the shift from the Cu image:
+  - [ ] I think there is a mistake in the Cu vasp alignment. In the previous Ti
+        alignment, after you did all the relative alignment within vasp, you
+        shifted all the simulated spectra by a constant determined by aligning
+        simulation to experiment for anatase TiO2, which we call the reference.
+        This shift will be different for Cu K-edge, as it is a different
+        element. Attached is an exp paper on Cu K-edge. Please digitize Cu2O
+        spectrum in Fig. 1 and align [simulated](simulated) spectrum from
+        mp-361 (Cu2O) to it, in order to get the correct value for the constant
+        shift in Cu K-edge. Cu feff spectra are ok.
+- [ ] do constasnt trunctaion of 35 range for both Cu and Ti
+- [ ] interpolate/extrapolate
+- [ ] for transfer learning do not use the alignement between feff and vasp.
+      only that vasp is shifter xs comparision as is current before feff/vasp
+      alignment
+- [ ] use this code if it helps to make it fast:
+      https://github.com/AI-multimodal/XAS-NNE
+- [x] include mvc data as well in raw data
+
 - [ ] document process in pdf
-- [ ] run full compilations:
-  - [ ] decide if breaking of data is needed
-  - [ ] run for all
+- [x] run full compilations:
+- [ ] figure out how to handle difference shapes (interp/extrap)
   - [ ] seperate outliers
   - [ ] upload after organizing
 - [ ] benchmark after transformations
