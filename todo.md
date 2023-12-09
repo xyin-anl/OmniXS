@@ -1,5 +1,11 @@
-- [ ] confirm the dE starts fromm 4970 for eg
+- [ ] upload after organizing
+- [ ] for transfer learning do not use the alignement between feff and vasp.
+      only that vasp is shifter xs comparision as is current before feff/vasp
+      alignment
+- [ ] use this code if it helps to make it fast:
+      https://github.com/AI-multimodal/XAS-NNE
 - [ ] extract the shift from the Cu image:
+
   - [ ] I think there is a mistake in the Cu vasp alignment. In the previous Ti
         alignment, after you did all the relative alignment within vasp, you
         shifted all the simulated spectra by a constant determined by aligning
@@ -9,22 +15,7 @@
         spectrum in Fig. 1 and align [simulated](simulated) spectrum from
         mp-361 (Cu2O) to it, in order to get the correct value for the constant
         shift in Cu K-edge. Cu feff spectra are ok.
-- [x] do constasnt trunctaion of 35 range for both Cu and Ti
-- [x] decouple truncate_emperically
-- [x] organize cfg 
-- [ ] interpolate/extrapolate
-- [ ] for transfer learning do not use the alignement between feff and vasp.
-      only that vasp is shifter xs comparision as is current before feff/vasp
-      alignment
-- [ ] use this code if it helps to make it fast:
-      https://github.com/AI-multimodal/XAS-NNE
-- [x] include mvc data as well in raw data
 
-- [ ] document process in pdf
-- [x] run full compilations:
-- [ ] figure out how to handle difference shapes (interp/extrap)
-  - [ ] seperate outliers
-  - [ ] upload after organizing
 - [ ] benchmark after transformations
 - [ ] how things changed?
   - [ ] better/worse?
@@ -32,6 +23,15 @@
   - [ ] is vasp still overfitting?
   - [ ] are there training differences
 - [ ] transfer learning
+
+- [x] document data transformationprocess in markdown
+- [x] confirm the dE starts fromm 4970 for eg
+- [x] do constasnt trunctaion of 35 range for both Cu and Ti
+- [x] decouple truncate_emperically
+- [x] organize cfg
+- [x] interpolate/extrapolate
+- [x] include mvc data as well in raw data
+- [x] run full compilations:
 
 ## Done for data transformation
 
