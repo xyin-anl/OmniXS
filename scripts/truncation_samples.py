@@ -31,8 +31,7 @@ if __name__ == "__main__":
                 params=raw_data.parameters[id],
             )
 
-            if data.simulation_type == "FEFF":
-                data.align(VASPData(compound, vasp_raw_data.parameters[id]))
+            data.reset().transform(include_emperical_truncation=False)
 
             ax.plot(
                 data.energy,
@@ -42,11 +41,11 @@ if __name__ == "__main__":
                 color="red",
             )
 
-            truncated_data = data.truncate_emperically()
+            data.reset().transform(include_emperical_truncation=True)
             ax.plot(
-                truncated_data.energy,
-                truncated_data.spectra,
-                label=f"{truncated_data.simulation_type} chopped",
+                data.energy,
+                data.spectra,
+                label=f"{data.simulation_type} chopped",
                 linestyle="-",
                 color="tab:blue",
             )

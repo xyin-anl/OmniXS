@@ -9,8 +9,11 @@ class FEFFData(ProcessedData):
         # note: init includes call to transform()
         super().__init__(compound, simulation_type="FEFF", params=params, id=id)
 
-    def transform(self):
-        return self.truncate().scale()
+    def transform(self, include_emperical_truncation=True):
+        self.truncate().scale()
+        if include_emperical_truncation:
+            self.truncate_emperically()
+        return self
 
     def truncate(self):
         return self.filter(spectral_range=[0, None])

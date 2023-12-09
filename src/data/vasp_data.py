@@ -1,3 +1,5 @@
+from src.data.raw_data import RAWData
+import yaml
 from scipy.constants import physical_constants
 import warnings
 import numpy as np
@@ -17,9 +19,11 @@ class VASPData(ProcessedData):
         # note: init includes call to transform()
         super().__init__(compound, simulation_type="VASP", params=params, id=id)
 
-    def transform(self):
-        """Apply truncation, scaling, broadening, and alignment."""
-        return self.truncate().scale().broaden().align()
+    def transform(self, include_emperical_truncation=True):
+        self.truncate().scale().broaden().align()
+        if include_emperical_truncation:
+            self.truncate_emperically()
+        return self
 
     def truncate(self, start_offset=10):
         min_energy = (self.e_cbm - self.e_core) - start_offset
@@ -44,7 +48,7 @@ class VASPData(ProcessedData):
 
     def broaden(self, gamma: float = None):
         if gamma is None:
-            gamma = self.configs()["VASP"][self.compound]["gamma"]
+            gamma = RAWData.configs()["gamma"][self.compound]
         broadened_amplitude = self.lorentz_broaden(
             self._energy,
             self._energy,
@@ -54,9 +58,13 @@ class VASPData(ProcessedData):
         self._spectra = broadened_amplitude
         return self
 
-    def align(self, emperical_offset=5114.08973):
+    def align(self):
+        cfg = RAWData.configs()
+
         theoretical_offset = (self.e_core - self.e_cbm) + (self.E_ch - self.E_GS)
         super().align_energy(theoretical_offset)
+
+        emperical_offset = cfg["emperical_offset"][self.compound]
         super().align_energy(emperical_offset)
         return self
 

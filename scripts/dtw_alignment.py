@@ -36,13 +36,14 @@ if __name__ == "__main__":
                 compound=compound,
                 params=raw_data.parameters[id],
             )
+            data.reset().transform(include_emperical_truncation=False)
             if data.simulation_type == "FEFF":
                 t1 = time.time()
                 data.align(VASPData(compound, vasp_raw_data.parameters[id]))
                 del_t = time.time() - t1
                 time_corr.append(del_t)
                 ic("time_taken_for_corr", del_t)
-            data.truncate_emperically()
+            data.reset().transform(include_emperical_truncation=True)
             ax.plot(
                 data.energy,
                 data.spectra,
@@ -56,6 +57,7 @@ if __name__ == "__main__":
                     compound=compound,
                     params=raw_data.parameters[id],
                 )
+                data.reset().transform(include_emperical_truncation=False)
                 t1 = time.time()
                 shift = data_class.dtw_shift(
                     data,
@@ -65,7 +67,7 @@ if __name__ == "__main__":
                 time_dtw.append(del_t)
                 ic("time_taken_for_dtw", del_t)
                 data.align_energy(-shift)
-                data.truncate_emperically()
+                data.reset().transform()  # includes truncation
                 ax.plot(
                     data.energy,
                     data.spectra,
@@ -99,7 +101,10 @@ if __name__ == "__main__":
         alpha=0.5,
         linewidth=3,
     )
-    plt.title("Speed  of alignment algorithms \n  Correlation_based vs DTW_based ", fontsize=20)
+    plt.title(
+        "Speed  of alignment algorithms \n  Correlation_based vs DTW_based ",
+        fontsize=20,
+    )
     plt.ylabel("count", fontsize=20)
     plt.xlabel("time_taken corr_based/dtw_based", fontsize=20)
     plt.savefig("time_comparison.pdf", bbox_inches="tight", dpi=300)
