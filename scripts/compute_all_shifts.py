@@ -23,16 +23,17 @@ def ids_from_files(compound, simulation_type):
     return ids
 
 
-def common_ids_from_files(compound):
+def common_ids(compound):
     feff_ids = ids_from_files(compound=compound, simulation_type="FEFF")
     vasp_ids = ids_from_files(compound=compound, simulation_type="VASP")
     common_ids = set(feff_ids).intersection(set(vasp_ids))
+    common_ids = list(map(lambda x: tuple(x.split("_site_")), common_ids))
     return common_ids
 
 
 def compute_shift(params):
     compound, id = params
-    id = tuple(id.split("_site_"))
+    # id = tuple(id.split("_site_"))
     data_vasp = VASPData(compound).load(id)
     data_feff = FEFFData(compound).load(id)
     alignment_shift = data_feff.align(data_vasp)
@@ -40,7 +41,7 @@ def compute_shift(params):
 
 
 def compute_all_shifts(compound, max_length=None, paralleize=True):
-    common_ids = common_ids_from_files(compound)
+    common_ids = common_ids(compound)
     common_ids = list(common_ids)[:max_length]  # TODO: remove this line
     params = [(compound, id) for id in common_ids]
     if paralleize:
@@ -76,9 +77,9 @@ def save_shifts(compound, shifts):
 
 if __name__ == "__main__":
     compound = "Ti"
-    shifts = compute_all_shifts(compound, max_length=10)
+    shifts = compute_all_shifts(compound, max_length=None)
     save_shifts(compound, shifts)
 
     compound = "Cu"
-    shifts = compute_all_shifts(compound, max_length=10)
+    shifts = compute_all_shifts(compound, max_length=None)
     save_shifts(compound, shifts)

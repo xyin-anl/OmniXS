@@ -8,7 +8,9 @@
         spectrum in Fig. 1 and align [simulated](simulated) spectrum from
         mp-361 (Cu2O) to it, in order to get the correct value for the constant
         shift in Cu K-edge. Cu feff spectra are ok.
-- [ ] do constasnt trunctaion of 35 range for both Cu and Ti
+- [x] do constasnt trunctaion of 35 range for both Cu and Ti
+- [x] decouple truncate_emperically
+- [x] organize cfg 
 - [ ] interpolate/extrapolate
 - [ ] for transfer learning do not use the alignement between feff and vasp.
       only that vasp is shifter xs comparision as is current before feff/vasp

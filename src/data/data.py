@@ -1,3 +1,4 @@
+from src.data.raw_data import RAWData
 import yaml
 import numpy as np
 from dtw import dtw
@@ -71,9 +72,11 @@ class ProcessedData(ABC):
         return self
 
     def truncate_emperically(self):
-        cfg = self.configs()[self.simulation_type][self.compound]
-        e_range = cfg["e_range"]
-        return self.filter(energy_range=e_range)
+        cfg = RAWData.configs()
+        e_start = cfg["e_start"][self.compound]
+        e_range_diff = cfg["e_range_diff"]
+        e_end = e_start + e_range_diff
+        return self.filter(energy_range=(e_start, e_end))
 
     def filter(self, energy_range=(None, None), spectral_range=(None, None)):
         e_start, e_end = energy_range
@@ -101,11 +104,6 @@ class ProcessedData(ABC):
         string += f"spectra: {self.spectra}\n"
         return string
 
-    def configs(self, cfg_path="cfg/transformations.yaml"):
-        with open(cfg_path) as file:
-            cfg = yaml.load(file, Loader=yaml.FullLoader)
-        return cfg
-
     @staticmethod
     def dtw_shift(source: "ProcessedData", target: "ProcessedData"):
         # 4x faster than compare_between_spectra
@@ -119,6 +117,11 @@ class ProcessedData(ABC):
         shifts = source.energy[path[0]] - target.energy[path[1]]
         dominant_shift = np.round(np.median(shifts)).astype(int)
         return dominant_shift
+
+    def __len__(self):
+        if len(self._energy) != len(self._spectra):
+            raise ValueError("Energy and spectra is not of same length.")
+        return len(self._energy)
 
     @abstractmethod
     def transform(self):

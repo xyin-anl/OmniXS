@@ -1,3 +1,5 @@
+import yaml
+from scipy.constants import physical_constants
 import os
 import re
 import warnings
@@ -86,16 +88,15 @@ class RAWDataVASP(RAWData):
             volume = np.abs(np.dot(vx, np.cross(vy, vz)))
             if volume == 0:
                 raise ValueError(f"Volume is zero for {file_path}")
-            volume /= 0.529177**3  # in bohr^3 units
+
+            bohrs_radius = physical_constants["Bohr radius"][0]
+            bohrs_radius /= physical_constants["Angstrom star"][0]
+            volume /= bohrs_radius**3  # in bohr^3 units
             return volume
 
     @cached_property
     def e_core(self):
-        values = {
-            "Cu": -8850.2467,
-            "Ti": -4864.0371,
-        }
-        return values[self.compound]
+        return RAWData.configs()["e_core"][self.compound]
 
     def _read_mu_file(self, file_path):
         with open(file_path, "r") as f:
