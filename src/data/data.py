@@ -61,11 +61,27 @@ class ProcessedData(ABC):
             raise ValueError("Energy values empty. Load data first.")
         return self._energy
 
+    @energy.setter
+    def energy(self, energy):
+        if not np.all(np.diff(energy) > 0):
+            raise ValueError("Energy values must be monotonically increasing.")
+        self._energy = energy
+        if len(self._spectra) != len(self._energy):
+            self._spectra = None
+            warnings.warn("Spectra values reset to None.")
+
     @property
     def spectra(self):
         if self._spectra is None:
             raise ValueError("Spectra values empty. Load data first.")
         return self._spectra
+
+    @spectra.setter
+    def spectra(self, spectra):
+        self._spectra = spectra
+        if len(self._spectra) != len(self._energy):
+            self._energy = None
+            warnings.warn("Energy values reset to None.")
 
     def reset(self):
         self._energy, self._spectra = self.energy_full, self.spectra_full

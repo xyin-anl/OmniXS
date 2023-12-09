@@ -1,3 +1,4 @@
+- [ ] confirm the dE starts fromm 4970 for eg
 - [ ] extract the shift from the Cu image:
   - [ ] I think there is a mistake in the Cu vasp alignment. In the previous Ti
         alignment, after you did all the relative alignment within vasp, you
