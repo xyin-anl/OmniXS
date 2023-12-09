@@ -1,3 +1,4 @@
+import yaml
 import os
 import re
 import warnings
@@ -51,6 +52,12 @@ class RAWData(ABC):
     @cached_property
     def total_sites(self):
         return len([s for sites in self._sites.values() for s in sites])
+
+    @staticmethod
+    def configs(cfg_path="cfg/transformations.yaml"):
+        with open(cfg_path) as file:
+            cfg = yaml.load(file, Loader=yaml.FullLoader)
+        return cfg
 
     def __len__(self):
         return self.total_sites

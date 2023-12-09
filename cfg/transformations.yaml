@@ -1,21 +1,18 @@
-# energy_range = [4970, 4970 + 40] if compound == "Ti" else [4602, 4602 + 40]
-# vasp cu broadeening gamma=1.19
-# vasp Ti boradening gamma=0.89
+Quarter_eV_resolution: 0.25 # used for interpolation
+e_range_diff: 35 # energy range used
 
-VASP:
-  Cu:
-    e_range: [4602, 4642] # 40 ev
-    gamma: 1.19
-    raw-data-cleaned: dataset/raw-data-cleaned/vasp_raw_data_Cu.pkl
-  Ti:
-    e_range: [4970, 5010] # 40 ev
-    gamma: 0.89
-    raw-data-cleaned: dataset/raw-data-cleaned/vasp_raw_data_Ti.pkl
+e_start:
+  Ti: 4970
+  Cu: 4602
 
-FEFF:
-  Cu:
-    e_range: [4602, 4642] # 40 ev
-    raw-data-cleaned: dataset/raw-data-cleaned/feff_raw_data_Cu.pkl
-  Ti:
-    e_range: [4970, 5010] # 40 ev
-    raw-data-cleaned: dataset/raw-data-cleaned/feff_raw_data_Ti.pkl
+emperical_offset:
+  Ti: 5114.08973
+  Cu: 9494.08973
+
+gamma:
+  Ti: 0.89
+  Cu: 1.19
+
+e_core:
+  Ti: -4864.0371
+  Cu: -8850.2467
