@@ -1,3 +1,9 @@
+---
+  pdf_document: null
+  geometry: margin=2cm
+  output: pdf_document
+---
+
 ## Parsing and Pre-processing Algorithm for RAW FEFF and VASP Data
 
 ### VASP Data (`RAWDataVASP`)

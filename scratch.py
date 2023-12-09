@@ -150,3 +150,11 @@ plt.plot(feff_data.energy, feff_data.spectra, label="FEFF", **kwargs)
 
 
 # %%
+
+compound = "Ti"
+feff_raw_data = RAWDataFEFF(compound=compound)
+vasp_raw_data = RAWDataVASP(compound=compound)
+
+feff_ids = set(feff_raw_data.parameters.keys())
+vasp_ids = set(vasp_raw_data.parameters.keys())
+common_ids = feff_ids.intersection(vasp_ids)
