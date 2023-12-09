@@ -168,3 +168,19 @@ class ProcessedData(ABC):
         file_path = os.path.join(save_dir, file_name)
         data_table = np.array([self.energy, self.spectra]).T
         np.savetxt(file_path, data_table, delimiter="\t")
+
+    def resample(self, energy_grid=None):  # inplace
+        if energy_grid is None:
+            cfg = RAWData.configs()
+            dE = cfg["quarter_eV_resolution"]
+            e_range_diff = cfg["e_range_diff"]
+            e_start = cfg["e_start"][self.compound]
+            e_end = e_start + e_range_diff
+            energy_grid = np.arange(e_start, e_end + dE, dE)
+        self.spectra = np.interp(
+            energy_grid,
+            self.energy,
+            self.spectra,
+        )
+        self.energy = energy_grid
+        return self

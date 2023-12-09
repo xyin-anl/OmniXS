@@ -1,4 +1,4 @@
-Quarter_eV_resolution: 0.25 # used for interpolation
+quarter_eV_resolution: 0.25 # used for interpolation
 e_range_diff: 35 # energy range used
 
 e_start:
