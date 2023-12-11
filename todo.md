@@ -1,3 +1,6 @@
+- [x] decide how much data to take for each sim:
+  - [ ] do full
+  - [ ] Then common_id only
 - [ ] upload after organizing
 - [ ] for transfer learning do not use the alignement between feff and vasp.
       only that vasp is shifter xs comparision as is current before feff/vasp
@@ -24,6 +27,9 @@
   - [ ] are there training differences
 - [ ] transfer learning
 
+- [x] do multi-way paritioning implementation for train, test, val in material
+      split. [original source_code](https://t.ly/cDSid).
+- [x] multiway paritioning for train, test, val during material split
 - [x] document data transformationprocess in markdown
 - [x] confirm the dE starts fromm 4970 for eg
 - [x] do constasnt trunctaion of 35 range for both Cu and Ti

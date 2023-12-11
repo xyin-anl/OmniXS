@@ -1,4 +1,5 @@
 # %%
+from src.data.multiway_paritioning import greedy_multiway_partition
 from utils.src.plots.highlight_tick import highlight_tick
 import multiprocessing
 import re
@@ -106,27 +107,6 @@ def reimport_modules_and_functions():
 
 
 reimport_modules_and_functions()
-
-
-# %%
-
-
-def get_common_ids(vasp_raw_data, feff_raw_data):
-    feff_ids = set(feff_raw_data.parameters.keys())
-    vasp_ids = set(vasp_raw_data.parameters.keys())
-    common_ids = feff_ids.intersection(vasp_ids)
-    return common_ids
-
-
-def random_sample(vasp_raw_data, feff_raw_data, seed):
-    random.seed(seed)
-    common_ids = get_common_ids(vasp_raw_data, feff_raw_data)
-    id = random.choice(list(common_ids))
-    vasp_data = VASPData(compound, vasp_raw_data.parameters[id])
-    feff_data = FEFFData(compound, feff_raw_data.parameters[id])
-    return vasp_data, feff_data
-
-
 # %%
 
 compound = "Ti"
@@ -134,27 +114,3 @@ feff_raw_data = RAWDataFEFF(compound=compound)
 vasp_raw_data = RAWDataVASP(compound=compound)
 
 # %%
-
-seed = 32
-vasp_data, feff_data = random_sample(
-    vasp_raw_data,
-    feff_raw_data,
-    seed=seed,
-)
-
-vasp_data.resample()
-feff_data.resample()
-kwargs = {"marker": "o", "markersize": 3}
-plt.plot(vasp_data.energy, vasp_data.spectra, label="VASP", **kwargs)
-plt.plot(feff_data.energy, feff_data.spectra, label="FEFF", **kwargs)
-
-
-# %%
-
-compound = "Ti"
-feff_raw_data = RAWDataFEFF(compound=compound)
-vasp_raw_data = RAWDataVASP(compound=compound)
-
-feff_ids = set(feff_raw_data.parameters.keys())
-vasp_ids = set(vasp_raw_data.parameters.keys())
-common_ids = feff_ids.intersection(vasp_ids)

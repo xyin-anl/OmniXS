@@ -1,3 +1,4 @@
+import numpy as np
 import yaml
 import os
 import re
@@ -34,6 +35,11 @@ class RAWData(ABC):
         if len(ids) == 0:
             raise ValueError(f"No ids found for {self.compound}")
         return ids
+
+    @property
+    def ids(self):
+        # includes valid id and site combinations
+        return np.array(["_site_".join(x) for x in list(self.parameters.keys())])
 
     @cached_property
     def _sites(self):
