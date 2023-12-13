@@ -1,3 +1,8 @@
+- [ ] featurization using m3gnet:
+  - [x] fix the bug in featurization
+- [ ] map the mat_id with the output of m3gnet
+- [ ] Do -5ev starting offset for Ti, if not doing the correlation based
+      alignment for TL
 - [x] decide how much data to take for each sim:
   - [ ] do full
   - [ ] Then common_id only

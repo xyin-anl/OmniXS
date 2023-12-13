@@ -1,4 +1,5 @@
 # %%
+from scripts.m3gnet_version_fix import fix_m3gnet_version
 from src.data.multiway_paritioning import greedy_multiway_partition
 from utils.src.plots.highlight_tick import highlight_tick
 import multiprocessing
@@ -112,5 +113,17 @@ reimport_modules_and_functions()
 compound = "Ti"
 feff_raw_data = RAWDataFEFF(compound=compound)
 vasp_raw_data = RAWDataVASP(compound=compound)
+
+# %%
+
+from Crescendo.crescendo.extern.m3gnet._featurizer import featurize_material
+from pymatgen.core.structure import Structure
+from scripts.m3gnet_version_fix import fix_m3gnet_version
+
+fix_m3gnet_version()
+poscar_path = "dataset/VASP-raw-data/Cu/mp-1478/VASP/004_Cu/POSCAR"
+structure = Structure.from_file(poscar_path)
+features = featurize_material(structure)
+print(features.shape)
 
 # %%
