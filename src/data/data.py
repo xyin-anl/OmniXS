@@ -169,18 +169,13 @@ class ProcessedData(ABC):
         data_table = np.array([self.energy, self.spectra]).T
         np.savetxt(file_path, data_table, delimiter="\t")
 
-    def resample(self, energy_grid=None):  # inplace
-        if energy_grid is None:
-            cfg = RAWData.configs()
-            dE = cfg["quarter_eV_resolution"]
-            e_range_diff = cfg["e_range_diff"]
-            e_start = cfg["e_start"][self.compound]
-            e_end = e_start + e_range_diff
-            energy_grid = np.arange(e_start, e_end + dE, dE)
-        self.spectra = np.interp(
-            energy_grid,
-            self.energy,
-            self.spectra,
-        )
-        self.energy = energy_grid
+    def resample(self, e_start=None, e_end=None, dE=None):
+        e_start = self.energy[0] if e_start is None else e_start
+        e_end = self.energy[-1] if e_end is None else e_end
+        dE = RAWData.configs()["quarter_eV_resolution"] if dE is None else dE
+        num_points = int((e_end - e_start) / dE) + 1
+        new_energy_grid = np.linspace(e_start, e_end, num_points)
+        new_spectra = np.interp(new_energy_grid, self.energy, self.spectra)
+        self.spectra = new_spectra
+        self.energy = new_energy_grid
         return self

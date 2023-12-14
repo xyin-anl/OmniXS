@@ -39,7 +39,8 @@ class RAWData(ABC):
     @property
     def ids(self):
         # includes valid id and site combinations
-        return np.array(["_site_".join(x) for x in list(self.parameters.keys())])
+        # return np.array(["_site_".join(x) for x in list(self.parameters.keys())])
+        return list(self.parameters.keys())
 
     @cached_property
     def _sites(self):

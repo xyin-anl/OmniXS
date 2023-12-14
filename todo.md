@@ -32,6 +32,7 @@
   - [ ] are there training differences
 - [ ] transfer learning
 
+- [x] fix VASP resampling error before truncation
 - [x] do multi-way paritioning implementation for train, test, val in material
       split. [original source_code](https://t.ly/cDSid).
 - [x] multiway paritioning for train, test, val during material split

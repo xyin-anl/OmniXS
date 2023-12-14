@@ -1,4 +1,5 @@
 # %%
+from src.data.raw_data import RAWData
 from scripts.m3gnet_version_fix import fix_m3gnet_version
 from src.data.multiway_paritioning import greedy_multiway_partition
 from utils.src.plots.highlight_tick import highlight_tick
