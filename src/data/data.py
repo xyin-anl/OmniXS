@@ -10,7 +10,9 @@ from abc import ABC, abstractmethod
 
 
 class ProcessedData(ABC):
-    def __init__(self, compound, simulation_type, params=None, id=None):
+    def __init__(
+        self, compound, simulation_type, params=None, id=None, do_transform=True
+    ):
         self.compound = compound
         self.simulation_type = simulation_type
         self._id = id
@@ -20,7 +22,8 @@ class ProcessedData(ABC):
             self.params = params
             self._energy = self.energy_full = self.params["mu"][:, 0]
             self._spectra = self.spectra_full = self.params["mu"][:, 1]
-            self.transform()
+            if do_transform:
+                self.transform()
 
     @property
     def id(self):

@@ -5,9 +5,15 @@ from scipy import constants
 
 
 class FEFFData(ProcessedData):
-    def __init__(self, compound, params=None, id=None):
+    def __init__(self, compound, params=None, id=None, do_transform=True):
         # note: init includes call to transform()
-        super().__init__(compound, simulation_type="FEFF", params=params, id=id)
+        super().__init__(
+            compound,
+            simulation_type="FEFF",
+            params=params,
+            id=id,
+            do_transform=do_transform,
+        )
 
     def transform(self, include_emperical_truncation=True):
         self.truncate().scale()

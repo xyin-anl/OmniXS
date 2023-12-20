@@ -9,15 +9,20 @@ from src.data.data import ProcessedData
 
 
 class VASPData(ProcessedData):
-    def __init__(self, compound, params=None, id=None):
+    def __init__(self, compound, params=None, id=None, do_transform=True):
         if params is not None:
             self.e_core = params["e_core"]
             self.e_cbm = params["e_cbm"]
             self.E_ch = params["E_ch"]
             self.E_GS = params["E_GS"]
             self.volume = params["volume"]
-        # note: init includes call to transform()
-        super().__init__(compound, simulation_type="VASP", params=params, id=id)
+        super().__init__(
+            compound,
+            simulation_type="VASP",
+            params=params,
+            id=id,
+            do_transform=do_transform,
+        )
 
     def transform(self, include_emperical_truncation=True):
         self.truncate().scale().broaden().align()
@@ -25,7 +30,7 @@ class VASPData(ProcessedData):
             self.truncate_emperically()
         return self
 
-    def truncate(self, start_offset=10):
+    def truncate(self, start_offset=0):
         min_energy = (self.e_cbm - self.e_core) - start_offset
         self.filter(energy_range=[min_energy, None], spectral_range=[0, None])
         return self
@@ -58,13 +63,14 @@ class VASPData(ProcessedData):
         self._spectra = broadened_amplitude
         return self
 
-    def align(self):
+    def align(self, emperical_offset=None):
         cfg = RAWData.configs()
 
         theoretical_offset = (self.e_core - self.e_cbm) + (self.E_ch - self.E_GS)
         super().align_energy(theoretical_offset)
 
-        emperical_offset = cfg["emperical_offset"][self.compound]
+        if emperical_offset is None:
+            emperical_offset = cfg["emperical_offset"][self.compound]
         super().align_energy(emperical_offset)
         return self
 
