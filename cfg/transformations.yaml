@@ -3,11 +3,11 @@ e_range_diff: 35 # energy range used
 
 e_start:
   Ti: 4970
-  # Cu: 4602
+  # Cu: 0
 
 emperical_offset:
   Ti: 5114.08973
-  # Cu: 9494.08973
+  Cu: 9497.07
 
 gamma:
   Ti: 0.89
