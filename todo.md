@@ -1,9 +1,13 @@
+- [ ] Finish FEFF spectra processing:
+  - [ ] Document data tranformation steps for FEFF
+  - [ ] Document Statistical report
 - [ ] featurization using m3gnet:
   - [x] fix the bug in featurization
-- [ ] map the mat_id with the output of m3gnet
-- [ ] Do -5ev starting offset for Ti, if not doing the correlation based
-      alignment for TL
+- [ ] Finalize vasp data
+  - [ ] Find broadening info for VASP
+    - [ ] Deyu is working on it
 - [x] decide how much data to take for each sim:
+  - [ ] Then fix number of data for all
   - [ ] do full
   - [ ] Then common_id only
 - [ ] upload after organizing
@@ -12,17 +16,6 @@
       alignment
 - [ ] use this code if it helps to make it fast:
       https://github.com/AI-multimodal/XAS-NNE
-- [ ] extract the shift from the Cu image:
-
-  - [ ] I think there is a mistake in the Cu vasp alignment. In the previous Ti
-        alignment, after you did all the relative alignment within vasp, you
-        shifted all the simulated spectra by a constant determined by aligning
-        simulation to experiment for anatase TiO2, which we call the reference.
-        This shift will be different for Cu K-edge, as it is a different
-        element. Attached is an exp paper on Cu K-edge. Please digitize Cu2O
-        spectrum in Fig. 1 and align [simulated](simulated) spectrum from
-        mp-361 (Cu2O) to it, in order to get the correct value for the constant
-        shift in Cu K-edge. Cu feff spectra are ok.
 
 - [ ] benchmark after transformations
 - [ ] how things changed?
@@ -32,6 +25,11 @@
   - [ ] are there training differences
 - [ ] transfer learning
 
+- [x] Find Cu experimental shift
+  - [x] extract the shift from the Cu image:
+- [x] process VASP data for mp-361
+- [x] process raw_0 data:
+  - [x] all FEFF data are already processed
 - [x] fix VASP resampling error before truncation
 - [x] do multi-way paritioning implementation for train, test, val in material
       split. [original source_code](https://t.ly/cDSid).
@@ -111,7 +109,7 @@
   - [x] Do random split for FC and LR
 - [x] refactor plot alignment based on new changes:
   - removed out. use bottom script in vasp_data_tranformations.py
-- [x] make sure to shift all vasp (not feff) by : 5114.089730000899
+- [x] make sure to shift all vasp (not feff) of Ti by : 5114.089730000899
 - [x] try scipy constatn so that no can be hardcoded
 - [x] make sure that 0.89 \* 2 to be for alignment comparision only
 - [x] sperate alignment for vasp and feff to different class
