@@ -173,8 +173,10 @@ class ProcessedData(ABC):
         np.savetxt(file_path, data_table, delimiter="\t")
 
     def resample(self, e_start=None, e_end=None, dE=None):
-        e_start = self.energy[0] if e_start is None else e_start
-        e_end = self.energy[-1] if e_end is None else e_end
+        e_start = (
+            RAWData.configs()["e_start"][self.compound] if e_start is None else e_start
+        )
+        e_end = e_start + RAWData.configs()["e_range_diff"] if e_end is None else e_end
         dE = RAWData.configs()["quarter_eV_resolution"] if dE is None else dE
         num_points = int((e_end - e_start) / dE) + 1
         new_energy_grid = np.linspace(e_start, e_end, num_points)
