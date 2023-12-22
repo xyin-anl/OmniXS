@@ -2,7 +2,16 @@ quarter_eV_resolution: 0.25 # used for interpolation
 e_range_diff: 35 # energy range used
 
 e_start:
-  Ti: 4970
+  Co: 7709.282
+  Cr: 5989.168
+  Cu: 8983.173
+  Fe: 7111.23
+  Mn: 6537.886
+  Ni: 8332.181
+  Ti: 4964.504
+  V: 5464.097
+  # PREVIOUS VALUES
+  # Ti: 4970
   # Cu: 0
 
 emperical_offset:
