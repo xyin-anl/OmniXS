@@ -1,4 +1,6 @@
 # %%
+from pickle import dump, load
+from p_tqdm import p_map
 from src.data.raw_data import RAWData
 from scripts.m3gnet_version_fix import fix_m3gnet_version
 from src.data.multiway_paritioning import greedy_multiway_partition
@@ -111,20 +113,26 @@ def reimport_modules_and_functions():
 reimport_modules_and_functions()
 # %%
 
-compound = "Ti"
-feff_raw_data = RAWDataFEFF(compound=compound)
-vasp_raw_data = RAWDataVASP(compound=compound)
+compounds = ["Co", "Cr", "Cu", "Fe", "Mn", "Ni", "Ti", "V"]
+dir = os.path.join("FEFF-processed-data")
+counts = [len(os.listdir(os.path.join(dir, c))) for c in compounds]
+counts = sorted(list(zip(compounds, counts)), key=lambda x: x[1], reverse=True)
+
 
 # %%
 
-from Crescendo.crescendo.extern.m3gnet._featurizer import featurize_material
-from pymatgen.core.structure import Structure
-from scripts.m3gnet_version_fix import fix_m3gnet_version
 
-fix_m3gnet_version()
-poscar_path = "dataset/VASP-raw-data/Cu/mp-1478/VASP/004_Cu/POSCAR"
-structure = Structure.from_file(poscar_path)
-features = featurize_material(structure)
-print(features.shape)
+plt.style.use(["default", "science"])
+plt.figure(figsize=(8, 6))
+plt.bar(*zip(*counts), color="tab:blue")
+plt.xlabel("Compound", fontsize=18)
+plt.xticks(fontsize=14)
+plt.ylabel("Number of Spectras", fontsize=18)
+plt.yticks(fontsize=14)
+for i, (c, n) in enumerate(counts):
+    plt.text(i, n + 5, n, ha="center", va="bottom", fontsize=14)
+plt.title("Number of FEFF Spectras for ML", fontsize=18)
+plt.tight_layout()
+plt.savefig("ml_feff_counts.pdf", dpi=300, bbox_inches="tight")
 
 # %%

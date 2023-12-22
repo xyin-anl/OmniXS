@@ -1,6 +1,8 @@
-- [ ] Finish FEFF spectra processing:
+- [ ] Find where the structure are coming form: DFT, experiment
+  - [ ] Xiaohui is on it
+- [x] Finish FEFF spectra processing:
   - [ ] Document data tranformation steps for FEFF
-  - [ ] Document Statistical report
+  - [x] Document Statistical report
 - [ ] featurization using m3gnet:
   - [x] fix the bug in featurization
 - [ ] Finalize vasp data
