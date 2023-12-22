@@ -22,14 +22,32 @@ class RAWDataFEFF(RAWData):
             self.base_dir = self._default_base_dir()
         self.parameters  # initialize cached property
 
-    def mu(self, id, site):
-        file_path = os.path.join(
+    def _check_convergence(self, id, site):
+        dir = os.path.join(
             self.base_dir,
             id,
             f"{self.simulation_type}-XANES",
             site,
-            "xmu.dat",
         )
+        if os.path.exists(os.path.join(dir, "feff.out")):
+            with open(os.path.join(dir, "feff.out"), "r") as f:
+                lines = f.readlines()
+                converge_kwrd = "Convergence reached in"
+                return any([line.startswith(converge_kwrd) for line in lines])
+        else:
+            return False
+
+    def mu(self, id, site):
+        if not self._check_convergence(id, site):
+            warnings.warn(f"Unconverged {id} at {site}")
+            return None
+        dir_path = os.path.join(
+            self.base_dir,
+            id,
+            f"{self.simulation_type}-XANES",
+            site,
+        )
+        file_path = os.path.join(dir_path, "xmu.dat")
         if not os.path.exists(file_path):
             warnings.warn(f"Missing mu for {id} at {site}")
             return None

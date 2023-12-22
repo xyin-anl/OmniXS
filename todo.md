@@ -25,6 +25,10 @@
   - [ ] are there training differences
 - [ ] transfer learning
 
+- [x] Throw away the data where sim has not converged:
+  - [x] `grep "Convergence reached" */FEFF-XANES/*/feff.out | wc -l`
+  - [x] For Mn it is `19575`
+- [x] plot histogram of count of FEFF data
 - [x] Find Cu experimental shift
   - [x] extract the shift from the Cu image:
 - [x] process VASP data for mp-361
