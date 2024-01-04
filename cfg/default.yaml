@@ -1,8 +1,0 @@
-defaults:
-  - data
-  - model
-  - callbacks
-  - optuna
-  - logger: tensorboard
-  - paths: default
-  - hydra: default

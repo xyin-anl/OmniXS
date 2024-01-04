@@ -1,0 +1,11 @@
+defaults:
+  - paths: default
+  - _self_
+
+paths:
+  data_dir: ${paths.root_dir}/dataset
+  poscar: ${paths.data_dir}/POSCAR_unit_cells/{compound}/{id}/POSCAR
+  raw_data_feff: ${paths.data_dir}/FEFF-raw-data/{compound}/{id}/FEFF-XANES/{site}_{compound}
+  raw_data_vasp: ${paths.data_dir}/VASP-raw-data/{compound}/{id}/{site}_{compound}
+  ml_data_feff: ${paths.data_dir}/ML_FEFF/{compound}/{id}_site_{site}_{compound}.dat
+  ml_data_vasp: ${paths.data_dir}/ML_VASP/{compound}/{id}_site_{site}_{compound}.dat
