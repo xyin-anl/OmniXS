@@ -1,3 +1,4 @@
+from config.defaults import cfg
 from typing import TypedDict
 import os
 from pathlib import Path
@@ -11,21 +12,26 @@ from torch.utils.data import TensorDataset
 from utils.src.lightning.pl_data_module import PlDataModule
 
 
-class XASData(PlDataModule):
-    class DataQuery(TypedDict):
-        compound: str
-        simulation_type: Literal["VASP", "FEFF"]
-        split: Literal["material", "spectra"]
+class DataQuery(TypedDict):
+    compound: str
+    simulation_type: Literal["VASP", "FEFF"]
 
+
+class XASData(PlDataModule):
     def __init__(
         self,
         query: "XASData.DataQuery",
         dtype: torch.dtype = torch.float32,
+        pre_split: bool = False,
         **pl_data_module_kwargs,
     ):
         self.dtype = dtype
         self.query = query
-        self.datasets = self.load_datasets(query=self.query, dtype=self.dtype)
+        if pre_split:
+            self.datasets = XASData.load_pre_split_data(self.query, self.dtype)
+        else:
+            self.datasets = self.load_datasets(query=self.query, dtype=self.dtype)
+
         super().__init__(
             train_dataset=self.datasets["train"],
             val_dataset=self.datasets["val"],
@@ -33,40 +39,24 @@ class XASData(PlDataModule):
             **pl_data_module_kwargs,
         )
 
-    @classmethod
-    def load_datasets(
-        self,
-        query: DataQuery,
-        dtype: torch.dtype = torch.float32,
-    ) -> dict:
-        np_data = self.load_data(query=query)
-        return {
-            task: TensorDataset(
-                torch.from_numpy(np_data[task]["X"]).to(dtype=dtype),
-                torch.from_numpy(np_data[task]["y"]).to(dtype=dtype),
-            )
-            for task in ["train", "val", "test"]
-        }
+    @staticmethod
+    def load_pre_split_data(query: DataQuery, dtype: torch.dtype = torch.float32):
+        compound = query["compound"]
+        sim_type = query["simulation_type"]
+        data_dir = cfg.paths.pre_split_ml_data
+        data_dir = data_dir.format(compound=compound, simulation_type=sim_type)
 
-    @classmethod
-    def load_data(self, query: DataQuery) -> dict:
-        data_dirs = self.get_data_dir(query)
-        return {
-            task: {
-                "X": np.load(os.path.join(data_dirs, f"X_{task}.npy")),
-                "y": np.load(os.path.join(data_dirs, f"y_{task}.npy")),
-            }
-            for task in ["train", "val", "test"]
-        }
+        def load_split(task, var_name):
+            return np.load(os.path.join(data_dir, f"{var_name}_{task}.npy"))
 
-    @classmethod
-    def get_data_dir(self, query: DataQuery) -> Union[str, Path]:
-        return os.path.join(
-            "dataset/ML-231009",
-            f"{query['compound']}_K-edge_{query['simulation_type']}_XANES",
-            f"{query['split']}-splits",
-            "data",
-        )
+        def to_tensor(data):
+            return torch.from_numpy(data).to(dtype=dtype)
+
+        def to_dataset(X, y):
+            return TensorDataset(to_tensor(X), to_tensor(y))
+
+        tasks = ["train", "val", "test"]
+        return {t: to_dataset(load_split(t, "X"), load_split(t, "y")) for t in tasks}
 
 
 if __name__ == "__main__":
