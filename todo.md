@@ -1,10 +1,17 @@
+- [x] featurization using m3gnet:
+  - [x] fix the bug in featurization
+  - [x] featurize all feff data
+- [ ] Establish baselines:
+  - [ ] Previous results
+  - [ ] MAD: Mean absolute deviation
+  - [ ] MedAD: Median absolute deviation
+  - [ ] Linear/Polynomial regression
+- [ ] Uncertainty Quantification
 - [ ] Find where the structure are coming form: DFT, experiment
   - [ ] Xiaohui is on it
 - [x] Finish FEFF spectra processing:
   - [ ] Document data tranformation steps for FEFF
   - [x] Document Statistical report
-- [ ] featurization using m3gnet:
-  - [x] fix the bug in featurization
 - [ ] Finalize vasp data
   - [ ] Find broadening info for VASP
     - [ ] Deyu is working on it
@@ -12,7 +19,6 @@
   - [ ] Then fix number of data for all
   - [ ] do full
   - [ ] Then common_id only
-- [ ] upload after organizing
 - [ ] for transfer learning do not use the alignement between feff and vasp.
       only that vasp is shifter xs comparision as is current before feff/vasp
       alignment
