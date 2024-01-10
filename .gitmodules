@@ -1,9 +1,6 @@
 [submodule "utils"]
 	path = utils
 	url = git@github.com:shubharajkharel/ai_utils.git
-[submodule "Crescendo"]
-	path = Crescendo
-	url = git@github.com:matthewcarbone/Crescendo.git
 [submodule "DigitalBeamline"]
 	path = DigitalBeamline
 	url = git@github.com:AI-multimodal/DigitalBeamline.git

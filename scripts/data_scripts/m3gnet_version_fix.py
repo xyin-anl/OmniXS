@@ -27,7 +27,9 @@ def fix_m3gnet_version(
 
 
 if __name__ == "__main__":
-    from Crescendo.crescendo.extern.m3gnet._featurizer import featurize_material
+    from DigitalBeamline.digitalbeamline.extern.m3gnet.featurizer import (
+        featurize_material,
+    )
     from pymatgen.core.structure import Structure
 
     fix_m3gnet_version()  # <--- this is the fix
