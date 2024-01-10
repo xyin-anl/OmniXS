@@ -1,7 +1,7 @@
 # %%
 # %load_ext autoreload
 # %autoreload 2
-from src.pl_data import XASData
+from src.data.pl_data import XASData
 import glob
 import os
 

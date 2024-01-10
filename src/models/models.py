@@ -1,4 +1,4 @@
-from src.pl_data import XASData
+from src.data.pl_data import XASData
 from utils.src.optuna.dynamic_fc import PlDynamicFC
 
 # import pytorch_lightning as pl

@@ -3,9 +3,9 @@ import numpy as np
 import pandas as pd
 import scienceplots
 
-from src.plot.model_report import linear_model_predictions
-from src.pl_data import XASData
-from src.ckpt_predictions import fc_ckpt_predictions
+from scripts.model_scripts.model_report import linear_model_predictions
+from src.data.pl_data import XASData
+from src.models.ckpt_predictions import fc_ckpt_predictions
 
 
 def plot_best_worst_residues(query, y_test, predictions, model_name, count=10):

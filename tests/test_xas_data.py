@@ -5,7 +5,7 @@ import unittest
 import lightning as pl
 import torch
 
-from src.pl_data import XASData
+from src.data.pl_data import XASData
 from utils.src.optuna.dynamic_fc import PlDynamicFC
 
 

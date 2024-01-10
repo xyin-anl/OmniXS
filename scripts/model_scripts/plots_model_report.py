@@ -4,7 +4,7 @@ import scienceplots
 from matplotlib.gridspec import GridSpec
 from sklearn.linear_model import LinearRegression
 
-from src.pl_data import XASData
+from src.data.pl_data import XASData
 from utils.src.plots.heatmap_of_lines import heatmap_of_lines
 
 

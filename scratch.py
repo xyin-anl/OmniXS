@@ -1,5 +1,5 @@
 # %%
-from src.pl_data import XASData
+from src.data.pl_data import XASData
 from typing import List, Tuple, TypedDict, Union
 import warnings
 from src.data.material_split import MaterialSplitter
@@ -18,7 +18,7 @@ import numpy as np
 from pickle import dump, load
 from p_tqdm import p_map
 from src.data.raw_data import RAWData
-from scripts.m3gnet_version_fix import fix_m3gnet_version
+from scripts.data_scripts.m3gnet_version_fix import fix_m3gnet_version
 from utils.src.plots.highlight_tick import highlight_tick
 import multiprocessing
 import re
@@ -54,8 +54,8 @@ from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.preprocessing import MinMaxScaler
-from scripts.pca_plots import linear_fit_of_pcas, plot_pcas
-from scripts.plots_model_report import (
+from scripts.model_scripts.pca_plots import linear_fit_of_pcas, plot_pcas
+from scripts.model_scripts.plots_model_report import (
     heatmap_of_lines,
     plot_predictions,
     # plot_residue_histogram,
@@ -63,8 +63,8 @@ from scripts.plots_model_report import (
     plot_residue_heatmap,
     plot_residue_quartiles,
 )
-from src.ckpt_predictions import get_optimal_fc_predictions
-from src.plot.model_report import linear_model_predictions, model_report
+from src.models.ckpt_predictions import get_optimal_fc_predictions
+from scripts.model_scripts.model_report import linear_model_predictions, model_report
 from src.data.vasp_data import VASPData
 
 # from src.pl_data import XASData

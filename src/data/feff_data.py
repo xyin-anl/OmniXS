@@ -1,6 +1,6 @@
 import numpy as np
 from src.data.data import ProcessedData
-from src.lightshow.compare_utils import compare_between_spectra
+from DigitalBeamline.digitalbeamline.extern.lightshow.compare_utils import compare_between_spectra
 from scipy import constants
 
 

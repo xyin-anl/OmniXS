@@ -54,7 +54,7 @@ def plot_mse_histogram(
 
 
 if __name__ == "__main__":
-    from src.ckpt_predictions import get_optimal_fc_predictions
+    from src.models.ckpt_predictions import get_optimal_fc_predictions
 
     for coumound in ["Cu-O", "Ti-O"]:
         for simulation_type in ["VASP", "FEFF"]:

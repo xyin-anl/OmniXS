@@ -1,10 +1,10 @@
-from src.ckpt_predictions import fc_ckpt_predictions
+from src.models.ckpt_predictions import fc_ckpt_predictions
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
 from scripts.plots_model_report import generate_plots_for_report
-from src.pl_data import XASData
+from src.data.pl_data import XASData
 
 
 def model_report(query, model_fn):
