@@ -5,6 +5,7 @@ defaults:
   - model
   - callbacks
   - optuna
+  - transformations
   - hydra: default
   - logger: tensorboard
 

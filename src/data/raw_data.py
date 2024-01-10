@@ -1,3 +1,4 @@
+from config.defaults import cfg
 import numpy as np
 import yaml
 import os
@@ -62,9 +63,7 @@ class RAWData(ABC):
 
     @staticmethod
     def configs(cfg_path="cfg/transformations.yaml"):
-        with open(cfg_path) as file:
-            cfg = yaml.load(file, Loader=yaml.FullLoader)
-        return cfg
+        return cfg.transformations
 
     def __len__(self):
         return self.total_sites
