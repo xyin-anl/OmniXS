@@ -1,3 +1,4 @@
+from typing import Optional
 from src.data.raw_data import RAWData
 import yaml
 from scipy.constants import physical_constants
@@ -44,17 +45,17 @@ class VASPData(ProcessedData):
         self._spectra = (omega * self.big_omega) / a
         return self
 
-    @classmethod
-    def lorentz_broaden(self, x, xin, yin, gamma):
+    @staticmethod
+    def lorentz_broaden(x, xin, yin, gamma):
         dx = xin[-1] - xin[0]
         differences = x[:, np.newaxis] - xin
         lorentzian = cauchy.pdf(differences, 0, gamma / 2)
         return np.dot(lorentzian, yin) / len(xin) * dx
 
-    def broaden(self, gamma: float = None):
+    def broaden(self, gamma: Optional[float] = None):
         if gamma is None:
             gamma = RAWData.configs()["gamma"][self.compound]
-        broadened_amplitude = self.lorentz_broaden(
+        broadened_amplitude = VASPData.lorentz_broaden(
             self._energy,
             self._energy,
             self._spectra,

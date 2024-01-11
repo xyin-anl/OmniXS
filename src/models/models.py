@@ -1,8 +1,9 @@
-from src.data.pl_data import XASData
+from src.data.pl_data import XASData, DataQuery
 from utils.src.optuna.dynamic_fc import PlDynamicFC
 
 # import pytorch_lightning as pl
 import lightning as pl
+import lightning
 import torch
 import yaml
 
@@ -12,14 +13,14 @@ if __name__ == "__main__":
         TensorboardLogTestTrainLoss,
     )
 
-    query = {
-        "compound": "Ti-O",
-        "simulation_type": "VASP",
-        "split": "material",
-    }
-    optimal_fc = yaml.safe_load(open("cfg/misc.yaml", "r"))["optimal_fc_params"]
+    query = DataQuery(
+        compound="Ti-O",
+        simulation_type="VASP",
+    )
+
+    optimal_fc = yaml.safe_load(open("config/misc.yaml", "r"))["optimal_fc_params"]
     widths = optimal_fc[query["compound"]][query["simulation_type"]]
-    data_module = XASData(query=query, num_workers=0, batch_size=128)
+    data_module = XASData(query=query, num_workers=0, batch_size=128, pre_split=True)
     model = PlDynamicFC(widths=widths, output_size=200)
     trainer = pl.Trainer(max_epochs=500)
     callbacks = [

@@ -1,3 +1,4 @@
+from typing import List
 from config.defaults import cfg
 import numpy as np
 import yaml
@@ -12,12 +13,18 @@ from typing import Optional, Set
 
 @dataclass
 class RAWData(ABC):
-    compound: str = field(default=None, init=False)
-    simulation_type: str = field(default=None, init=False)
-    missing_data: Optional[Set[str]] = field(default_factory=set, init=False)
-    intermediate_dir: str = field(default=None, init=False)
+    compound: Optional[str] = field(default=str(), init=True)
+    simulation_type: Optional[str] = field(default=None, init=True)
+    intermediate_dir: Optional[str] = field(default=None, init=True)
+    base_dir: Optional[str] = field(default=str(), init=False)
+    missing_data: Set[tuple] = field(default_factory=set, init=False)
 
-    def _default_base_dir(self):
+    def __post_init__(self):
+        if self.base_dir is str():
+            self.base_dir = self._default_base_dir()
+        self.parameters
+
+    def _default_base_dir(self) -> str:
         default_base_dir = os.path.join(  # default
             "dataset",
             f"{self.simulation_type}-raw-data",
@@ -28,7 +35,7 @@ class RAWData(ABC):
         return default_base_dir
 
     @cached_property
-    def _ids(self):
+    def _material_ids(self) -> List[str]:
         """Can include ids with missing data"""
         ids = os.listdir(self.base_dir)
         id_filter = re.compile(r"(mp-\d+|mvc-\d+)")
@@ -47,10 +54,15 @@ class RAWData(ABC):
     def _sites(self):
         """Can include sites with missing data"""
         sites = {}
-        for id in self._ids:
-            dir_path = os.path.join(self.base_dir, id, self.intermediate_dir)
+        for id in self._material_ids:
+            dir_path = os.path.join(
+                self.base_dir or "",
+                id,
+                self.intermediate_dir or "",
+            )
+            # dir_path = os.path.join(self.base_dir, id, self.intermediate_dir)
             folders = os.listdir(dir_path)
-            pattern = r"(\d+)_" + self.compound
+            pattern = r"(\d+)_" + (self.compound or "")
             site_list = list(filter(lambda x: re.match(pattern, x), folders))
             if len(site_list) == 0:
                 warnings.warn(f"No sites found for {id} at {folders}")

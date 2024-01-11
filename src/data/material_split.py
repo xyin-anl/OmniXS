@@ -69,4 +69,6 @@ if __name__ == "__main__":
     fractions = [len(x) / total for x in out]
     fractions = [round(x, 2) for x in fractions]
 
+    from utils.src.misc.icecream import ic
+
     ic(fractions)

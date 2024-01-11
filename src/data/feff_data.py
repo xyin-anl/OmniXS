@@ -1,6 +1,8 @@
 import numpy as np
 from src.data.data import ProcessedData
-from DigitalBeamline.digitalbeamline.extern.lightshow.compare_utils import compare_between_spectra
+from DigitalBeamline.digitalbeamline.extern.lightshow.compare_utils import (
+    compare_between_spectra,
+)
 from scipy import constants
 
 
@@ -20,7 +22,7 @@ class FEFFData(ProcessedData):
         if include_emperical_truncation:
             self.truncate_emperically()
         if resample:
-            self.resample() # taking emperical range
+            self.resample()  # taking emperical range
         return self
 
     def truncate(self):
@@ -34,8 +36,9 @@ class FEFFData(ProcessedData):
 
     def align(self, target: ProcessedData):
         source = np.array([self.energy, self.spectra]).T
-        target = np.array([target.energy, target.spectra]).T
-        shift, _ = compare_between_spectra(source, target)
+        shift, _ = compare_between_spectra(
+            source, np.array([target.energy, target.spectra]).T
+        )
         self.align_energy(-shift)
         return shift
 

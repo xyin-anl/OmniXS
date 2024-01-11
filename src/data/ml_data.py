@@ -88,7 +88,7 @@ class MLData:
 
     @staticmethod
     def filename_to_uid(compound, filename):
-        id, site = re.split(f"_site_|_{compound}\.dat", filename)[:2]
+        id, site = re.split(rf"_site_|_{compound}\.dat", filename)[:2]
         return id, site
 
     @staticmethod

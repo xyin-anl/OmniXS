@@ -4,11 +4,11 @@
   output: pdf_document
 ---
 
-## Parsing and Pre-processing Algorithm for RAW FEFF and VASP Data
+# Parsing and Pre-processing Algorithm for RAW FEFF and VASP Data
 
-### VASP Data (`RAWDataVASP`)
+## VASP Data (`RAWDataVASP`)
 
-#### Search Patterns and Calculations:
+### VASP: Search Patterns and Calculations
 
 - **ID Search Pattern**: Regular expression `"(mp-\d+|mvc-\d+)"` used to
   identify IDs.
@@ -34,9 +34,9 @@
     (`cfg/transformations.yaml`).
   - current values are: `-8850.2467(Cu)` and `-4864.0371(Ti)`.
 
-### FEFF Data (`RAWDataFEFF`)
+## FEFF Data (`RAWDataFEFF`)
 
-#### Search Patterns and Calculations:
+### FEFF: Search Patterns and Calculations
 
 - **ID Search Pattern**: Same regular expression as VASP (`"(mp-\d+|mvc-\d+)"`) for consistency.
 - **Mu Parameter (mu)**:

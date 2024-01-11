@@ -1,6 +1,8 @@
 # %%
 # %load_ext autoreload
 # %autoreload 2
+import numpy as np
+from typing import Tuple
 from src.data.pl_data import XASData
 import glob
 import os
@@ -66,12 +68,12 @@ def fc_ckpt_predictions(
     data_module,
     widths,
     base_dir="results/oct_26/optimal_nn_tb_logs/",
-):
+) -> Tuple[str, np.ndarray, np.ndarray]:
     ckpt_path = find_ckpt_paths(query, base_dir)
 
     if not ckpt_path:
         print(f"No checkpoint found for query {query}")
-        return None, None, None
+        return str(), np.ndarray([]), np.ndarray([])
 
     # Load the model
     model = load_model_from_ckpt(ckpt_path, widths)

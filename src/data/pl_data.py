@@ -1,3 +1,4 @@
+from typing import Union
 import os
 import warnings
 from typing import List, Literal, TypedDict
@@ -11,18 +12,19 @@ from src.data.material_split import MaterialSplitter
 from utils.src.lightning.pl_data_module import PlDataModule
 
 
-class XASData(PlDataModule):
-    class DataQuery(TypedDict):
-        compound: str
-        simulation_type: Literal["VASP", "FEFF"]
+class DataQuery(TypedDict):
+    compound: str
+    simulation_type: Literal["VASP", "FEFF"]
 
+
+class XASData(PlDataModule):
     def __init__(
         self,
-        query: "XASData.DataQuery",
+        query: DataQuery,
         dtype: torch.dtype = torch.float32,
         pre_split: bool = False,
-        split_fractions: List[float] = [0.8, 0.1, 0.1],  #  used when pre_split=False
-        max_size: int = None,
+        split_fractions: Union[List[float], None] = None,  # used when pre_split=False
+        max_size: Union[int, None] = None,  # used when pre_split=False
         **pl_data_module_kwargs,
     ):
         self.dtype = dtype
@@ -56,9 +58,9 @@ class XASData(PlDataModule):
     def load_data(
         query: DataQuery,
         dtype: torch.dtype = torch.float32,
-        split_fractions: List[float] = [0.8, 0.1, 0.1],
-        max_size: int = None,
-    ):
+        split_fractions: Union[List[float], None] = None,
+        max_size: Union[int, None] = None,
+    ) -> dict[str, TensorDataset]:
         """Loads data and does material splitting."""
         compound = query["compound"]
         sim_type = query["simulation_type"]
@@ -89,31 +91,26 @@ class XASData(PlDataModule):
         id_to_task.update({id: "val" for id in val_split[:, 0]})
         id_to_task.update({id: "test" for id in test_split[:, 0]})
 
-        # Initialize split data structure
-        variables = ["X", "y"]
         tasks = ["train", "val", "test"]
-        data_split = {t: {v: [] for v in variables} for t in tasks}
 
-        # Populate split data
-        for id, feature, spectra in zip(
-            data_all["ids"], data_all["features"], data_all["spectras"]
-        ):
-            task = id_to_task.get(id)
-            if task:
-                data_split[task]["X"].append(feature)
-                data_split[task]["y"].append(spectra)
-            else:
-                warnings.warn(f"ID {id} not in any recognized split")
+        # assign id to task based on the split
+        data_split = {
+            id_to_task.get(id): {"features": feature, "spectra": spectra}
+            for id, feature, spectra in zip(
+                data_all["ids"], data_all["features"], data_all["spectras"]
+            )
+        }
 
         # Convert to tensors and create TensorDataset objects
-        for t in tasks:
-            data_split[t] = {
-                v: torch.from_numpy(np.array(data_split[t][v])).to(dtype=dtype)
-                for v in variables
-            }
-            data_split[t] = TensorDataset(data_split[t]["X"], data_split[t]["y"])
+        dataset = {
+            t: TensorDataset(
+                torch.from_numpy(np.array(data_split[t]["features"])).to(dtype=dtype),
+                torch.from_numpy(np.array(data_split[t]["spectra"])).to(dtype=dtype),
+            )
+            for t in tasks
+        }
 
-        return data_split
+        return dataset
 
     @staticmethod
     def load_pre_split_data(query: DataQuery, dtype: torch.dtype = torch.float32):
@@ -138,13 +135,13 @@ class XASData(PlDataModule):
 
 if __name__ == "__main__":
     xas_data_pre_split = XASData(
-        query=XASData.DataQuery(compound="Cu-O", simulation_type="FEFF"),
+        query=DataQuery(compound="Cu-O", simulation_type="FEFF"),
         pre_split=True,
         split_fractions=None,
     )
 
     xas_data_post_split = XASData(
-        query=XASData.DataQuery(compound="Cu", simulation_type="FEFF"),
+        query=DataQuery(compound="Cu", simulation_type="FEFF"),
         pre_split=False,
         split_fractions=[0.4, 0.3, 0.3],
         max_size=1000,

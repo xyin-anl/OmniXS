@@ -1,3 +1,4 @@
+from typing import Union, Tuple
 from src.data.raw_data import RAWData
 import yaml
 import numpy as np
@@ -11,12 +12,17 @@ from abc import ABC, abstractmethod
 
 class ProcessedData(ABC):
     def __init__(
-        self, compound, simulation_type, params=None, id=None, do_transform=True
+        self,
+        compound: str,
+        simulation_type: str,
+        params=None,
+        id: Union[Tuple[str, str], None] = None,
+        do_transform: bool = True,
     ):
         self.compound = compound
         self.simulation_type = simulation_type
         self._id = id
-        self._energy = self._spectra = None
+        self._energy = self._spectra = np.array([])
 
         if params is not None:
             self.params = params
@@ -26,13 +32,13 @@ class ProcessedData(ABC):
                 self.transform()
 
     @property
-    def id(self):
+    def id(self) -> Tuple[str, str]:
         if self._id is None:
             raise ValueError("id not set")
         return self._id
 
     @id.setter
-    def id(self, id):
+    def id(self, id) -> None:
         assert (
             isinstance(id, tuple)
             and len(id) == 2
@@ -59,31 +65,31 @@ class ProcessedData(ABC):
         return self
 
     @property
-    def energy(self):
+    def energy(self) -> np.ndarray:
         if self._energy is None:
             raise ValueError("Energy values empty. Load data first.")
         return self._energy
 
     @energy.setter
-    def energy(self, energy):
+    def energy(self, energy) -> None:
         if not np.all(np.diff(energy) > 0):
             raise ValueError("Energy values must be monotonically increasing.")
         self._energy = energy
-        if len(self._spectra) != len(self._energy):
-            self._spectra = None
+        if self._spectra and len(self._spectra) != len(self._energy):
+            self._spectra = np.array([])
             warnings.warn("Spectra values reset to None.")
 
     @property
-    def spectra(self):
+    def spectra(self) -> np.ndarray:
         if self._spectra is None:
             raise ValueError("Spectra values empty. Load data first.")
         return self._spectra
 
     @spectra.setter
-    def spectra(self, spectra):
+    def spectra(self, spectra) -> None:
         self._spectra = spectra
         if len(self._spectra) != len(self._energy):
-            self._energy = None
+            self._energy = np.array([])
             warnings.warn("Energy values reset to None.")
 
     def reset(self):
@@ -133,7 +139,9 @@ class ProcessedData(ABC):
             target.spectra,
             dist=lambda x, y: np.abs(x - y),  # euclidean norm
         )
-        shifts = source.energy[path[0]] - target.energy[path[1]]
+        path0 = np.array(path[0]) if isinstance(path[0], range) else path[0].astype(int)
+        path1 = np.array(path[1]) if isinstance(path[1], range) else path[1].astype(int)
+        shifts = source.energy[path0] - target.energy[path1]
         dominant_shift = np.round(np.median(shifts)).astype(int)
         return dominant_shift
 
@@ -167,7 +175,7 @@ class ProcessedData(ABC):
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
             warnings.warn(f"Created directory {save_dir} to save data.")
-        file_name = "_site_".join(self._id) + ".dat"
+        file_name = "_site_".join(self.id) + ".dat"
         file_path = os.path.join(save_dir, file_name)
         data_table = np.array([self.energy, self.spectra]).T
         np.savetxt(file_path, data_table, delimiter="\t")

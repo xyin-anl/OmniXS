@@ -2,7 +2,7 @@ import os
 import warnings
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import Literal, Optional
+from typing import Literal, Optional, Set
 
 import numpy as np
 from scipy.stats import cauchy
@@ -13,19 +13,14 @@ from src.data.raw_data import RAWData
 @dataclass
 class RAWDataFEFF(RAWData):
     compound: str
-    base_dir: Optional[str] = field(default=None, init=False)
+    # base_dir: Optional[str] = field(default=None, init=False)
     simulation_type: Literal["FEFF"] = field(default="FEFF", init=True)
     intermediate_dir: Literal["FEFF-XANES"] = field(default="FEFF-XANES", init=True)
 
-    def __post_init__(self):
-        if self.base_dir is None:
-            self.base_dir = self._default_base_dir()
-        self.parameters  # initialize cached property
-
-    def _check_convergence(self, id, site):
+    def _check_convergence(self, material_id: str, site: str):
         dir = os.path.join(
-            self.base_dir,
-            id,
+            self.base_dir or "",
+            material_id,
             f"{self.simulation_type}-XANES",
             site,
         )
@@ -37,19 +32,19 @@ class RAWDataFEFF(RAWData):
         else:
             return False
 
-    def mu(self, id, site):
-        if not self._check_convergence(id, site):
-            warnings.warn(f"Unconverged {id} at {site}")
+    def mu(self, material_id, site):
+        if not self._check_convergence(material_id, site):
+            warnings.warn(f"Unconverged {material_id} at {site}")
             return None
         dir_path = os.path.join(
-            self.base_dir,
-            id,
+            self.base_dir or "",
+            material_id,
             f"{self.simulation_type}-XANES",
             site,
         )
         file_path = os.path.join(dir_path, "xmu.dat")
         if not os.path.exists(file_path):
-            warnings.warn(f"Missing mu for {id} at {site}")
+            warnings.warn(f"Missing mu for {material_id} at {site}")
             return None
         with open(file_path, "r") as f:
             lines = f.readlines()
@@ -59,7 +54,7 @@ class RAWDataFEFF(RAWData):
             energy = data[:, 0]
             mu = data[:, 3] * normalization
             if mu is None:
-                warnings.warn(f"Missing mu for {id} at {site}")
+                warnings.warn(f"Missing mu for {material_id} at {site}")
                 return None
             data = np.array([energy, mu]).T
             data.setflags(write=False)
@@ -68,14 +63,14 @@ class RAWDataFEFF(RAWData):
     @cached_property
     def parameters(self):
         parameters = {}
-        for id in self._ids:
-            for site in self._sites.get(id, []):
-                mu_val = self.mu(id, site)
+        for mat_id in self._material_ids:
+            for site in self._sites.get(mat_id, []):
+                mu_val = self.mu(mat_id, site)
                 if mu_val is None:
-                    self.missing_data.add((id, site))
+                    self.missing_data.add((mat_id, site))
                     continue
                 mu_val.setflags(write=False)  # redundant but clearer
-                parameters[id, site] = {"mu": mu_val}
+                parameters[mat_id, site] = {"mu": mu_val}
         if len(self.missing_data) > 0:
             warnings.warn(f"{len(self.missing_data)} missing data for {self.compound}")
         return parameters
@@ -86,7 +81,7 @@ if __name__ == "__main__":
     data.parameters
     print(f"data: {len(data)}, missing: {len(data.missing_data)}")
 
-    id = next(iter(data._ids))
+    id = next(iter(data._material_ids))
     site = next(iter(data._sites[id]))
     id = ("mp-390", "000_Ti")  # reference to another paper data
 

@@ -1,4 +1,3 @@
-from optuna.integration import PyTorchLightningPruningCallback
 import sys
 import logging
 import optuna

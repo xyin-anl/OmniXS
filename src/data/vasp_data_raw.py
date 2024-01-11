@@ -16,14 +16,8 @@ from src.data.raw_data import RAWData
 @dataclass
 class RAWDataVASP(RAWData):
     compound: str
-    base_dir: Optional[str] = field(default=None, init=False)
     simulation_type: Literal["VASP"] = field(default="VASP", init=True)
     intermediate_dir: Literal["VASP"] = field(default="VASP", init=True)
-
-    def __post_init__(self):
-        if self.base_dir is None:
-            self.base_dir = self._default_base_dir()
-        self.parameters  # initialize cached property
 
     def __len__(self):
         return len(self.parameters)
@@ -32,7 +26,7 @@ class RAWDataVASP(RAWData):
     def parameters(self):
         """Parameters for each site in each id where all data is available"""
         parameters = {}
-        for id in self._ids:
+        for id in self._material_ids:
             E_GS_val = self.E_GS(id)
             if E_GS_val is None:
                 sites_with_id = [(id, site) for site in self._sites[id]]
@@ -65,7 +59,7 @@ class RAWDataVASP(RAWData):
 
     def volume(self, id, site):
         file_path = os.path.join(
-            self.base_dir,
+            self.base_dir or "",
             id,
             self.simulation_type,
             site,
@@ -117,7 +111,12 @@ class RAWDataVASP(RAWData):
             print(f"Generated {mu_avg_file_path}")
 
     def mu(self, id, site):
-        dir_path = os.path.join(self.base_dir, id, self.simulation_type, site)
+        dir_path = os.path.join(
+            self.base_dir or "",
+            id,
+            self.simulation_type,
+            site,
+        )
         avg_path = os.path.join(dir_path, "xmu_avg.dat")
         sum_path = os.path.join(dir_path, "mu2.txt")
         if not os.path.exists(avg_path):
@@ -130,7 +129,7 @@ class RAWDataVASP(RAWData):
 
     def e_cbm(self, id, site):
         file_path = os.path.join(
-            self.base_dir,
+            self.base_dir or "",
             id,
             self.simulation_type,
             site,
@@ -161,7 +160,7 @@ class RAWDataVASP(RAWData):
     def E_ch(self, id, site):
         return self.E0(
             os.path.join(
-                self.base_dir,
+                self.base_dir or "",
                 id,
                 self.simulation_type,
                 site,
@@ -172,7 +171,7 @@ class RAWDataVASP(RAWData):
     def E_GS(self, id):
         return self.E0(
             os.path.join(
-                self.base_dir,
+                self.base_dir or "",
                 id,
                 self.simulation_type,
                 "SCF",
