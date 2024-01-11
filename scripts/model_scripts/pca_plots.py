@@ -69,22 +69,22 @@ def linear_fit_of_pcas(x_pca, y_pca, selected_x_pca_dim, compound, simulation_ty
 
 if __name__ == "__main__":
     # configs
-    compound = "Cu-O"
+    compound = "Ti"
     simulation_type = "FEFF"  # "VASP", "FEFF"
     query = {
         "compound": compound,
         "simulation_type": simulation_type,
-        "split": "material",
+        # "split": "material",
     }
 
     plt.style.use(["science", "high-vis", "no-latex"])
-    selected_x_pca_dims = {"FEFF": {"Cu-O": 2, "Ti-O": 4}, "VASP": {"Ti-O": 2}}
+    selected_x_pca_dims = {"FEFF": {"Cu": 2, "Ti": 4}, "VASP": {"Ti": 2}}
     selected_x_pca_dim = selected_x_pca_dims[simulation_type][compound]
 
     # data
     data = XASData.load_data(query=query)
-    X_train, y_train = data["train"]["X"], data["train"]["y"]
-    X_test, y_test = data["test"]["X"], data["test"]["y"]
+    X_train, y_train = data["train"].tensors
+    X_test, y_test = data["test"].tensors
 
     # model and predictions
     model = LinearRegression().fit(X_train, y_train)

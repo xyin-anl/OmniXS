@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
-from scripts.plots_model_report import generate_plots_for_report
+from scripts.model_scripts.plots_model_report import generate_plots_for_report
 from src.data.pl_data import XASData
 
 
@@ -28,8 +28,8 @@ def model_report(query, model_fn):
 
 def linear_model_predictions(query):
     data = XASData.load_data(query=query)
-    X_train, y_train = data["train"]["X"], data["train"]["y"]
-    X_test, y_test = data["test"]["X"], data["test"]["y"]
+    X_train, y_train = data["train"].tensors
+    X_test, y_test = data["test"].tensors
 
     model_name = "linear_regression"
     predictions = LinearRegression().fit(X_train, y_train).predict(X_test)

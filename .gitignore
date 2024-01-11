@@ -1,4 +1,6 @@
 results
+lightning_logs
+*.pdf
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/macos,linux,jupyternotebooks,python
