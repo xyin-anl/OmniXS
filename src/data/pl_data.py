@@ -1,3 +1,4 @@
+from utils.src.misc.icecream import ic
 from typing import Union
 import os
 import warnings
@@ -23,7 +24,11 @@ class XASData(PlDataModule):
         query: DataQuery,
         dtype: torch.dtype = torch.float32,
         pre_split: bool = False,
-        split_fractions: Union[List[float], None] = None,  # used when pre_split=False
+        split_fractions: Union[List[float], None] = [
+            0.8,
+            0.1,
+            0.1,
+        ],  # used when pre_split=False
         max_size: Union[int, None] = None,  # used when pre_split=False
         **pl_data_module_kwargs,
     ):
@@ -93,13 +98,19 @@ class XASData(PlDataModule):
 
         tasks = ["train", "val", "test"]
 
-        # assign id to task based on the split
-        data_split = {
-            id_to_task.get(id): {"features": feature, "spectra": spectra}
-            for id, feature, spectra in zip(
-                data_all["ids"], data_all["features"], data_all["spectras"]
-            )
-        }
+        data_split = {t: {"features": [], "spectra": []} for t in tasks}
+        for id, feature, spectra in zip(
+            data_all["ids"], data_all["features"], data_all["spectras"]
+        ):
+            task = id_to_task.get(id)
+            if task is None:
+                warnings.warn(f"task is None for id {id}")
+                continue
+            if task not in tasks:
+                warnings.warn(f"task {task} not in tasks")
+                continue
+            data_split[task]["features"].append(feature)
+            data_split[task]["spectra"].append(spectra)
 
         # Convert to tensors and create TensorDataset objects
         dataset = {

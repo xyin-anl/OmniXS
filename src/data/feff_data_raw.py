@@ -13,7 +13,6 @@ from src.data.raw_data import RAWData
 @dataclass
 class RAWDataFEFF(RAWData):
     compound: str
-    # base_dir: Optional[str] = field(default=None, init=False)
     simulation_type: Literal["FEFF"] = field(default="FEFF", init=True)
     intermediate_dir: Literal["FEFF-XANES"] = field(default="FEFF-XANES", init=True)
 
@@ -92,5 +91,3 @@ if __name__ == "__main__":
         data.parameters[id]["mu"][:, 1],
     )
     plt.show()
-
-# %%
