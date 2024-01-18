@@ -1,14 +1,21 @@
 defaults:
   - _self_
-  - paths
   - data
   - model
-  - callbacks
+  # - callbacks
   - optuna
   - transformations
+  - compounds
+  - paths
+  - experiment
   - hydra: default
   - logger: tensorboard
 
 hydra:
   searchpath:
+    - pkg://utils/src/hydra/configs
     - utils/src/hydra/configs
+
+  # You can also use file based schema:
+  # - file:///etc/my_app
+  # - file://${oc.env:HOME}/.my_app

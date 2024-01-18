@@ -8,7 +8,7 @@ from omegaconf import DictConfig
 from rich import print
 
 
-@hydra.main(version_base=None, config_path="cfg", config_name="experiment")
+@hydra.main(version_base=None, config_path="config", config_name="defaults")
 def main(cfg: DictConfig):
     # print(cfg)
     # return
@@ -70,7 +70,7 @@ class Optimizer:
         return trainer.callback_metrics["val_loss"]
 
 
-@hydra.main(version_base=None, config_path="cfg", config_name="experiment")
+@hydra.main(version_base=None, config_path="config", config_name="defaults")
 def run_optmization(cfg: DictConfig):
     optuna.logging.get_logger("optuna").addHandler(logging.StreamHandler(sys.stdout))
     study = optuna.create_study(

@@ -1,9 +1,13 @@
 data_module:
-  _target_: src.xas_data.XASData
+  _target_: src.data.pl_data.XASData
+  # _target_: src.xas_data.XASData
   query:
+    _target_: src.data.pl_data.DataQuery
     compound: ${compound_name}
     simulation_type: ${simulation_type}
-    split: material
+    # compound: ${compound_name}
+    # simulation_type: ${simulation_type}
+    # split: material
   # data_dir: "dataset/ML-231009/${compound_name}_K-edge_${simulation_type}_XANES/material-splits/data"
   random_seed: 42
   batch_size: 128

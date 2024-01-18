@@ -3,6 +3,7 @@ defaults:
   - _self_
 
 paths:
+  root_dir: "."
   data_dir: ${paths.root_dir}/dataset
   poscar: ${paths.data_dir}/POSCAR_unit_cells/{compound}/{id}/POSCAR
   raw_data_feff: ${paths.data_dir}/FEFF-raw-data/{compound}/{id}/FEFF-XANES/{site}_{compound}
@@ -10,3 +11,10 @@ paths:
   processed_data: ${paths.data_dir}/{simulation_type}-processed-data/{compound}/{id}_site_{site}_{compound}.dat
   ml_data: ${paths.data_dir}/ML-data/{compound}_{simulation_type}.npz
   pre_split_ml_data: ${paths.data_dir}/ML-231009/{compound}_K-edge_{simulation_type}_XANES/material-splits/data
+  train_data: ${paths.root_dir}/results/train_data
+
+  optuna_db: sqlite:///${paths.train_data}/{compound}-{simulation_type}.db
+  best_checkpoint: ${paths.train_log}/checkpoints/epoch=*.ckpt
+  last_checkpoint: ${paths.train_log}/checkpoints/last.ckpt
+  train_log: ${paths.train_data}/logs/{compound}-{simulation_type}/runs/{hydra_id}/lightning_logs/version_{optuna_id}
+  hydra_id: 2024-01-11-_21-44-47 # <-- analysis dependent

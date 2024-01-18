@@ -1,0 +1,12 @@
+defaults:
+  - _self_
+
+compounds:
+  - Co
+  - Cr
+  - Cu
+  - Fe
+  - Mn
+  - Ni
+  - Ti
+  - V

@@ -1,3 +1,4 @@
+from omegaconf import OmegaConf
 from utils.src.misc.icecream import ic
 from typing import Union
 import os
@@ -69,6 +70,9 @@ class XASData(PlDataModule):
         """Loads data and does material splitting."""
         compound = query["compound"]
         sim_type = query["simulation_type"]
+
+        cfg = OmegaConf.load("./config/paths.yaml")
+
         file_path = cfg.paths.ml_data.format(
             compound=compound, simulation_type=sim_type
         )

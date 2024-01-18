@@ -1,5 +1,5 @@
 defaults:
-  - default
+  # - defaults
   # - debug
   - mps # trainer is specified underneath
   - callbacks
@@ -11,8 +11,8 @@ model:
   model:
     widths: [64] # [64, 100, 100, 100]
 
-compound_name: Cu-O # Ti-O
-simulation_type: feff
+compound_name: Cu # Cu-O # Ti-O
+simulation_type: FEFF
 tags:
   - ${compound_name}
   - ${simulation_type}
@@ -40,11 +40,3 @@ callbacks:
   model_checkpoint:
     mode: "min"
     save_last: True
-
-# TODO: move this to seperate
-hydra:
-  searchpath:
-    - pkg://utils/src/hydra/configs
-    # You can also use file based schema:
-    # - file:///etc/my_app
-    # - file://${oc.env:HOME}/.my_app
