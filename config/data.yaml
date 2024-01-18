@@ -1,8 +1,7 @@
 data_module:
-  _target_: src.data.pl_data.XASData
-  # _target_: src.xas_data.XASData
+  _target_: src.data.ml_data.XASPlData
   query:
-    _target_: src.data.pl_data.DataQuery
+    _target_: src.data.ml_data.DataQuery
     compound: ${compound_name}
     simulation_type: ${simulation_type}
     # compound: ${compound_name}

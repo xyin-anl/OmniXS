@@ -2,15 +2,24 @@ from typing import List
 import numpy as np
 from utils.src.misc import icecream
 from src.data.feff_data_raw import RAWDataFEFF
+import warnings
 
 
 class MaterialSplitter:
     @staticmethod
-    def split(id_site_pairs, target_fractions, seed=42):
-        target_sums = [int(x * len(id_site_pairs)) for x in target_fractions]
-        return MaterialSplitter.greedy_multiway_partition(
-            id_site_pairs, target_sums, seed
+    def split(idSite, target_fractions, seed=42):
+        target_sums = [int(x * len(idSite)) for x in target_fractions]
+
+        splits = MaterialSplitter.greedy_multiway_partition(
+            idSite, target_sums, seed
         )
+
+        missing_count = len(idSite) - sum([len(x) for x in splits])
+        if missing_count > 0:
+            msg = f"{missing_count} ids are not part of any (train/val/test) split"
+            warnings.warn(msg)
+
+        return splits
 
     @staticmethod
     def greedy_multiway_partition(
@@ -61,7 +70,7 @@ if __name__ == "__main__":
     feff_raw_data = RAWDataFEFF(compound=compound)
 
     out = MaterialSplitter.split(
-        id_site_pairs=feff_raw_data.ids,
+        idSite=feff_raw_data.ids,
         target_fractions=[0.8, 0.1, 0.1],
     )
 

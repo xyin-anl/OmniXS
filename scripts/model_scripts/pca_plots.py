@@ -1,6 +1,6 @@
 import pandas as pd
 import seaborn as sns
-from src.data.pl_data import XASData
+from src.data.ml_data import XASPlData
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from itertools import combinations_with_replacement
 from sklearn.linear_model import LinearRegression
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     selected_x_pca_dim = selected_x_pca_dims[simulation_type][compound]
 
     # data
-    data = XASData.load_data(query=query)
+    data = XASPlData.load_data(query=query)
     X_train, y_train = data["train"].tensors
     X_test, y_test = data["test"].tensors
 

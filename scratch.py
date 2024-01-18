@@ -1,6 +1,9 @@
 # %%
+import optuna
+from typing import Dict
+from src.data.ml_data import DataQuery
 from utils.src.misc.icecream import ic
-from src.data.pl_data import XASData
+from src.data.ml_data import XASPlData
 from typing import Tuple, TypedDict, Union
 import warnings
 from src.data.material_split import MaterialSplitter
@@ -14,7 +17,7 @@ from utils.src.lightning.pl_data_module import PlDataModule
 
 from config.defaults import cfg
 import re
-from pickle import dump, load
+import pickle
 from p_tqdm import p_map
 from src.data.raw_data import RAWData
 from scripts.data_scripts.m3gnet_version_fix import fix_m3gnet_version
@@ -61,68 +64,95 @@ from src.data.vasp_data import VASPData
 # from src.pl_data import XASData
 from utils.src.lightning.pl_module import PLModule
 from utils.src.optuna.dynamic_fc import PlDynamicFC
-
-imports_1 = [
-    "src",
-    "utils.src.misc",
-    "utils.src.plots.highlight_tick",
-    "matplotlib.pyplot",
-    "src.data.feff_data_raw",
-    "scienceplots",
-    "matplotlib",
-    "src.data.feff_data",
-    "src.data.vasp_data_raw",
-    "scripts.pca_plots",
-    "scripts.plots_model_report",
-    "src.ckpt_predictions",
-    "src.plot.model_report",
-    "src.data.vasp_data",
-    "src.pl_data",
-    "utils.src.lightning.pl_module",
-    "utils.src.optuna.dynamic_fc",
-]
-
-
-imports_2 = {
-    "utils.src.misc": ["icecream"],
-    "utils.src.plots.highlight_tick": ["highlight_tick"],
-    "src.data.feff_data_raw": ["RAWDataFEFF"],
-    "src.data.feff_data": ["FEFFData"],
-    "src.data.vasp_data_raw": ["RAWDataVASP"],
-    "src.data.vasp_data": ["VASPData"],
-    "src.pl_data": ["XASData"],
-    "utils.src.lightning.pl_module": ["PLModule"],
-    "utils.src.optuna.dynamic_fc": ["PlDynamicFC"],
-    "scripts.pca_plots": ["linear_fit_of_pcas", "plot_pcas"],
-    "scripts.plots_model_report": [
-        "heatmap_of_lines",
-        "plot_predictions",
-        "plot_residue_cv",
-        "plot_residue_heatmap",
-        "plot_residue_quartiles",
-    ],
-    "src.ckpt_predictions": ["get_optimal_fc_predictions"],
-    "src.plot.model_report": ["linear_model_predictions", "model_report"],
-}
-
-
-def reimport_modules_and_functions():
-    for module in imports_1:
-        importlib.reload(importlib.import_module(module))
-    for module, items in imports_2.items():
-        reloaded_module = importlib.import_module(module)
-        globals().update({item: getattr(reloaded_module, item) for item in items})
-
-
-reimport_modules_and_functions()
+from src.data.ml_data import DataQuery
 
 # %%
-xas_data_post_split = XASData(
-    query=XASData.DataQuery(compound="Cu", simulation_type="FEFF"),
-    pre_split=False,
-    split_fractions=[0.4, 0.3, 0.3],
-    max_size=1000,
-)
-ic(len(xas_data_post_split.datasets["train"]))
 
-# %%
+from functools import cached_property
+from abc import ABC, abstractmethod
+from src.data.ml_data import XASPlData
+from sklearn.linear_model import LinearRegression
+import optuna
+import numpy as np
+from config.defaults import cfg
+
+
+class TrainedModel(ABC):
+    def __init__(self, compound, simulation_type):
+        self.compound = compound
+        self.simulation_type = simulation_type
+
+    @abstractmethod
+    def name(self):
+        pass
+
+    @abstractmethod
+    def model(self):
+        pass
+
+    @abstractmethod
+    def residues(self):
+        pass
+
+    @staticmethod
+    def get_data(compound, simulation_type):
+        data = XASData(
+            query=DataQuery(
+                compound=compound,
+                simulation_type=simulation_type,
+            ),
+        )
+        X_train, y_train = data.train_dataset.tensors
+        X_test, y_test = data.test_dataset.tensors
+        return X_train, y_train, X_test, y_test
+
+
+class LinReg(TrainedModel):
+    @property
+    def name(self):
+        return "LinReg"
+
+    @cached_property
+    def model(self):
+        X_train, y_train, _, _ = self.get_data(
+            compound=self.compound, simulation_type=self.simulation_type
+        )
+        fitted_model = LinearRegression().fit(X_train, y_train)
+        return fitted_model
+
+    @cached_property
+    def residues(self):
+        _, _, X_test, y_test = self.get_data(
+            compound=self.compound,
+            simulation_type=self.simulation_type,
+        )
+        y_pred = self.model.predict(X_test)
+        y_residues = (y_test - y_pred).flatten()
+        return y_residues
+
+
+class Trained_FCModel(TrainedModel):
+    @property
+    def name(self):
+        return "FCModel"
+
+    @cached_property
+    def model(self):
+        # load from ckpt or build from params
+        raise NotImplementedError
+
+    @cached_property
+    def _optuna_study(self):
+        optuna_study_storage = cfg.paths.optuna_db.format(
+            compound=self.compound,
+            simulation_type=self.simulation_type,
+        )
+        study = optuna.load_study(
+            study_name=f"{self.compound}-{self.simulation_type}",
+            storage=optuna_study_storage,
+        )
+        return study
+
+    @cached_property
+    def losses(self):
+        return self._optuna_study.best_value

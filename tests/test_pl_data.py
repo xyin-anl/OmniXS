@@ -5,26 +5,26 @@ import unittest
 import lightning as pl
 import torch
 
-from src.data.pl_data import XASData
+from src.data.ml_data import XASPlData
 from utils.src.optuna.dynamic_fc import PlDynamicFC
-from src.data.pl_data import DataQuery
+from src.data.ml_data import DataQuery
 
 
-class TestXASDataModule(unittest.TestCase):
+class TestXASPlData(unittest.TestCase):
     def test_load_dataset(self):
         query = DataQuery(
             compound="Cu",
             simulation_type="FEFF",
         )
-        data_module = XASData(query=query)
+        data_module = XASPlData(query=query)
         self.assertEqual(data_module.train_dataset[0][0].shape, torch.Size([64]))
 
 
-class TestXASDataModuleWithModel(unittest.TestCase):
+class TestXASPlDataWithModel(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         # data
-        cls.data = XASData(
+        cls.data = XASPlData(
             DataQuery(
                 compound="Cu",
                 simulation_type="FEFF",

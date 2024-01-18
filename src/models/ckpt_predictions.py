@@ -3,7 +3,7 @@
 # %autoreload 2
 import numpy as np
 from typing import Tuple
-from src.data.pl_data import XASData
+from src.data.ml_data import XASPlData
 import glob
 import os
 
@@ -20,7 +20,7 @@ def get_optimal_fc_predictions(
     base_dir="results/oct_26/optimal_nn_tb_logs/",
 ):
     optimal_fc = yaml.safe_load(open("cfg/misc.yaml", "r"))["optimal_fc_params"]
-    data_module = XASData(query=query, batch_size=128, num_workers=0)
+    data_module = XASPlData(query=query, batch_size=128, num_workers=0)
     model_name, data, predictions = fc_ckpt_predictions(
         query=query,
         data_module=data_module,
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     #         "FEFF": [64, 150, 120, 170],
     #     },
     # }
-    # data_module = XASData(query=query, batch_size=128, num_workers=0)
+    # data_module = XASPlData(query=query, batch_size=128, num_workers=0)
     # model_name, data, predictions = fc_ckpt_predictions(
     #     query,
     #     base_dir,

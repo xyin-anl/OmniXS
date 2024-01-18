@@ -4,7 +4,7 @@ import pandas as pd
 import scienceplots
 
 from scripts.model_scripts.model_report import linear_model_predictions
-from src.data.pl_data import XASData
+from src.data.ml_data import XASPlData
 from src.models.ckpt_predictions import fc_ckpt_predictions
 
 
@@ -90,7 +90,7 @@ if __name__ == "__main__":
             }
 
             # FC
-            data_module = XASData(query=query, batch_size=1, num_workers=0)
+            data_module = XASPlData(query=query, batch_size=1, num_workers=0)
             _, y_test, predictions = fc_ckpt_predictions(
                 query=query,
                 base_dir=base_dir,

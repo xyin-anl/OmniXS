@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 
 from scripts.model_scripts.plots_model_report import generate_plots_for_report
-from src.data.pl_data import XASData
+from src.data.ml_data import XASPlData
 
 
 def model_report(query, model_fn):
@@ -27,7 +27,7 @@ def model_report(query, model_fn):
 
 
 def linear_model_predictions(query):
-    data = XASData.load_data(query=query)
+    data = XASPlData.load_data(query=query)
     X_train, y_train = data["train"].tensors
     X_test, y_test = data["test"].tensors
 
@@ -68,8 +68,7 @@ if __name__ == "__main__":
         "split": "material",
     }
 
-    data_module = XASData(query=query, batch_size=128, num_workers=0)
-
+    data_module = XASPlData(query=query, batch_size=128, num_workers=0)
     model_name, data, predictions = fc_ckpt_predictions(
         query,
         base_dir,
