@@ -1,19 +1,25 @@
+import os
+from hydra.utils import instantiate
 import numpy as np
 from abc import ABC, abstractmethod
 from sklearn.linear_model import LinearRegression
+import torch
+import optuna
 
 
 from functools import cached_property
+from config.defaults import cfg
 
 from src.data.ml_data import DataQuery, load_xas_ml_data
 
-from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 
 class TrainedModel(ABC):
-    def __init__(self, compound, simulation_type="FEFF"):
-        self.compound = compound
-        self.simulation_type = simulation_type
+    def __init__(self, query: DataQuery):
+        self.compound = query.compound
+        self.simulation_type = query.simulation_type
+        self.query = query
 
     @abstractmethod
     def name(self):
@@ -34,6 +40,10 @@ class TrainedModel(ABC):
     @cached_property
     def mae(self):
         return mean_absolute_error(self.data.test.y, self.predictions)
+
+    @cached_property
+    def mse(self):
+        return mean_squared_error(self.data.test.y, self.predictions, squared=True)
 
     def sorted_predictions(self, sort_array=None):
         sort_array = sort_array or self.mae_per_spectra  # default sort by mae
@@ -66,7 +76,7 @@ class TrainedModel(ABC):
 
     @cached_property
     def peak_errors(self):
-        max_idx = np.argmax(self.model.data.test.y, axis=1)
+        max_idx = np.argmax(self.data.test.y, axis=1)
         peak_errors = np.array(
             [error[idx] for error, idx in zip(self.model.absolute_errors, max_idx)]
         )
@@ -83,3 +93,68 @@ class LinReg(TrainedModel):
     @cached_property
     def predictions(self):
         return self.model.predict(self.data.test.X)
+
+
+class Trained_FCModel(TrainedModel):
+    name = "FCModel"
+
+    def __init__(self, query, date_time=None, version=None, ckpt_name="last"):
+        super().__init__(query)
+        self.date_time = date_time or self._latest_dir(self._hydra_dir)
+        self.version = (
+            version or self._latest_dir(self._lightning_log_dir).split("_")[-1]
+        )  # TODO: make it try optuna study
+        self.ckpt_name = ckpt_name
+
+    @cached_property
+    def model(self):
+        model = instantiate(cfg.model)
+        model_params = torch.load(self._ckpt_path)
+        model.load_state_dict(model_params["state_dict"])
+        model.eval()
+        return model
+
+    @cached_property
+    def optuna_study(self):
+        kwargs = dict(compound=self.compound, simulation_type=self.simulation_type)
+        # TODO: move this config to yaml
+        study_name = f"{self.compound}-{self.simulation_type}"
+        storage = cfg.paths.optuna_db.format(**kwargs)
+        study = optuna.load_study(study_name=study_name, storage=storage)
+        return study
+
+    @cached_property
+    def predictions(self):
+        return self.model(torch.Tensor(self.data.test.X)).detach().numpy()
+
+    def _latest_dir(self, directory):
+        assert os.path.exists(directory), f"Directory {directory} does not exist"
+        all_items = os.listdir(directory)
+        dirs = [  # Filter out items that are not directories
+            item for item in all_items if os.path.isdir(os.path.join(directory, item))
+        ]
+        assert len(dirs) > 0, f"Directory {directory} is empty"
+        dirs.sort(  # Sort directories by creation time
+            key=lambda x: os.path.getctime(os.path.join(directory, x)), reverse=True
+        )
+        return dirs[0]
+
+    @property
+    def _hydra_dir(self):
+        dir = "logs/{compound}-{simulation_type}/runs/".format(**self.query.__dict__)
+        assert os.path.exists(dir), f"Hydra dir {dir} not found"
+        return dir
+
+    @property
+    def _lightning_log_dir(self):
+        lightning_dir = self._hydra_dir + self.date_time + "/lightning_logs/"
+        assert os.path.exists(lightning_dir), f"lightning_dir {lightning_dir} not found"
+        return lightning_dir
+
+    @cached_property
+    def _ckpt_path(self, version=None):
+        log_dir = self._lightning_log_dir
+        version_dir = f"version_{self.version}"
+        ckpt_path = log_dir + version_dir + f"/checkpoints/{self.ckpt_name}.ckpt"
+        assert os.path.exists(ckpt_path), f"ckpt_path {ckpt_path} not found"
+        return ckpt_path

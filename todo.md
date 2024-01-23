@@ -1,3 +1,4 @@
+- debug why fc is givin bad results
 - refactor `scripts/model_scripts/plot_model_report.py`
 - make visual rank better:
   - fourier in both rank and train loss
@@ -17,6 +18,7 @@
   - lin model with constraint so that product is positive and plot it
   - feature importance
   - see the percentile of the data ....
+- [x] make the trained model load from the saved model
 - [x] featurization using m3gnet:
   - [x] fix the bug in featurization
   - [x] featurize all feff data
