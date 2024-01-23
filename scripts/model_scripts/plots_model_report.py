@@ -25,6 +25,7 @@ def plot_residue_quartiles(residues, offset, compound, simulation_type):
 
 
 def plot_residue_histogram(residues, title):
+    residues = abs(residues)
     plt.hist(residues, bins=200, density=True)
     plt.title(title)
     plt.xlabel("residue")
@@ -42,7 +43,7 @@ def plot_residue_cv(residues, title):
 
 def plot_residue_heatmap(residues, title):
     linreg_rmse = np.sqrt(np.mean((((residues) ** 2)).flatten()))
-    heatmap_of_lines(residues, ylabel="residues")
+    heatmap_of_lines(residues)
     plot_title = title
     plot_title += f"\n RMSE = {round(linreg_rmse, 3)}"
     plt.title(plot_title)
@@ -63,12 +64,12 @@ def save_plot(file_name):
 
 
 def plot_data(data, title_prefix):
-    heatmap_of_lines(data, ylabel="spectral data")
+    heatmap_of_lines(data)
     plt.title(f"{title_prefix}")
 
 
 def plot_predictions(predictions, residues, title_prefix):
-    heatmap_of_lines(predictions, ylabel="spectral predictions")
+    heatmap_of_lines(predictions)
     linreg_rmse = np.sqrt(np.mean((((residues) ** 2)).flatten()))
     plt.title(f"{title_prefix}:  RMSE = {round(linreg_rmse, 3)}")
 
@@ -80,6 +81,7 @@ def generate_plots_for_report(
     save_file_prefix,
     save: bool = False,
 ):
+    data = data.numpy()
     residues = predictions - data
 
     # plot settings
@@ -133,32 +135,44 @@ def generate_plots_for_report(
 
 
 if __name__ == "__main__":
-    # configs
-    compound = "Cu-O"
-    simulation_type = "FEFF"  # "VASP", "FEFF"
-    query = {
-        "compound": compound,
-        "simulation_type": simulation_type,
-        "split": "material",
-    }
+    from src.data.ml_data import DataQuery
 
-    # linear_model_report(query=query)
+    # ========================================================================
+    # # pre-split data
+    # data = XASPlData.load_pre_split_data(
+    #     query=DataQuery(
+    #         compound="Cu-O",
+    #         simulation_type="FEFF",
+    #     )
+    # )
+    # ========================================================================
 
-    # # data
-    # data = XASData.load_data(query=query)
-    # X_train, y_train = data["train"]["X"], data["train"]["y"]
-    # X_test, y_test = data["test"]["X"], data["test"]["y"]
+    # ========================================================================
+    # data that is no pre-split
+    compound = "V"
+    simulation_type = "FEFF"
+    data = XASPlData(
+        query=DataQuery(
+            compound=compound,
+            simulation_type=simulation_type,
+        ),
+    )
+    data = {"train": data.train_dataset, "test": data.test_dataset}
+    # ========================================================================
+
+    X_train, y_train = data["train"].tensors
+    X_test, y_test = data["test"].tensors
 
     # # model and predictions
-    # model_name = "Linear Regression"
-    # model = LinearRegression().fit(X_train, y_train)
-    # y_pred = model.predict(X_test)
-    # y_residue = y_test - y_pred
+    model_name = "Linear Regression"
+    model = LinearRegression().fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    y_residue = y_test - y_pred
 
-    # generate_plots_for_report(
-    #     data=y_test,
-    #     predictions=y_pred,
-    #     save=False,
-    #     title_prefix=f"{model_name}_{compound}_{simulation_type} \n",
-    #     save_file_prefix=f"{model_name}_{compound}_{simulation_type}",
-    # )
+    generate_plots_for_report(
+        data=y_test,
+        predictions=y_pred,
+        save=False,
+        title_prefix=f"{model_name}_{compound}_{simulation_type} \n",
+        save_file_prefix=f"{model_name}_{compound}_{simulation_type}",
+    )

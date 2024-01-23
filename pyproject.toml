@@ -2,7 +2,7 @@
 line-length = 88
 
 [tool.ruff]
-ignore = ["F401"]
+ignore = ["F401", "F811", "E402"]
 exclude = [
     ".bzr",
     ".direnv",

@@ -13,5 +13,10 @@
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
     // "python.envFile": "${workspaceFolder}/.vscode/.env",
-    "python.tensorBoard.logDirectory": "${workspaceFolder}/outputs/logs",
+    "tensorBoard.logDirectory": "${workspaceFolder}/outputs/logs",
+    "markdownlint.ignore": [
+        "MD013",
+        "MD033",
+        "MD041"
+    ],
 }

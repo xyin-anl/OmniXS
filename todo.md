@@ -1,3 +1,22 @@
+- refactor `scripts/model_scripts/plot_model_report.py`
+- make visual rank better:
+  - fourier in both rank and train loss
+  - dtw
+- Reviews of Modern Physics, Vol. 72, No. 3, July 2000
+- histogram of residues in different basis and a kernet fit
+- plot it based on the periodic table
+- maybbe there is way to quantifiy coimplexiy of data
+- later look at the receptive field as well
+- qunatile plot
+- what is wrong with MLP:
+- maybe try the cu only prediciton and see how it maps with literature
+
+  - if it doesnt work dropout and other regularization
+
+- interpretation:
+  - lin model with constraint so that product is positive and plot it
+  - feature importance
+  - see the percentile of the data ....
 - [x] featurization using m3gnet:
   - [x] fix the bug in featurization
   - [x] featurize all feff data
