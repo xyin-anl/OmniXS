@@ -94,6 +94,28 @@ class Plot:
         plt.savefig(f"{file_name}.{ext}", bbox_inches="tight", dpi=300)
         return self
 
+    def bar_plot_of_loss(self, model_list, ax=None):
+        ax = ax or plt.gca()
+
+        mse = {m.compound: m.mse for m in model_list}
+        model_name = set([m.name for m in model_list])
+        assert len(model_name) == 1, "All models must be of same type"
+        model_name = model_name.pop()
+
+        # bar plots
+        ax.bar(mse.keys(), mse.values(), label=model_name, alpha=0.5)
+        # values on top of bars
+        for i, (c, m) in enumerate(mse.items()):
+            ax.text(i, m, f"{m:.1e}", ha="center", va="bottom", fontsize=12)
+
+        ax.set_ylabel("MSE")
+        ax.set_xlabel("Compound")
+        ax.legend()
+        ax.set_yscale("log")
+
+        # make sure the text are not outside the plot
+        return self
+
     # def histogram_of_residues(model, ax=None):
     #     residues = model.residues()
     #     compound = model.compound
