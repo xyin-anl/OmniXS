@@ -1,13 +1,15 @@
+import re
+from functools import cached_property
+
+import numpy as np
 import scienceplots
+from matplotlib import pyplot as plt
+from sklearn.metrics import r2_score
+
 from config.defaults import cfg
-from src.models.trained_models import TrainedModel
 from src.data.ml_data import DataQuery, load_xas_ml_data
 from src.data.vasp_data import VASPData
-
-from functools import cached_property
-from matplotlib import pyplot as plt
-import numpy as np
-import re
+from src.models.trained_models import TrainedModel
 
 
 class Plot:
@@ -36,7 +38,13 @@ class Plot:
         self.title = title
         return self
 
-    def plot_top_predictions(self, top_predictions, splits=10, axs=None, fill=True):
+    @property
+    def hatch_for_models(self):
+        return {"FCModel": ".", "LinReg": ""}
+
+    def plot_top_predictions(
+        self, top_predictions, compound, splits=10, axs=None, fill=True
+    ):
         if axs is None:
             fig, axs = plt.subplots(splits, 1, figsize=(8, 20))
             axs = axs.flatten()
@@ -81,7 +89,7 @@ class Plot:
             ],
             fontsize=14,
         )
-        axs[-1].set_xlabel(self.title, fontsize=20)
+        axs[-1].set_xlabel(compound, fontsize=20)
         return self
 
     def save(self, file_name=None, ext="pdf"):
@@ -97,20 +105,42 @@ class Plot:
     def bar_plot_of_loss(self, model_list, ax=None):
         ax = ax or plt.gca()
 
+        colors = [self.colors_for_compounds[m.compound] for m in model_list]
+
         mse = {m.compound: m.mse for m in model_list}
+
         model_name = set([m.name for m in model_list])
         assert len(model_name) == 1, "All models must be of same type"
         model_name = model_name.pop()
 
         # bar plots
-        ax.bar(mse.keys(), mse.values(), label=model_name, alpha=0.5)
+        ax.bar(
+            mse.keys(),
+            mse.values(),
+            alpha=0.5,
+            color=colors,
+            edgecolor="black",
+            hatch=self.hatch_for_models[model_name],
+            label=f"{model_name}",
+        )
         # values on top of bars
-        for i, (c, m) in enumerate(mse.items()):
-            ax.text(i, m, f"{m:.1e}", ha="center", va="bottom", fontsize=12)
 
-        ax.set_ylabel("MSE")
-        ax.set_xlabel("Compound")
-        ax.legend()
+        # add labels on top of bars for each compound
+        for m in model_list:
+            ax.text(
+                m.compound,
+                m.mse,
+                f"{m.mse:.1e}",
+                ha="center",
+                va="bottom",
+                fontsize=16,
+                # color=self.colors_for_compounds[m.compound],
+            )
+
+        ax.tick_params(axis="x", labelsize=20)
+        ax.tick_params(axis="y", labelsize=18)
+        ax.set_ylabel("MSE", fontsize=20)
+        ax.legend(fontsize=20, loc="upper left")
         ax.set_yscale("log")
 
         # make sure the text are not outside the plot
@@ -132,6 +162,71 @@ class Plot:
     #     # ax.set_xscale("log")
     #     # ax.set_ylim(1e-3, 1)
     #     # ax.set_xlim(np.quantile(residues, 0.02), np.quantile(residues, 0.70))
+
+    def plot_peak_loc(self, model, compound, ax=None):
+        ax = ax or plt.gca()
+
+        # range of energies for compound
+        e_start = cfg.transformations.e_start[compound]
+        e_diff = cfg.transformations.e_range_diff
+        e_end = e_start + e_diff
+        e_map = np.linspace(e_start, e_end, model.data.test.y.shape[1])
+
+        # peak locations in eV for ground truth
+        peak_truth_idx = np.argmax(model.data.test.y, axis=1)
+        peak_loc_truth = e_map[peak_truth_idx]
+
+        # peak locations in eV for predictions
+        peak_pred_idx = np.argmax(model.predictions, axis=1)
+        peak_loc_predictions = e_map[peak_pred_idx]
+
+        ax.scatter(
+            peak_loc_truth,
+            peak_loc_predictions,
+            color=Plot().colors_for_compounds[compound],
+            marker="o",
+            facecolors="none",
+            linewidths=1.5,
+            edgecolors=Plot().colors_for_compounds[compound],
+        )
+
+        # x == y line
+        x_lims = np.array([np.min(peak_loc_truth), np.max(peak_loc_truth)])
+        y_lims = np.array([np.min(peak_loc_predictions), np.max(peak_loc_predictions)])
+        ax.plot(x_lims, y_lims, color="gray", linestyle="--")
+
+        # linear fit
+        fit = np.polyfit(peak_loc_truth, peak_loc_predictions, 1)
+        fit_fn = np.poly1d(fit)
+        r2 = r2_score(peak_loc_truth, peak_loc_predictions)
+        ax.plot(
+            x_lims,
+            fit_fn(x_lims),
+            linestyle="-",
+            color=Plot().colors_for_compounds[compound],
+            # label=f"R2 = {r2:.3f}",
+            linewidth=1.5,
+        )
+        # # add text to fit line
+        # ax.text(
+        #     0.05,
+        #     0.95,
+        #     f"y = {fit_fn[1]:.3f}x + {fit_fn[0]:.3f}",
+        #     transform=ax.transAxes,
+        #     fontsize=14,
+        #     verticalalignment="top",
+        # )
+
+        ax.set_title(f"{compound}: R2={r2:.3f}", fontsize=18)
+        # ax.set_xlabel("Ground Truth", fontsize=14)
+        # ax.set_ylabel("Predictions", fontsize=14)
+        x0 = min([np.min(peak_loc_truth), np.min(peak_loc_predictions)])
+        x1 = max([np.max(peak_loc_truth), np.max(peak_loc_predictions)])
+        ax.set_xlim(x0, x1)
+        ax.set_ylim(x0, x1)
+        ax.set_aspect("equal", "box"),
+        ax.legend(fontsize=14)
+        return r2
 
 
 if __name__ == "__main__":
