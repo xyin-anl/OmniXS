@@ -1,3 +1,4 @@
+- make 1000 scale organized
 - debug why fc is givin bad results
 - refactor `scripts/model_scripts/plot_model_report.py`
 - make visual rank better:

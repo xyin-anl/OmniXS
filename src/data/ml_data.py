@@ -70,6 +70,8 @@ def load_xas_ml_data(
         filter = np.where(id_match & site_match)[0]
         X = data_all["features"][filter].astype(np.float32)
         y = data_all["spectras"][filter].astype(np.float32)
+        X *= 1000
+        y *= 1000
         return DataSplit(X, y)
 
     return MLSplits(
