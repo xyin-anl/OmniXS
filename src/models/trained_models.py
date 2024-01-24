@@ -99,7 +99,7 @@ class LinReg(TrainedModel):
 class Trained_FCModel(TrainedModel):
     name = "FCModel"
 
-    def __init__(self, query, date_time=None, version=None, ckpt_name="last"):
+    def __init__(self, query, date_time=None, version=None, ckpt_name=None):
         super().__init__(query)
         self.date_time = date_time or self._latest_dir(self._hydra_dir)
         self.version = (
@@ -161,6 +161,13 @@ class Trained_FCModel(TrainedModel):
     def _ckpt_path(self, version=None):
         log_dir = self._lightning_log_dir
         version_dir = f"version_{self.version}"
-        ckpt_path = log_dir + version_dir + f"/checkpoints/{self.ckpt_name}.ckpt"
+        # if ckpt path is none select one that starts with "epoch*.ckpt"
+
+        # ckpt_path = log_dir + version_dir + f"/checkpoints/{self.ckpt_name}.ckpt"
+        ckpt_path = log_dir + version_dir + "/checkpoints/"
+        if self.ckpt_name is None:
+            ckpt_path += [f for f in os.listdir(ckpt_path) if f.startswith("epoch")][0]
+        else:
+            ckpt_path += self.ckpt_name + ".ckpt"
         assert os.path.exists(ckpt_path), f"ckpt_path {ckpt_path} not found"
         return ckpt_path
