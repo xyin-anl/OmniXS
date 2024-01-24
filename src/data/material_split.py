@@ -10,9 +10,16 @@ class MaterialSplitter:
     def split(idSite, target_fractions, seed=42):
         target_sums = [int(x * len(idSite)) for x in target_fractions]
 
-        splits = MaterialSplitter.greedy_multiway_partition(
-            idSite, target_sums, seed
-        )
+        splits = MaterialSplitter.greedy_multiway_partition(idSite, target_sums, seed)
+
+        # sanity check
+        # overlap between splits
+        for i in range(len(splits)):
+            for j in range(i + 1, len(splits)):
+                overlap = np.isin(splits[i][:, 0], splits[j][:, 0]).any()
+                if overlap:
+                    msg = f"Overlap between split {i} and {j}"
+                    raise ValueError(msg)
 
         missing_count = len(idSite) - sum([len(x) for x in splits])
         if missing_count > 0:
