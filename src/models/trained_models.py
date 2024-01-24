@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from sklearn.linear_model import LinearRegression
 import torch
 import optuna
+from main import FC_XAS
 
 
 from functools import cached_property
@@ -108,8 +109,13 @@ class Trained_FCModel(TrainedModel):
 
     @cached_property
     def model(self):
-        model = instantiate(cfg.model)
+        # model = instantiate(cfg.model)
+        model = FC_XAS(widths=[64, 100, 141])
         model_params = torch.load(self._ckpt_path)
+        # change keys of state_dict to remove the "model." prefix
+        model_params["state_dict"] = {
+            k.replace("model.", ""): v for k, v in model_params["state_dict"].items()
+        }
         model.load_state_dict(model_params["state_dict"])
         model.eval()
         return model

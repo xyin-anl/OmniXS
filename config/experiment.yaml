@@ -7,9 +7,6 @@ defaults:
 
 # task_name: ${model.model.widths}
 task_name: ${compound_name}-${simulation_type}
-model:
-  model:
-    widths: [64] # [64, 100, 100, 100]
 
 compound_name: Cu # Cu-O # Ti-O
 simulation_type: FEFF
@@ -18,25 +15,29 @@ tags:
   - ${simulation_type}
 
 trainer:
-  max_epochs: 100
-  log_every_n_steps: 10
+  max_epochs: 500
+  log_every_n_steps: 1
 
 optuna:
   study_name: ${compound_name}-${simulation_type}
   storage: sqlite:///${optuna.study_name}.db
   params:
-    min_width: 10
-    max_width: 200
+    min_width: 100
+    max_width: 100
     step_width: 10
+    min_depth: 1
+    max_depth: 1
   load_if_exists: True
-  n_trials: 500
+  n_trials: 1
 
 callbacks:
-  early_stopping:
-    min_delta: 0.
-    verbose: True
   model_summary:
-    max_depth: 10
+    max_depth: 2
   model_checkpoint:
     mode: "min"
     save_last: True
+  early_stopping:
+    monitor: val_loss
+    min_delta: 0.
+    patience: 10
+    verbose: False

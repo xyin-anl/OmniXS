@@ -11,8 +11,9 @@ paths:
   processed_data: ${paths.data_dir}/{simulation_type}-processed-data/{compound}/{id}_site_{site}_{compound}.dat
   ml_data: ${paths.data_dir}/ML-data/{compound}_{simulation_type}.npz
   pre_split_ml_data: ${paths.data_dir}/ML-231009/{compound}_K-edge_{simulation_type}_XANES/material-splits/data
-  train_data: ${paths.root_dir}/results/train_data
 
+  # train_data: ${paths.root_dir}/results/train_data
+  train_data: ${paths.root_dir}
   optuna_db: sqlite:///${paths.train_data}/{compound}-{simulation_type}.db
   best_checkpoint: ${paths.train_log}/checkpoints/epoch=*.ckpt
   last_checkpoint: ${paths.train_log}/checkpoints/last.ckpt
