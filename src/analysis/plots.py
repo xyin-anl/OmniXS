@@ -1,4 +1,5 @@
 import re
+from src.models.trained_models import MeanModel
 from functools import cached_property
 
 import numpy as np
@@ -40,7 +41,7 @@ class Plot:
 
     @property
     def hatch_for_models(self):
-        return {"FCModel": ".", "LinReg": ""}
+        return {"FCModel": ".", "LinReg": "", "MeanModel": "o"}
 
     def plot_top_predictions(
         self, top_predictions, compound, splits=10, axs=None, fill=True
@@ -102,12 +103,19 @@ class Plot:
         plt.savefig(f"{file_name}.{ext}", bbox_inches="tight", dpi=300)
         return self
 
-    def bar_plot_of_loss(self, model_list, ax=None):
+    def bar_plot_of_loss(self, model_list, ax=None, compare_with_mean_model=False):
         ax = ax or plt.gca()
 
         colors = [self.colors_for_compounds[m.compound] for m in model_list]
 
-        mse = {m.compound: m.mse for m in model_list}
+        if not compare_with_mean_model:
+            mse = {m.compound: m.mse for m in model_list}
+        else:
+            mse = {
+                m.compound: MeanModel(DataQuery(m.compound, m.simulation_type)).mse
+                / m.mse
+                for m in model_list
+            }
 
         model_name = set([m.name for m in model_list])
         assert len(model_name) == 1, "All models must be of same type"
@@ -117,31 +125,34 @@ class Plot:
         ax.bar(
             mse.keys(),
             mse.values(),
-            alpha=0.5,
+            alpha=1.0,
             color=colors,
             edgecolor="black",
             hatch=self.hatch_for_models[model_name],
-            label=f"{model_name}",
+            label=f"{model_name}"
+            # if not compare_with_mean_model
+            # else f"MeanModel/{model_name}",
         )
         # values on top of bars
 
-        # add labels on top of bars for each compound
-        for m in model_list:
+        # # add labels on top of bars for each compound
+        for compound, mse in mse.items():
             ax.text(
-                m.compound,
-                m.mse,
-                f"{m.mse:.1e}",
+                compound,
+                mse,
+                f"{mse:.1e}" if not compare_with_mean_model else f"{mse:.2f}",
                 ha="center",
                 va="bottom",
                 fontsize=16,
-                # color=self.colors_for_compounds[m.compound],
+                color=self.colors_for_compounds[compound],
             )
 
         ax.tick_params(axis="x", labelsize=20)
         ax.tick_params(axis="y", labelsize=18)
-        ax.set_ylabel("MSE", fontsize=20)
+        y_label = "MSE" if not compare_with_mean_model else "MeanModel_MSE/Model_MSE"
+        ax.set_ylabel(y_label, fontsize=20)
         ax.legend(fontsize=20, loc="upper left")
-        ax.set_yscale("log")
+        ax.set_yscale("log" if not compare_with_mean_model else "linear")
 
         # make sure the text are not outside the plot
         return self

@@ -84,6 +84,18 @@ class TrainedModel(ABC):
         return peak_errors
 
 
+class MeanModel(TrainedModel):
+    name = "MeanModel"
+
+    @cached_property
+    def model(self):
+        raise NotImplementedError
+
+    @cached_property
+    def predictions(self):
+        return np.array([np.mean(self.data.train.y, axis=0)] * len(self.data.test.y))
+
+
 class LinReg(TrainedModel):
     name = "LinReg"
 
@@ -98,7 +110,7 @@ class LinReg(TrainedModel):
 
 class Trained_FCModel(TrainedModel):
     name = "FCModel"
-
+    
     def __init__(self, query, date_time=None, version=None, ckpt_name=None):
         super().__init__(query)
         self.date_time = date_time or self._latest_dir(self._hydra_dir)
