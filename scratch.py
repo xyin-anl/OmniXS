@@ -1,32 +1,38 @@
 # %%
 
-%load_ext autoreload
-%autoreload 2
+# %load_ext autoreload
+# %autoreload 2
 
-from sklearn.metrics import r2_score
-import torch
-from main import FC_XAS
-from src.data.ml_data import load_xas_ml_data
-import torch
-from utils.src.lightning.pl_module import PLModule
-from utils.src.optuna.dynamic_fc import PlDynamicFC
-from src.data.ml_data import XASPlData
-from utils.src.torch.simple_torch_models import SimpleTorchFCModel
-from lightning import Trainer
 import pytorch_lightning as pl
-import lightning
-
-from sklearn.metrics import mean_squared_error
-
+import torch
+from dscribe.descriptors import (
+    ACSF,
+    LMBTR,
+    MBTR,
+    SOAP,
+    CoulombMatrix,
+    EwaldSumMatrix,
+    SineMatrix,
+)
+from lightning import Trainer
 from matplotlib import pyplot as plt
-
+from sklearn.metrics import mean_squared_error, r2_score
+from tqdm import tqdm
+from main import FC_XAS
 from src.analysis.plots import Plot
-from src.data.ml_data import DataQuery
-from src.models.trained_models import LinReg, Trained_FCModel
+from src.data.feff_data import FEFFData
+from src.data.ml_data import XASPlData, load_xas_ml_data
+from src.models.trained_models import LinReg, MeanModel, Trained_FCModel
+from utils.src.lightning.pl_module import PLModule
 from utils.src.misc.icecream import ic
-from config.defaults import cfg
-import numpy as np
+from utils.src.optuna.dynamic_fc import PlDynamicFC
+from utils.src.torch.simple_torch_models import SimpleTorchFCModel
+from src.data.dscribe_featurizer import DscribeFeaturizer
 
+
+# ==============================================================================
+# PEAK LOCATIONS
+# ==============================================================================
 # compound = "Cu"
 # model_class = Trained_FCModel
 # # model_class = LinReg
@@ -44,11 +50,8 @@ import numpy as np
 # plt.suptitle(f"Peak Location for {model_class.__name__}", fontsize=24, y=0.95)
 # plt.tight_layout()
 # Plot().save(f"peak_loc_{model_class.__name__}")
-
-
-
+# # ==============================================================================
 # %%
-
 # # ==============================================================================
 # # PLOT top predictions for FCModel and LinReg
 # # ==============================================================================
@@ -71,21 +74,20 @@ import numpy as np
 # plt.tight_layout()
 # Plot().save(f"top_{splits}_predictions_{model_class.__name__}")
 # # ==============================================================================
-
-
-# ==============================================================================
-# PLOT MSE FOR ALL COMPOUNDS for FCModel and LinReg
-# ==============================================================================
-fc_models = [
-    Trained_FCModel(DataQuery(compound, "FEFF")) for compound in cfg.compounds
-]
-lin_models = [
-    LinReg(DataQuery(compound, "FEFF")) for compound in cfg.compounds
-]
-fig = plt.figure(figsize=(10,8))
-Plot().bar_plot_of_loss(fc_models)
-Plot().bar_plot_of_loss(lin_models).save("mse_all")
-# ==============================================================================
-
-
+# # ==============================================================================
+# # PLOT MSE FOR ALL COMPOUNDS for FCModel and LinReg
+# # ==============================================================================
+# fc_models = [
+#     Trained_FCModel(DataQuery(compound, "FEFF")) for compound in cfg.compounds
+# ]
+# lin_models = [
+#     LinReg(DataQuery(compound, "FEFF")) for compound in cfg.compounds
+# ]
+# from src.analysis.plots import Plot
+# fig = plt.figure(figsize=(10,8))
+# Plot().bar_plot_of_loss(fc_models, compare_with_mean_model=True)
+# Plot().bar_plot_of_loss(lin_models, compare_with_mean_model=True).save("mse_all")
+# # ==============================================================================
 # %%
+
+featurizer = DscribeFeaturizer(ACSF, "Cu")

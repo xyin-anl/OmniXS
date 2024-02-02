@@ -9,7 +9,7 @@ defaults:
 task_name: ${compound_name}-${simulation_type}
 
 compound_name: Cu # Cu-O # Ti-O
-simulation_type: FEFF
+simulation_type: ACSF
 tags:
   - ${compound_name}
   - ${simulation_type}

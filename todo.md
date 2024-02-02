@@ -1,3 +1,5 @@
+- finish things for LMBTR
+- why is linreg and fc performaing similary for Cr:
 - make sure the ckpt is the best and the last one
 - make 1000 scale organized
 - debug why fc is givin bad results
