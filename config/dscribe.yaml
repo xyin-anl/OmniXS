@@ -1,11 +1,14 @@
 # source: pubs.acs.org/doi/suppl/10.1021/acs.jpcc.3c02029/suppl_file/jp3c02029_si_001.pdf
 dscribe:
+  features: [SOAP, ACSF, LMBTR]
+  pca:
+    n_components: 0.98
   SOAP:
     r_cut: 6.0
-    n_max: 12
-    l_max: 10
+    n_max: 3 # default is 12
+    l_max: 3 # default is 10
     sigma: 1.0
-    rbf: gto
+    rbf: gto # default is gto
 
   ACSF:
     r_cut: 6.0 # Angstroms,

@@ -1,3 +1,4 @@
+- do not forget to scale data before passing through fc models again
 - finish things for LMBTR
 - why is linreg and fc performaing similary for Cr:
 - make sure the ckpt is the best and the last one

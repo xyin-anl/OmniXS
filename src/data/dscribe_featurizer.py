@@ -70,20 +70,18 @@ class DscribeFeaturizer:
 
     @cached_property
     def _top_common_elements(self):
+        elements_in_all_materials = [
+            element
+            for atom in self.materials
+            for element in atom.get_chemical_symbols()
+        ]
         unique_elements, count = np.unique(
-            self._unique_elements,
+            elements_in_all_materials,
             return_counts=True,
         )
         most_common_elements = unique_elements[np.argsort(count)][::-1]
         top_common_elements = most_common_elements[: self.top_n]
         return list(top_common_elements)
-
-    @cached_property
-    def _unique_elements(self):
-        unique_elements = []
-        for atom in self.materials:
-            unique_elements.extend(atom.get_chemical_symbols())
-        return np.unique(unique_elements)
 
     def get_atoms(self, id):
         path = cfg.paths.poscar.format(compound=self.compound, id=id)
@@ -130,4 +128,5 @@ if __name__ == "__main__":
     from dscribe.descriptors import ACSF, SOAP, LMBTR
 
     for compound in cfg.compounds:
-        featurizer = DscribeFeaturizer(ACSF, compound).save()
+        # DscribeFeaturizer(ACSF, compound).save()
+        DscribeFeaturizer(SOAP, compound).save()

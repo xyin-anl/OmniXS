@@ -19,3 +19,9 @@ paths:
   last_checkpoint: ${paths.train_log}/checkpoints/last.ckpt
   train_log: ${paths.train_data}/logs/{compound}-{simulation_type}/runs/{hydra_id}/lightning_logs/version_{optuna_id}
   hydra_id: 2024-01-11-_21-44-47 # <-- analysis dependent
+
+  # caches
+  cache:
+    dir: ${paths.data_dir}/cache
+    pca: ${paths.cache.dir}/pca/{compound}_{simulation_type}.pkl
+    scaler: ${paths.cache.dir}/scaler/{compound}_{simulation_type}.pkl
