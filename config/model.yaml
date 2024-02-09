@@ -1,6 +1,3 @@
-# model:
-#   _target_: utils.src.lightning.pl_module.PLModule
 model:
-  _target_: utils.src.optuna.dynamic_fc.PlDynamicFC
-  widths: [64,100]
-  output_size: 141
+  # _target_: utils.src.lightning.pl_module.PLModule
+  _target_: main.FC_XAS

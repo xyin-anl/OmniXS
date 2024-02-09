@@ -1,3 +1,4 @@
+from sklearn.preprocessing import StandardScaler
 from functools import cached_property
 import pickle
 from typing import Union

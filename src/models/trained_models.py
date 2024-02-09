@@ -122,12 +122,23 @@ class Trained_FCModel(TrainedModel):
     @cached_property
     def model(self):
         # model = instantiate(cfg.model)
-        model = FC_XAS(widths=[64, 100, 141])
         model_params = torch.load(self._ckpt_path)
         # change keys of state_dict to remove the "model." prefix
         model_params["state_dict"] = {
             k.replace("model.", ""): v for k, v in model_params["state_dict"].items()
         }
+
+        # infer widths from state_dict
+        # TODO: double check this
+        state = model_params["state_dict"]
+        weight_shapes = [
+            state[k].shape for k in state.keys() if "layers" in k and "weight" in k
+        ]
+        input_sz = weight_shapes[0][1]
+        hidden_sz = [w[0] for w in weight_shapes[:]]
+        widths = [input_sz] + hidden_sz  # inclues output layer somehow
+
+        model = FC_XAS(widths=widths)
         model.load_state_dict(model_params["state_dict"])
         model.eval()
         return model

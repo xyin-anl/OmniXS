@@ -1,18 +1,23 @@
-import sys
 import logging
-import optuna
-import hydra
-from hydra.utils import instantiate
-from omegaconf import DictConfig
-from torch import nn
-from utils.src.lightning.pl_module import PLModule
+import sys
 
-from rich import print
+import hydra
+import lightning
+import lightning as pl
+import optuna
 import torch
+from hydra.utils import instantiate
+from lightning import Trainer
+from omegaconf import DictConfig
+from rich import print
+from torch import nn
+
+from src.data.ml_data import DataQuery, XASPlData, load_xas_ml_data
+from utils.src.lightning.pl_module import PLModule
 
 
 class FC_XAS(nn.Module):
-    def __init__(self, widths=[64, 100, 141], dropout_rate=0.5):
+    def __init__(self, widths, dropout_rate=0.5):
         super().__init__()
         self.widths = widths
         self.pairs = [(w1, w2) for w1, w2 in zip(self.widths[:-1], self.widths[1:])]
@@ -20,6 +25,7 @@ class FC_XAS(nn.Module):
         self.batch_norms = nn.ModuleList()
         self.dropouts = nn.ModuleList()
         self.relu = nn.ReLU()
+        self.softplus = nn.Softplus()
         for i, (w1, w2) in enumerate(self.pairs):
             self.layers.append(nn.Linear(w1, w2))
             if i != len(self.pairs) - 1:
@@ -30,25 +36,27 @@ class FC_XAS(nn.Module):
         for i, layer in enumerate(self.layers):
             x = layer(x)
             if i != len(self.pairs) - 1:
-                # x = self.batch_norms[i](x)
+                x = self.batch_norms[i](x)
                 x = x * torch.sigmoid(x)  # swish activation
-                # x = self.dropouts[i](x)
+                x = self.dropouts[i](x)
+            else:
+                x = self.softplus(x)
         return x
-
-    # main()
-
-
-from src.data.ml_data import XASPlData, DataQuery
-from lightning import Trainer
-import lightning
-import lightning as pl
 
 
 @hydra.main(version_base=None, config_path="config", config_name="defaults")
-def main(cfg: DictConfig):
-    # model = instantiate(cfg.model)
-    model = PLModule(FC_XAS(widths=[64, 100, 141]))
+def main(cfg: DictConfig, widths=[100]):
     data_module = instantiate(cfg.data_module)
+    print(f"{cfg.simulation_type}")
+
+    # determine input and output dimensions from the data
+    data_sample = data_module.train_dataloader().dataset[0]
+    input_dim = data_sample[0].shape[0]
+    output_dim = data_sample[1].shape[0]
+    widths = [input_dim] + widths + [output_dim]
+
+    torch_model = instantiate(cfg.model, widths=widths)
+    pl_model = PLModule(torch_model)
 
     # TODO: Fix this error: it is sending removing the batch dimension for some reason
     # model.example_input_array = data_module.train_dataloader().dataset[0][0].to("mps")
@@ -58,8 +66,8 @@ def main(cfg: DictConfig):
     # TODO: Fix this error: this is getting trainer initilization stuck
     # trainer.callbacks = instantiate(cfg.callbacks).values()
 
-    trainer.fit(model, data_module)
-    trainer.test(model, datamodule=data_module)
+    trainer.fit(pl_model, data_module)
+    trainer.test(pl_model, datamodule=data_module)
 
 
 class Optimizer:
@@ -67,6 +75,7 @@ class Optimizer:
         self.cfg = hydra_configs
 
     def optimize(self, trial):
+
         # depth = trial.suggest_int("depth", 1, 3)
         depth = trial.suggest_int(
             "depth",
@@ -84,8 +93,6 @@ class Optimizer:
             for i in range(depth)
         ]
 
-        # widths = [64] + widths
-        # self.cfg["model"]["model"]["widths"] = widths
         # learning_rate = trial.suggest_float("learning_rate", 1e-4, 1e-3, log=True)
         # self.cfg["model"]["learning_rate"] = learning_rate
         # model = instantiate(self.cfg.model)
@@ -94,10 +101,17 @@ class Optimizer:
         # batch_size = 2**batch_exponent
         # self.cfg["data_module"]["batch_size"] = batch_size
 
-        widths = [64] + widths + [141]
-        model = PLModule(FC_XAS(widths=widths))
+        # widths = [64] + widths + [141]
 
         data_module = instantiate(self.cfg.data_module)
+
+        data_sample = data_module.train_dataloader().dataset[0]
+        input_dim = data_sample[0].shape[0]
+        output_dim = data_sample[1].shape[0]
+        widths = [input_dim] + widths + [output_dim]
+
+        torch_model = instantiate(self.cfg.model, widths=widths)
+        pl_model = PLModule(torch_model)
 
         # TODO: Fix this error: it is sending removing the batch dimension for some reason
         # model.example_input_array = (
@@ -127,7 +141,7 @@ class Optimizer:
         #     PyTorchLightningPruningCallback(trial, monitor="val_loss")
         # )
 
-        trainer.fit(model, data_module)
+        trainer.fit(pl_model, data_module)
 
         return trainer.callback_metrics["val_loss"]
 
@@ -150,5 +164,5 @@ def run_optmization(cfg: DictConfig):
 
 
 if __name__ == "__main__":
-    run_optmization()
-    # main()
+    # run_optmization()
+    main()

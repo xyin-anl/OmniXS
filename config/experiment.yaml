@@ -22,11 +22,11 @@ optuna:
   study_name: ${compound_name}-${simulation_type}
   storage: sqlite:///${optuna.study_name}.db
   params:
-    min_width: 100
-    max_width: 100
+    min_width: 500
+    max_width: 500
     step_width: 10
-    min_depth: 1
-    max_depth: 1
+    min_depth: 2
+    max_depth: 2
   load_if_exists: True
   n_trials: 1
 
@@ -39,5 +39,5 @@ callbacks:
   early_stopping:
     monitor: val_loss
     min_delta: 0.
-    patience: 10
+    patience: 3
     verbose: False
