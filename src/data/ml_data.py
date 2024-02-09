@@ -116,17 +116,22 @@ class FeatureProcessor:
 
 
 def load_xas_ml_data(
-    query: DataQuery, split_fractions: List[float] = [0.8, 0.1, 0.1]
+    query: DataQuery,
+    split_fractions: Union[List[float], None] = None,
+    reduce_dims: Union[bool, None] = None,
+    normalize: bool = True
 ) -> MLSplits:
     """Loads data and does material splitting."""
 
     file_path = OmegaConf.load("./config/paths.yaml").paths.ml_data
-    data_all = np.load(file_path.format(**query.__dict__))
+    file_path = file_path.format(**query.__dict__)
+    data_all = np.load(file_path, allow_pickle=True)
 
     # greedy multiway partitioning
     idSite = list(zip(data_all["ids"], data_all["sites"]))
     train_idSites, val_idSites, test_idSites = MaterialSplitter.split(
-        idSite=idSite, target_fractions=split_fractions
+        idSite=idSite,
+        target_fractions=split_fractions or cfg.data_module.split_fractions,
     )
 
     def to_split(ids):
@@ -137,11 +142,9 @@ def load_xas_ml_data(
         filter = np.where(id_match & site_match)[0]
         X = data_all["features"][filter].astype(np.float32)
         y = data_all["spectras"][filter].astype(np.float32)
-        X *= 1000
-        y *= 1000
         return DataSplit(X, y)
 
-    return MLSplits(
+    splits = MLSplits(
         train=to_split(train_idSites),
         val=to_split(val_idSites),
         test=to_split(test_idSites),
@@ -149,7 +152,17 @@ def load_xas_ml_data(
 
     if reduce_dims is None:
         reduce_dims = query.simulation_type in cfg.dscribe.features
-    return FeatureProcessor(query, splits).splits if reduce_dims else splits
+    out = FeatureProcessor(query, splits).splits if reduce_dims else splits
+
+    if normalize:  # TODO: use standard scaler or stg
+        out.train.X *= 1000
+        out.val.X *= 1000
+        out.test.X *= 1000
+        out.train.y *= 1000
+        out.val.y *= 1000
+        out.test.y *= 1000
+
+    return out
 
 
 class XASPlData(PlDataModule):
@@ -157,12 +170,14 @@ class XASPlData(PlDataModule):
         self,
         query: DataQuery,
         dtype: torch.dtype = torch.float,
-        split_fractions: List[float] = [0.8, 0.1, 0.1],
+        split_fractions: Union[List[float], None] = None,
         **data_loader_kwargs,
     ):
         def dataset(split: DataSplit):
             X, y = split.tensors
             return TensorDataset(X.type(dtype), y.type(dtype))
+
+        split_fractions = split_fractions or cfg.data_module.split_fractions
 
         ml_split = load_xas_ml_data(query, split_fractions=split_fractions)
         super().__init__(
