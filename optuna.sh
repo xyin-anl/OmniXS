@@ -12,8 +12,10 @@
 
 # python main.py compound_name=Cu simulation_type=FEFF trainer.max_epochs=500 callbacks.early_stopping.patience=3 >Cu_FEFF.log &
 
-compounds=("Co" "Cr" "Cu" "Fe" "Mn" "Ni" "Ti" "V")
-simulation_type=("ACSF" "SOAP" "FEFF")
+# compounds=("Co" "Cr" "Cu" "Fe" "Mn" "Ni" "Ti" "V")
+compouds=("Cu")
+# simulation_type=("ACSF" "SOAP" "FEFF")
+simulation_type=("FEFF1" "FEFF2" "FEFF")
 max_epochs=500
 for simulation_type in "${simulation_type[@]}"; do
     for compound in "${compounds[@]}"; do

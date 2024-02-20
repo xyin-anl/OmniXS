@@ -164,5 +164,5 @@ def run_optmization(cfg: DictConfig):
 
 
 if __name__ == "__main__":
-    # run_optmization()
-    main()
+    run_optmization()
+    # main()

@@ -1,3 +1,4 @@
+- redo feff123 with width 200 for consistency
 - do not forget to scale data before passing through fc models again
 - finish things for LMBTR
 - why is linreg and fc performaing similary for Cr:

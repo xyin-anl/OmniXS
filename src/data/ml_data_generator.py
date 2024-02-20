@@ -6,22 +6,41 @@ import os
 import numpy as np
 from DigitalBeamline.digitalbeamline.extern.m3gnet.featurizer import featurize_material
 from pymatgen.core.structure import Structure
+import torch.nn as nn
 
 
 class MLDataGenerator:
     """Contains methods to prepare data for ML"""
 
     @staticmethod
-    def save(compound, simulation_type, n_blocks=None):
+    def save(
+        compound,
+        simulation_type,
+        n_blocks=None,
+        randomize_weights=False,
+        seed=42,
+    ):
         # avoid overwriting
         save_file = cfg.paths.ml_data.format(
             compound=compound, simulation_type=simulation_type
         )
+        if n_blocks is not None:
+            file_name, ext = os.path.splitext(save_file)
+            save_file = f"{file_name}{n_blocks}{ext}"
+        if randomize_weights:
+            file_name, ext = os.path.splitext(save_file)
+            save_file = f"{file_name}_rnd{ext}"
         if os.path.exists(save_file):
             raise FileExistsError(f"File already exists: {save_file}")
         os.makedirs(os.path.dirname(save_file), exist_ok=True)
 
-        ml_data = MLDataGenerator.prepare(compound, simulation_type, n_blocks)
+        ml_data = MLDataGenerator.prepare(
+            compound,
+            simulation_type,
+            n_blocks,
+            randomize_weights,
+            seed,
+        )
         ids, sites, features, energies, spectras = map(np.array, zip(*ml_data))
         for energy in energies:
             if not np.all(energy == energies[0]):
@@ -37,7 +56,13 @@ class MLDataGenerator:
         )
 
     @staticmethod
-    def prepare(compound, simulation_type, n_blocks=None):
+    def prepare(
+        compound,
+        simulation_type,
+        n_blocks=None,
+        randomize_weights=False,
+        seed=42,
+    ):
         data_dir = os.path.dirname(cfg.paths.processed_data).format(
             compound=compound, simulation_type=simulation_type
         )
@@ -46,7 +71,14 @@ class MLDataGenerator:
             lambda x: (
                 x[0],
                 x[1],
-                MLDataGenerator.featurize(compound, x[0], x[1], n_blocks),
+                MLDataGenerator.featurize(
+                    compound,
+                    x[0],
+                    x[1],
+                    n_blocks,
+                    randomize_weights,
+                    seed,
+                ),
                 *MLDataGenerator.load_processed_data(
                     compound, x[0], x[1], simulation_type
                 ).T,
@@ -56,9 +88,21 @@ class MLDataGenerator:
         return ml_data
 
     @staticmethod
-    def featurize(compound: str, id: str, site_str: str, n_blocks=None):
+    def featurize(
+        compound: str,
+        id: str,
+        site_str: str,
+        n_blocks=None,
+        randomize_weights=False,
+        seed=42,
+    ):
         structure = MLDataGenerator.get_structure(compound, id)  # reads from POSCAR
-        features_all = featurize_material(structure, n_blocks=n_blocks)
+        features_all = featurize_material(
+            structure,
+            n_blocks=n_blocks,
+            randomize_weights=randomize_weights,
+            seed=seed,
+        )
         # check if site infor from folder is valid for structure derived from POSCAR
         site = int(site_str)
         site_is_in_strucutre = site >= 0 and site < features_all.shape[0]
@@ -105,13 +149,22 @@ class MLDataGenerator:
 
 
 if __name__ == "__main__":
-    simulation_type = "FEFF"
-
+    # simulation_type = "FEFF"
     # compounds = ["Co", "Cr", "Cu", "Fe", "Mn", "Ni", "Ti", "V"]
     # for compound in compounds:
     #     print(f"Preparing data for {compound}")
     #     MLDataGenerator.save(compound=compound, simulation_type=simulation_type)
 
-    data3 = MLDataGenerator.prepare("Co", simulation_type, n_blocks=3)
-    data2 = MLDataGenerator.prepare("Co", simulation_type, n_blocks=2)
+    # from config.defaults import cfg
+    # simulation_type = "FEFF"
+    # for compound in cfg.compounds:
+    #     for n_blocks in [1, 2]:
+    #         print(f"Preparing data for {compound} with {n_blocks} blocks")
+    #         MLDataGenerator.save(
+    #             compound=compound,
+    #             simulation_type=simulation_type,
+    #             n_blocks=n_blocks,
+    #         )
+
+    features_rnd = MLDataGenerator.prepare("Cu", "FEFF", n_blocks=0)
     print("dummy")

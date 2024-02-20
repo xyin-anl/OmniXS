@@ -196,10 +196,18 @@ from utils.src.torch.simple_torch_models import SimpleTorchFCModel
 # plt.ylabel("PCA dims", fontsize=20)
 # plt.savefig("pca_dims.pdf", bbox_inches="tight", dpi=300)
 # # =============================================================================
+# %%
+
+ic(
+    LinReg(DataQuery("Cu", "FEFF0")).mse,
+    LinReg(DataQuery("Cu", "FEFF1")).mse,
+    LinReg(DataQuery("Cu", "FEFF")).mse,
+)
 
 # %%
 
-sim_types = ["ACSF", "SOAP", "FEFF"]
+# sim_types = ["ACSF", "SOAP", "FEFF"]
+sim_types = ["FEFF1", "FEFF2", "FEFF"]
 fc_models = {
     c: {sim_type: Trained_FCModel(DataQuery(c, sim_type)) for sim_type in sim_types}
     for c in cfg.compounds
@@ -285,7 +293,27 @@ ax.legend(handles=handles, labels=labels, fontsize=18)
 plt.tight_layout()
 plt.savefig("mse_by_compound_and_simulation_type.pdf", bbox_inches="tight", dpi=300)
 
+
 # %%
+
+# multiple 3 points line plot for all compounds
+plt.style.use(["default", "science"])
+fig, ax = plt.subplots(figsize=(10, 7))
+for c in cfg.compounds:
+    x = np.arange(3)
+    y = [linreg_mse[c][sim_type] for sim_type in sim_types]
+    ax.plot(x, y, label=c, marker="o", markersize=10)
+ax.set_xticks(x)
+ax.set_xticklabels(sim_types, fontsize=18)
+ax.set_xlabel("Simulation type", fontsize=20)
+ax.set_ylabel("MSE for MLP models", fontsize=20)
+ax.set_title("MSE for MLP model", fontsize=24)
+ax.legend(fontsize=18, loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=4)
+plt.tight_layout()
+plt.savefig("mse_for_mlp_models.pdf", bbox_inches="tight", dpi=300)
+
+
+## %%
 
 # mse_diff = {c: fc_mse[c]["FEFF"] - linreg_mse[c]["FEFF"] for c in cfg.compounds}
 mse_diff = {c: linreg_mse[c]["FEFF"] - fc_mse[c]["FEFF"] for c in cfg.compounds}
@@ -330,5 +358,42 @@ ax.set_title("Performance difference by data size in m3gnet featurization", font
 ax.tick_params(axis="both", which="major", labelsize=18)
 plt.tight_layout()
 plt.savefig("mse_diff_by_data_size.pdf", bbox_inches="tight", dpi=300)
+
+# %%
+
+# %%
+
+sim_names = ["FEFF1", "FEFF2", "FEFF"]
+mse_all = {
+    c: {sim_type: LinReg(DataQuery(c, sim_type)).mse for sim_type in sim_names}
+    for c in cfg.compounds
+}
+
+# %%
+
+# grouped bar plot for all 3 feff simulations for all compounds
+
+plt.style.use(["default", "science"])
+bar_width = 0.25
+fig, ax = plt.subplots(figsize=(10, 7))
+compounds = cfg.compounds
+n_groups = len(compounds)
+index = np.arange(n_groups)
+for i, sim_type in enumerate(sim_names):
+    values = [mse_all[compound][sim_type] for compound in compounds]
+    ax.bar(
+        index + i * bar_width,
+        values,
+        bar_width,
+        label=sim_type,
+        edgecolor="black",
+    )
+ax.set_xlabel("Compound", fontsize=20)
+ax.set_ylabel("MSE", fontsize=20)
+ax.set_title("MSE by compound and simulation type", fontsize=24)
+ax.set_xticks(index + bar_width)
+ax.set_xticklabels(compounds, fontsize=18)
+ax.legend(fontsize=18)
+plt.tight_layout()
 
 # %%
