@@ -21,6 +21,7 @@ class TrainedModel(ABC):
         self.compound = query.compound
         self.simulation_type = query.simulation_type
         self.query = query
+        self._data = load_xas_ml_data(query=query)
 
     @abstractmethod
     def name(self):
@@ -37,6 +38,10 @@ class TrainedModel(ABC):
     @cached_property
     def mae_per_spectra(self):
         return np.mean(np.abs(self.data.test.y - self.predictions), axis=1)
+
+    @cached_property
+    def mse_per_spectra(self):
+        return np.mean((self.data.test.y - self.predictions) ** 2, axis=1)
 
     @cached_property
     def mae(self):
@@ -66,14 +71,28 @@ class TrainedModel(ABC):
     def absolute_errors(self):
         return np.abs(self.data.test.y - self.predictions)
 
-    @cached_property
+    @property
     def data(self):
-        return load_xas_ml_data(
-            query=DataQuery(
-                compound=self.compound,
-                simulation_type=self.simulation_type,
-            )
-        )
+        return self._data
+
+    @data.setter
+    def data(self, data):
+        self._data = data
+        self.__dict__.pop("predictions", None)
+        self.__dict__.pop("mae_per_spectra", None)
+        self.__dict__.pop("mse_per_spectra", None)
+        self.__dict__.pop("mae", None)
+        self.__dict__.pop("mse", None)
+        self.__dict__.pop("absolute_errors", None)
+
+    # @property
+    # def data(self):
+    #     return load_xas_ml_data(
+    #         query=DataQuery(
+    #             compound=self.compound,
+    #             simulation_type=self.simulation_type,
+    #         )
+    #     )
 
     @cached_property
     def peak_errors(self):
@@ -110,7 +129,7 @@ class LinReg(TrainedModel):
 
 class Trained_FCModel(TrainedModel):
     name = "FCModel"
-    
+
     def __init__(self, query, date_time=None, version=None, ckpt_name=None):
         super().__init__(query)
         self.date_time = date_time or self._latest_dir(self._hydra_dir)

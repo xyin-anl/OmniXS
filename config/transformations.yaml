@@ -14,6 +14,7 @@ transformations:
     Ni: 8332.181
     Ti: 4964.504
     V: 5464.097
+    ALL: 0 # dummy for universal e_start
     # PREVIOUS VALUES
     # Ti: 4970
     # Cu: 0

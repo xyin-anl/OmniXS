@@ -119,9 +119,13 @@ def load_xas_ml_data(
     query: DataQuery,
     split_fractions: Union[List[float], None] = None,
     reduce_dims: Union[bool, None] = None,
-    normalize: bool = True
+    normalize: bool = True,
+    for_m3gnet: bool = False,
 ) -> MLSplits:
     """Loads data and does material splitting."""
+
+    if query.compound == "ALL":  # TODO: hacky
+        return load_all_data(query.simulation_type, split_fractions=split_fractions)
 
     file_path = OmegaConf.load("./config/paths.yaml").paths.ml_data
     file_path = file_path.format(**query.__dict__)
@@ -186,6 +190,88 @@ class XASPlData(PlDataModule):
             test_dataset=dataset(ml_split.test),
             **data_loader_kwargs,
         )
+
+
+def load_all_data(
+    sim_type="FEFF",
+    same_size=False,  # TODO:
+    split_fractions=None,
+    seed=42,
+    return_compound_name=False,
+):
+    def ml_split_size(ml_split):
+        return len(ml_split.train.X) + len(ml_split.val.X) + len(ml_split.test.X)
+
+    data_all = load_xas_ml_data(DataQuery(cfg.compounds[0], sim_type))
+    for c in cfg.compounds[1:]:
+        data = load_xas_ml_data(DataQuery(c, sim_type))
+        data_all = MLSplits(
+            train=DataSplit(
+                X=np.concatenate([data_all.train.X, data.train.X]),
+                y=np.concatenate([data_all.train.y, data.train.y]),
+            ),
+            val=DataSplit(
+                X=np.concatenate([data_all.val.X, data.val.X]),
+                y=np.concatenate([data_all.val.y, data.val.y]),
+            ),
+            test=DataSplit(
+                X=np.concatenate([data_all.test.X, data.test.X]),
+                y=np.concatenate([data_all.test.y, data.test.y]),
+            ),
+        )
+    if same_size:
+        min_size = min(
+            [
+                ml_split_size(load_xas_ml_data(DataQuery(c, sim_type)))
+                for c in cfg.compounds
+            ]
+        )
+        split_fractions = split_fractions or cfg.data_module.split_fractions
+        train_size = int(min_size * split_fractions[0])
+        val_size = int(min_size * split_fractions[1])
+        test_size = min_size - train_size - val_size
+        data_all = MLSplits(
+            train=DataSplit(
+                X=data_all.train.X[:train_size], y=data_all.train.y[:train_size]
+            ),
+            val=DataSplit(X=data_all.val.X[:val_size], y=data_all.val.y[:val_size]),
+            test=DataSplit(
+                X=data_all.test.X[:test_size], y=data_all.test.y[:test_size]
+            ),
+        )
+
+    data_per_compound = {
+        c: load_xas_ml_data(DataQuery(c, sim_type), split_fractions=split_fractions)
+        for c in cfg.compounds
+    }
+    train_compounds, val_compounds, test_compounds = [], [], []
+    for compound, data in data_per_compound.items():
+        train_size = len(data.train.X)
+        val_size = len(data.val.X)
+        test_size = len(data.test.X)
+        train_compounds.extend([compound] * train_size)
+        val_compounds.extend([compound] * val_size)
+        test_compounds.extend([compound] * test_size)
+    train_compounds = np.array(train_compounds)
+    val_compounds = np.array(val_compounds)
+    test_compounds = np.array(test_compounds)
+
+    np.random.seed(seed)
+    idx = np.random.permutation(len(data_all.train.X))
+    data_all.train.X = data_all.train.X[idx]
+    data_all.train.y = data_all.train.y[idx]
+    train_compounds = train_compounds[idx]
+    idx = np.random.permutation(len(data_all.val.X))
+    data_all.val.X = data_all.val.X[idx]
+    data_all.val.y = data_all.val.y[idx]
+    val_compounds = val_compounds[idx]
+    idx = np.random.permutation(len(data_all.test.X))
+    data_all.test.X = data_all.test.X[idx]
+    data_all.test.y = data_all.test.y[idx]
+    test_compounds = test_compounds[idx]
+
+    compound_list = train_compounds, val_compounds, test_compounds
+    return (data_all, compound_list) if return_compound_name else data_all
 
 
 if __name__ == "__main__":
