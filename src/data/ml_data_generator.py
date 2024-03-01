@@ -1,4 +1,9 @@
+from functools import cached_property
+from DigitalBeamline.digitalbeamline.extern.m3gnet.featurizer import (
+    _load_default_featurizer,
+)
 import re
+import torch
 from p_tqdm import p_map
 from tqdm import tqdm
 from config.defaults import cfg
@@ -12,6 +17,8 @@ import torch.nn as nn
 class MLDataGenerator:
     """Contains methods to prepare data for ML"""
 
+    m3gnet = _load_default_featurizer()
+
     @staticmethod
     def save(
         compound,
@@ -19,17 +26,23 @@ class MLDataGenerator:
         n_blocks=None,
         randomize_weights=False,
         seed=42,
+        return_graph=False,
+        file_name=None,
     ):
-        # avoid overwriting
-        save_file = cfg.paths.ml_data.format(
-            compound=compound, simulation_type=simulation_type
-        )
-        if n_blocks is not None:
-            file_name, ext = os.path.splitext(save_file)
-            save_file = f"{file_name}{n_blocks}{ext}"
-        if randomize_weights:
-            file_name, ext = os.path.splitext(save_file)
-            save_file = f"{file_name}_rnd{ext}"
+        if file_name is None:
+            # avoid overwriting
+            save_file = cfg.paths.ml_data.format(
+                compound=compound, simulation_type=simulation_type
+            )
+            if n_blocks is not None:
+                file_name, ext = os.path.splitext(save_file)
+                save_file = f"{file_name}{n_blocks}{ext}"
+            if randomize_weights:
+                file_name, ext = os.path.splitext(save_file)
+                save_file = f"{file_name}_rnd{ext}"
+        else:
+            save_dir = os.path.dirname(cfg.paths.ml_data)
+            save_file = os.path.join(save_dir, file_name)
         if os.path.exists(save_file):
             raise FileExistsError(f"File already exists: {save_file}")
         os.makedirs(os.path.dirname(save_file), exist_ok=True)
@@ -40,6 +53,7 @@ class MLDataGenerator:
             n_blocks,
             randomize_weights,
             seed,
+            return_graph=return_graph,
         )
         ids, sites, features, energies, spectras = map(np.array, zip(*ml_data))
         for energy in energies:
@@ -62,30 +76,59 @@ class MLDataGenerator:
         n_blocks=None,
         randomize_weights=False,
         seed=42,
+        return_graph=False,
     ):
         data_dir = os.path.dirname(cfg.paths.processed_data).format(
             compound=compound, simulation_type=simulation_type
         )
         ids_and_sites = MLDataGenerator.parse_ids_and_site(compound, data_dir)
-        ml_data = p_map(
-            lambda x: (
-                x[0],
-                x[1],
-                MLDataGenerator.featurize(
-                    compound,
+        if not return_graph:
+            ml_data = p_map(
+                lambda x: (
                     x[0],
                     x[1],
-                    n_blocks,
-                    randomize_weights,
-                    seed,
+                    MLDataGenerator.featurize(
+                        compound,
+                        x[0],
+                        x[1],
+                        n_blocks,
+                        randomize_weights,
+                        seed,
+                    ),
+                    *MLDataGenerator.load_processed_data(
+                        compound, x[0], x[1], simulation_type
+                    ).T,
                 ),
-                *MLDataGenerator.load_processed_data(
-                    compound, x[0], x[1], simulation_type
-                ).T,
-            ),
-            ids_and_sites[:],
-        )
+                ids_and_sites[:],
+            )
+        else:
+
+            ml_data = []
+            for id, site in tqdm(
+                ids_and_sites
+            ):  # cannot parallelize graph objects processing
+                features = MLDataGenerator.graph_featurize(compound, id, site)
+                data = MLDataGenerator.load_processed_data(
+                    compound, id, site, simulation_type
+                )
+                ml_data.append((id, site, features, *data.T))
+
         return ml_data
+
+    @staticmethod
+    def graph_featurize(compound: str, id: str, site: str):
+        structure = MLDataGenerator.get_structure(compound, id)  # reads from POSCAR
+        from matgl.ext.pymatgen import Structure2Graph
+
+        g, state_attr = Structure2Graph(
+            MLDataGenerator.m3gnet.element_types,
+            MLDataGenerator.m3gnet.cutoff,
+        ).get_graph(structure)
+        # append site mask to graph
+        site = int(site)
+        g.ndata["site_mask"] = torch.zeros(g.num_nodes())
+        g.ndata["site_mask"][site] = 1
+        return g
 
     @staticmethod
     def featurize(
@@ -166,5 +209,18 @@ if __name__ == "__main__":
     #             n_blocks=n_blocks,
     #         )
 
-    features_rnd = MLDataGenerator.prepare("Cu", "FEFF", n_blocks=0)
-    print("dummy")
+    # features_rnd = MLDataGenerator.prepare("Cu", "FEFF", return_graph=True)
+
+    # =========================================
+    # GRAPH BASED FEATURE FOR M3GNET FINETUNING
+    # =========================================
+    simulation_type = "FEFF"
+    for compound in cfg.compounds:
+        print(f"Preparing data for {compound}")
+        MLDataGenerator.save(
+            compound,
+            simulation_type,
+            return_graph=True,
+            file_name=f"{compound}_{simulation_type}_GRAPH",
+        )
+    # =========================================
