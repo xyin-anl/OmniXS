@@ -48,6 +48,10 @@ class TrainedModel(ABC):
         return mean_absolute_error(self.data.test.y, self.predictions)
 
     @cached_property
+    def mse_relative_to_mean_model(self):
+        return MeanModel(query=self.query).mse / self.mse
+
+    @cached_property
     def mse(self):
         return mean_squared_error(self.data.test.y, self.predictions, squared=True)
 
@@ -77,22 +81,17 @@ class TrainedModel(ABC):
 
     @data.setter
     def data(self, data):
-        self._data = data
         self.__dict__.pop("predictions", None)
         self.__dict__.pop("mae_per_spectra", None)
         self.__dict__.pop("mse_per_spectra", None)
         self.__dict__.pop("mae", None)
         self.__dict__.pop("mse", None)
         self.__dict__.pop("absolute_errors", None)
-
-    # @property
-    # def data(self):
-    #     return load_xas_ml_data(
-    #         query=DataQuery(
-    #             compound=self.compound,
-    #             simulation_type=self.simulation_type,
-    #         )
-    #     )
+        self.__dict__.pop("sorted_predictions", None)
+        self.__dict__.pop("top_predictions", None)
+        self.__dict__.pop("mse_relative_to_mean_model", None)
+        self.__dict__.pop("peak_errors", None)
+        self._data = data
 
     @cached_property
     def peak_errors(self):
@@ -213,3 +212,7 @@ class Trained_FCModel(TrainedModel):
             ckpt_path += self.ckpt_name + ".ckpt"
         assert os.path.exists(ckpt_path), f"ckpt_path {ckpt_path} not found"
         return ckpt_path
+
+
+if __name__ == "__main__":
+    model = Trained_FCModel(DataQuery("ALL", "FEFF"))
