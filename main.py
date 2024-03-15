@@ -1,61 +1,34 @@
 import logging
 import sys
+from config.defaults import hydra_config_is_valid
 
 import hydra
 import lightning
 import lightning as pl
 import optuna
-import torch
 from hydra.utils import instantiate
 from lightning import Trainer
 from omegaconf import DictConfig
 from rich import print
-from torch import nn
 
 from src.data.ml_data import DataQuery, XASPlData, load_xas_ml_data
 from utils.src.lightning.pl_module import PLModule
 
 
-class FC_XAS(nn.Module):
-    def __init__(self, widths, dropout_rate=0.5):
-        super().__init__()
-        self.widths = widths
-        self.pairs = [(w1, w2) for w1, w2 in zip(self.widths[:-1], self.widths[1:])]
-        self.layers = nn.ModuleList()
-        self.batch_norms = nn.ModuleList()
-        self.dropouts = nn.ModuleList()
-        self.relu = nn.ReLU()
-        self.softplus = nn.Softplus()
-        for i, (w1, w2) in enumerate(self.pairs):
-            self.layers.append(nn.Linear(w1, w2))
-            if i != len(self.pairs) - 1:
-                self.batch_norms.append(nn.BatchNorm1d(w2))
-                self.dropouts.append(nn.Dropout(p=dropout_rate))
-
-    def forward(self, x):
-        for i, layer in enumerate(self.layers):
-            x = layer(x)
-            if i != len(self.pairs) - 1:
-                x = self.batch_norms[i](x)
-                x = x * torch.sigmoid(x)  # swish activation
-                x = self.dropouts[i](x)
-            else:
-                x = self.softplus(x)
-        return x
-
-
 @hydra.main(version_base=None, config_path="config", config_name="defaults")
-def main(cfg: DictConfig, widths=[100]):
+def main(cfg: DictConfig):
+    hydra_config_is_valid(cfg)
     data_module = instantiate(cfg.data_module)
-    print(f"{cfg.simulation_type}")
 
-    # determine input and output dimensions from the data
-    data_sample = data_module.train_dataloader().dataset[0]
-    input_dim = data_sample[0].shape[0]
-    output_dim = data_sample[1].shape[0]
-    widths = [input_dim] + widths + [output_dim]
+    # # determine input and output dimensions from the data
+    # data_sample = data_module.train_dataloader().dataset[0]
+    # input_dim = data_sample[0].shape[0]
+    # output_dim = data_sample[1].shape[0]
+    # widths = [input_dim] + cfg.model.widths + [output_dim]
+    # torch_model = instantiate(cfg.model, widths=widths)
 
-    torch_model = instantiate(cfg.model, widths=widths)
+    torch_model = instantiate(cfg.model)
+
     pl_model = PLModule(torch_model)
 
     # TODO: Fix this error: it is sending removing the batch dimension for some reason
@@ -83,7 +56,7 @@ class Optimizer:
             self.cfg.optuna.params.max_depth,
         )
 
-        widths = [
+        hidden_widths = [
             trial.suggest_int(
                 f"width_{i}",
                 self.cfg.optuna.params.min_width,
@@ -106,9 +79,10 @@ class Optimizer:
         data_module = instantiate(self.cfg.data_module)
 
         data_sample = data_module.train_dataloader().dataset[0]
-        input_dim = data_sample[0].shape[0]
-        output_dim = data_sample[1].shape[0]
-        widths = [input_dim] + widths + [output_dim]
+        input_width = data_sample[0].shape[0]
+        output_width = data_sample[1].shape[0]
+
+        widths = [input_width] + hidden_widths + [output_width]
 
         torch_model = instantiate(self.cfg.model, widths=widths)
         pl_model = PLModule(torch_model)
@@ -148,6 +122,7 @@ class Optimizer:
 
 @hydra.main(version_base=None, config_path="config", config_name="defaults")
 def run_optmization(cfg: DictConfig):
+    hydra_config_is_valid(cfg)
     optuna.logging.get_logger("optuna").addHandler(logging.StreamHandler(sys.stdout))
     study = optuna.create_study(
         study_name=cfg.optuna.study_name,
@@ -164,5 +139,5 @@ def run_optmization(cfg: DictConfig):
 
 
 if __name__ == "__main__":
-    run_optmization()
-    # main()
+    # run_optmization()
+    main()
