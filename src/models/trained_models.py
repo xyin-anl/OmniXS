@@ -1,22 +1,41 @@
 import os
-from hydra.utils import instantiate
-import numpy as np
 from abc import ABC, abstractmethod
-from sklearn.linear_model import LinearRegression
-import torch
-import optuna
-from main import FC_XAS
-
-
 from functools import cached_property
-from config.defaults import cfg
+from typing import List
 
-from src.data.ml_data import DataQuery, load_xas_ml_data
-
+import numpy as np
+import optuna
+import torch
+from hydra.utils import instantiate
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
+from config.defaults import cfg
+from src.models.xas_fc import FC_XAS
+from src.data.ml_data import DataQuery, load_xas_ml_data
 
-class TrainedModel(ABC):
+
+class PreTrainedFCXASModel(FC_XAS):
+    # Thin Wrapper around Trained_FCModel.model to allow for fine-tuning
+    def __init__(
+        self,
+        query: DataQuery,
+        name,
+        **model_kwargs,
+    ):
+        trained_model = Trained_FCModel(query=query, name=name).model
+
+        for k, v in model_kwargs.items():
+            if not hasattr(trained_model, k):
+                raise ValueError(f"model does not have attribute {k}")
+            if getattr(trained_model, k) != v:
+                raise ValueError(f"model attribute {k} is not equal to {v}")
+
+        super().__init__(**model_kwargs)
+        self.load_state_dict(trained_model.state_dict())
+
+
+class TrainedModel(ABC):  #
     def __init__(self, query: DataQuery):
         self.compound = query.compound
         self.simulation_type = query.simulation_type
@@ -158,7 +177,7 @@ class Trained_FCModel(TrainedModel):
         ]
         input_sz = weight_shapes[0][1]
         hidden_sz = [w[0] for w in weight_shapes[:]]
-        widths = [input_sz] + hidden_sz  # inclues output layer somehow
+        widths = [input_sz] + hidden_sz  # output is already included
 
         model = FC_XAS(widths=widths)
         model.load_state_dict(model_params["state_dict"])
