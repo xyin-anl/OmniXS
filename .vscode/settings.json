@@ -12,9 +12,8 @@
     "files.exclude": {
         "**/logs": true,
         "**/results": true,
+        "**/utils": true,
     },
-    
-
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter",
     },

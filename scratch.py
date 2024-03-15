@@ -23,7 +23,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 from tqdm import tqdm
 
 from config.defaults import cfg
-from main import FC_XAS
+from xas_fc import FC_XAS
 from src.analysis.plots import Plot
 from src.data.dscribe_featurizer import DscribeFeaturizer
 from src.data.feff_data import FEFFData
@@ -68,7 +68,7 @@ from utils.src.torch.simple_torch_models import SimpleTorchFCModel
 # model_class = Trained_FCModel
 # # model_class = LinReg
 # splits = 10
-# simulation_type = "ACSF"
+# simulation_type = "ALL"
 # fig, axs = plt.subplots(splits, len(cfg.compounds), figsize=(20, 20))
 # # fig, axs = plt.subplots(splits, len(cfg.compounds), figsize=(12,6))
 # for i, compound in enumerate(cfg.compounds):
@@ -95,14 +95,14 @@ from utils.src.torch.simple_torch_models import SimpleTorchFCModel
 # # fc_models = [
 # #     Trained_FCModel(DataQuery(compound, "FEFF")) for compound in cfg.compounds
 # # ]
-# lin_models = [LinReg(DataQuery(compound, "FEFF")) for compound in cfg.compounds]
-# fc_acsf_models = [
-#     Trained_FCModel(DataQuery(compound, "ACSF")) for compound in cfg.compounds
-# ]
+# lin_models = [LinReg(DataQuery("ALL", "FEFF")) for compound in cfg.compounds]
+# # fc_acsf_models = [
+# #     Trained_FCModel(DataQuery(compound, "ACSF")) for compound in cfg.compounds
+# # ]
 # fig = plt.figure(figsize=(10, 8))
 # # Plot().bar_plot_of_loss(fc_models, compare_with_mean_model=True)
 # Plot().bar_plot_of_loss(lin_models, compare_with_mean_model=True)
-# Plot().bar_plot_of_loss(fc_acsf_models, compare_with_mean_model=True)
+# # Plot().bar_plot_of_loss(fc_acsf_models, compare_with_mean_model=True)
 # # ==============================================================================
 
 # %%
@@ -197,72 +197,83 @@ from utils.src.torch.simple_torch_models import SimpleTorchFCModel
 # plt.ylabel("PCA dims", fontsize=20)
 # plt.savefig("pca_dims.pdf", bbox_inches="tight", dpi=300)
 # # =============================================================================
-# %%
+
 
 # %%
 
-# TODO: move this to Plot()
-# sim_types = ["ACSF", "SOAP", "FEFF"]
-sim_types = ["FEFF1", "FEFF2", "FEFF"]
-fc_mse = {
-    c: {sim_type: Trained_FCModel(DataQuery(c, sim_type)).mse for sim_type in sim_types}
-    for c in cfg.compounds
-}
-linreg_mse = {
-    c: {sim_type: LinReg(DataQuery(c, sim_type)).mse for sim_type in sim_types}
-    for c in cfg.compounds
-}
-# grouped bar plot by compound with linreg showing color same as fcmodel but lighter
-# so 6 bars for each compound
-plt.style.use(["default", "science"])
-fig, ax = plt.subplots(figsize=(10, 7))
-compounds = cfg.compounds
-n_groups = len(compounds)
-n_sim_types = len(sim_types)
-total_width = 0.8
-single_width = total_width / n_sim_types
-space_width = 0
-bar_width = single_width - (space_width / n_sim_types)
-# Starting position for the first group of bars
-start_pos = np.arange(n_groups) - (total_width / 2) + (bar_width / 2)
-for i, sim_type in enumerate(sim_types):
-    # Positions of the fc and linreg bars for this simulation type
-    linreg_pos = start_pos + i * (bar_width + space_width)
-    fc_pos = start_pos + i * (bar_width + space_width)
-    # Extracting MSE values for fc and linreg
-    fc_values = [fc_mse[compound][sim_type] for compound in compounds]
-    linreg_values = [linreg_mse[compound][sim_type] for compound in compounds]
-    # Plotting the bars
-    ax.bar(
-        linreg_pos,
-        linreg_values,
-        bar_width,
-        # label=f"LinReg MSE: {sim_type}",
-        hatch="||",
-        # alpha=0.2,
-        edgecolor="black",
-        fill=False,
-        linewidth=1.5,
-    )
-    ax.bar(
-        fc_pos,
-        fc_values,
-        bar_width,
-        label=f"FC MSE: {sim_type if sim_type!='FEFF' else 'm3gnet'}",
-    )
-ax.set_xlabel("Compound", fontsize=20)
-ax.set_ylabel("MSE", fontsize=20)
-ax.set_title("MSE by compound and simulation type", fontsize=24)
-ax.set_xticks(np.arange(n_groups))
-ax.set_xticklabels(compounds, fontsize=18)
-# add || hatch for linreg
-dummy_patch = mpatches.Patch(fill=False, edgecolor="black", hatch="||", label="LinReg")
-handles, labels = ax.get_legend_handles_labels()
-handles.append(dummy_patch)
-labels.append("LinReg")
-ax.legend(handles=handles, labels=labels, fontsize=18)
-plt.tight_layout()
-plt.savefig("mse_by_compound_and_simulation_type.pdf", bbox_inches="tight", dpi=300)
+# # TODO: move this to Plot()
+# # sim_types = ["ACSF", "SOAP", "FEFF"]
+# sim_types = ["FEFF1", "FEFF2", "FEFF"]
+# fc_mse = {
+#     c: {sim_type: Trained_FCModel(DataQuery(c, sim_type)).mse for sim_type in sim_types}
+#     for c in cfg.compounds
+# }
+# linreg_mse = {
+#     c: {sim_type: LinReg(DataQuery(c, sim_type)).mse for sim_type in sim_types}
+#     for c in cfg.compounds
+# }
+# # grouped bar plot by compound with linreg showing color same as fcmodel but lighter
+# # so 6 bars for each compound
+# plt.style.use(["default", "science"])
+# fig, ax = plt.subplots(figsize=(10, 7))
+# compounds = cfg.compounds
+# n_groups = len(compounds)
+# n_sim_types = len(sim_types)
+# total_width = 0.8
+# single_width = total_width / n_sim_types
+# space_width = 0
+# bar_width = single_width - (space_width / n_sim_types)
+# # Starting position for the first group of bars
+# start_pos = np.arange(n_groups) - (total_width / 2) + (bar_width / 2)
+# for i, sim_type in enumerate(sim_types):
+#     # Positions of the fc and linreg bars for this simulation type
+#     linreg_pos = start_pos + i * (bar_width + space_width)
+#     fc_pos = start_pos + i * (bar_width + space_width)
+#     # Extracting MSE values for fc and linreg
+#     fc_values = [fc_mse[compound][sim_type] for compound in compounds]
+#     linreg_values = [linreg_mse[compound][sim_type] for compound in compounds]
+#     # Plotting the bars
+#     ax.bar(
+#         linreg_pos,
+#         linreg_values,
+#         bar_width,
+#         # label=f"LinReg MSE: {sim_type}",
+#         hatch="||",
+#         # alpha=0.2,
+#         edgecolor="black",
+#         fill=False,
+#         linewidth=1.5,
+#     )
+#     ax.bar(
+#         fc_pos,
+#         fc_values,
+#         bar_width,
+#         label=f"FC MSE: {sim_type if sim_type!='FEFF' else 'm3gnet'}",
+#     )
+# ax.set_xlabel("Compound", fontsize=20)
+# ax.set_ylabel("MSE", fontsize=20)
+# ax.set_title("MSE by compound and simulation type", fontsize=24)
+# ax.set_xticks(np.arange(n_groups))
+# ax.set_xticklabels(compounds, fontsize=18)
+# # add || hatch for linreg
+# dummy_patch = mpatches.Patch(fill=False, edgecolor="black", hatch="||", label="LinReg")
+# handles, labels = ax.get_legend_handles_labels()
+# handles.append(dummy_patch)
+# labels.append("LinReg")
+# ax.legend(handles=handles, labels=labels, fontsize=18)
+# plt.tight_layout()
+# plt.savefig("mse_by_compound_and_simulation_type.pdf", bbox_inches="tight", dpi=300)
 
+
+# %%
+
+
+from src.models.xas_m3gnet import XASM3GNet
+
+model = XASM3GNet()
+pl_model = PLModule(model)
+trainer = Trainer()
+data_module = XASPlData(DataQuery("Cu", "FEFF_GRAPH"))
+trainer.fit(pl_model, data_module)
 
 # %%

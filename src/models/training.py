@@ -10,6 +10,7 @@ import yaml
 
 
 if __name__ == "__main__":
+    raise NotImplementedError(f"Only Valid for VASP Prelims in the past.")
     from utils.src.lightning.loggers.tb.log_train_val_loss import (
         TensorboardLogTestTrainLoss,
     )
@@ -21,7 +22,9 @@ if __name__ == "__main__":
 
     optimal_fc = yaml.safe_load(open("config/misc.yaml", "r"))["optimal_fc_params"]
     widths = optimal_fc[query["compound"]][query["simulation_type"]]
-    data_module = XASPlData(query=query, num_workers=0, batch_size=128, use_pre_split_data=True)
+    data_module = XASPlData(
+        query=query, num_workers=0, batch_size=128, use_pre_split_data=True
+    )
     model = PlDynamicFC(widths=widths, output_size=200)
     trainer = pl.Trainer(max_epochs=500)
     callbacks = [
