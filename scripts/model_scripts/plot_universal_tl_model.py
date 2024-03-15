@@ -18,7 +18,7 @@ def universal_TL_mses(
 ):  # returns {"global": .., "per_compound": {"c": ...}}
 
     data_all, compound_labels = load_all_data(return_compound_name=True)
-    universal_model = Trained_FCModel(DataQuery("ALL", "FEFF"))
+    universal_model = Trained_FCModel(DataQuery("ALL", "FEFF"), name="universal_tl")
 
     global_mse = (
         universal_model.mse_relative_to_mean_model
@@ -73,7 +73,10 @@ def plot_deciles_of_universal_tl_model():
     )
 
 
-def plot_universal_tl_vs_per_compound_tl(relative_to_per_compound_mean_model=False):
+def plot_universal_tl_vs_per_compound_tl(
+    model_names=["per_compound_tl", "ft_tl"],
+    relative_to_per_compound_mean_model=False,
+):
     plt.style.use(["default", "science"])
     fig, ax = plt.subplots(figsize=(10, 7))
     bar_width = 0.25
@@ -82,30 +85,35 @@ def plot_universal_tl_vs_per_compound_tl(relative_to_per_compound_mean_model=Fal
 
     colors = {
         "univ_TL_MLP": "red",
-        "per_compound_TL_MLP": "blue",
+        "per_compound_tl": "blue",
+        "ft_tl": "green",
     }
 
-    fc_models = [Trained_FCModel(DataQuery(c, "FEFF")) for c in cfg.compounds]
-    fc_mses = [
-        (
-            model.mse_relative_to_mean_model
-            if relative_to_per_compound_mean_model
-            else model.mse
+    for i, model_name in enumerate(model_names, start=1):
+        fc_models = [
+            Trained_FCModel(DataQuery(c, "FEFF"), name=model_name)
+            for c in cfg.compounds
+        ]
+        fc_mses = [
+            (
+                model.mse_relative_to_mean_model
+                if relative_to_per_compound_mean_model
+                else model.mse
+            )
+            for model in fc_models
+        ]
+        ax.bar(
+            index + i * bar_width,
+            fc_mses,
+            bar_width,
+            color=colors[model_name],
+            label=model_name,
+            edgecolor="black",
         )
-        for model in fc_models
-    ]
-    ax.bar(
-        index,
-        fc_mses,
-        bar_width,
-        color=colors["per_compound_TL_MLP"],
-        label="Per-compound-TL-MLP",
-        edgecolor="black",
-    )
 
     univ_mses = universal_TL_mses(relative_to_per_compound_mean_model)
     ax.bar(
-        index + bar_width,
+        index,
         univ_mses["per_compound"].values(),
         bar_width,
         label="Universal-TL-MLP",
@@ -122,16 +130,21 @@ def plot_universal_tl_vs_per_compound_tl(relative_to_per_compound_mean_model=Fal
     if (
         not relative_to_per_compound_mean_model
     ):  # coz weighte mean has no meaning in relative case
-        data_sizes = [len(model.data.test.y) for model in fc_models]
-        fc_mse_weighted_mse = sum(
-            [model.mse * size for model, size in zip(fc_models, data_sizes)]
-        ) / sum(data_sizes)
-        ax.axhline(
-            fc_mse_weighted_mse,
-            color=colors["per_compound_TL_MLP"],
-            linestyle="--",
-            label="Per_compound_TL_weighted_MSE",
-        )
+        for model_name in model_names:
+            fc_models = [
+                Trained_FCModel(DataQuery(c, "FEFF"), name=model_name)
+                for c in cfg.compounds
+            ]
+            data_sizes = [len(model.data.test.y) for model in fc_models]
+            fc_mse_weighted_mse = sum(
+                [model.mse * size for model, size in zip(fc_models, data_sizes)]
+            ) / sum(data_sizes)
+            ax.axhline(
+                fc_mse_weighted_mse,
+                color=colors[model_name],
+                linestyle="--",
+                label=f"{model_name}_weighted_MSE",
+            )
 
     title = "Per-compound-TL-MLP vs Universal-TL-MLP"
     x_label = "Compound"
@@ -145,7 +158,7 @@ def plot_universal_tl_vs_per_compound_tl(relative_to_per_compound_mean_model=Fal
         "per_compound_tl_vs_universal_tl_mlp"
         if not relative_to_per_compound_mean_model
         else "per_compound_tl_vs_universal_tl_relative"
-    ) + ".pdf"
+    ) + f"_{len(model_names)}.pdf"
 
     ax.set_xlabel(x_label, fontsize=20)
     ax.set_ylabel(y_label, fontsize=20)
@@ -161,5 +174,5 @@ def plot_universal_tl_vs_per_compound_tl(relative_to_per_compound_mean_model=Fal
 if __name__ == "__main__":
     from src.models.trained_models import MeanModel
 
-    plot_universal_tl_vs_per_compound_tl(relative_to_per_compound_mean_model=True)
+    # plot_universal_tl_vs_per_compound_tl(relative_to_per_compound_mean_model=True)
     plot_universal_tl_vs_per_compound_tl(relative_to_per_compound_mean_model=False)
