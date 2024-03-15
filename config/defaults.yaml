@@ -1,5 +1,4 @@
 defaults:
-  - _self_
   - data
   - model
   # - callbacks
@@ -11,11 +10,15 @@ defaults:
   - dscribe
   - hydra: default
   - logger: tensorboard
+  - _self_
 
 hydra:
   searchpath:
     - pkg://utils/src/hydra/configs
     - utils/src/hydra/configs
+
+  run:
+    dir: ${paths.log_dir}/${task_name}/${model_name}/${now:%Y-%m-%d_%H-%M-%S}
 
   # You can also use file based schema:
   # - file:///etc/my_app

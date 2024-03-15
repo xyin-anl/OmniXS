@@ -17,7 +17,7 @@ paths:
   optuna_db: sqlite:///${paths.train_data}/{compound}-{simulation_type}.db
   best_checkpoint: ${paths.train_log}/checkpoints/epoch=*.ckpt
   last_checkpoint: ${paths.train_log}/checkpoints/last.ckpt
-  train_log: ${paths.train_data}/logs/{compound}-{simulation_type}/runs/{hydra_id}/lightning_logs/version_{optuna_id}
+  train_log: ${paths.train_data}/logs/{compound}_{simulation_type}/runs/{hydra_id}/lightning_logs/version_{optuna_id}
   hydra_id: 2024-01-11-_21-44-47 # <-- analysis dependent
 
   # caches

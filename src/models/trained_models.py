@@ -127,15 +127,19 @@ class LinReg(TrainedModel):
 
 
 class Trained_FCModel(TrainedModel):
-    name = "FCModel"
 
-    def __init__(self, query, date_time=None, version=None, ckpt_name=None):
+    def __init__(self, query, name, date_time=None, version=None, ckpt_name=None):
         super().__init__(query)
+        self._name = name
         self.date_time = date_time or self._latest_dir(self._hydra_dir)
         self.version = (
             version or self._latest_dir(self._lightning_log_dir).split("_")[-1]
         )  # TODO: make it try optuna study
         self.ckpt_name = ckpt_name
+
+    @property
+    def name(self):
+        return self._name
 
     @cached_property
     def model(self):
@@ -182,15 +186,19 @@ class Trained_FCModel(TrainedModel):
         ]
         assert len(dirs) > 0, f"Directory {directory} is empty"
         dirs.sort(  # Sort directories by creation time
-            key=lambda x: os.path.getctime(os.path.join(directory, x)), reverse=True
+            key=lambda x: os.path.getctime(os.path.join(directory, x)),
+            # reverse=True,
         )
         return dirs[0]
 
     @property
     def _hydra_dir(self):
-        dir = "logs/{compound}-{simulation_type}/runs/".format(**self.query.__dict__)
-        assert os.path.exists(dir), f"Hydra dir {dir} not found"
-        return dir
+        hydra_dir = "logs/{compound}_{simulation_type}/runs/".format(
+            **self.query.__dict__
+        )
+        hydra_dir = hydra_dir.replace("runs", self.name)  # adhoc TODO:
+        assert os.path.exists(hydra_dir), f"Hydra dir {hydra_dir} not found"
+        return hydra_dir
 
     @property
     def _lightning_log_dir(self):
@@ -215,4 +223,5 @@ class Trained_FCModel(TrainedModel):
 
 
 if __name__ == "__main__":
-    model = Trained_FCModel(DataQuery("ALL", "FEFF"))
+    model = Trained_FCModel(DataQuery("ALL", "FEFF")).mse
+    model = PreTrainedFCXASModel(DataQuery("Cu", "FEFF"))

@@ -1,3 +1,29 @@
-model:
-  # _target_: utils.src.lightning.pl_module.PLModule
-  _target_: main.FC_XAS
+model_name: per_compound_tl
+
+model: ${named_models.${model_name}}
+
+name_queries:
+  per_compound:
+    _target_: src.data.ml_data.DataQuery
+    compound: ${compound}
+    simulation_type: ${simulation_type}
+
+  universal:
+    _target_: src.data.ml_data.DataQuery
+    compound: "ALL"
+    simulation_type: ${simulation_type}
+
+named_models:
+  default:
+    _target_: src.models.xas_fc.FC_XAS
+    widths: [64, 200, 141]
+
+  per_compound_tl: ${named_models.default}
+
+  universal_tl: ${named_models.default}
+
+  ft_tl:
+    _target_: src.models.trained_models.PreTrainedFCXASModel
+    query: ${name_queries.universal}
+    name: universal_tl
+    widths: [64, 200, 141]
