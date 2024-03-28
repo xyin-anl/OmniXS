@@ -75,7 +75,7 @@ class ProcessedData(ABC):
         if not np.all(np.diff(energy) > 0):
             raise ValueError("Energy values must be monotonically increasing.")
         self._energy = energy
-        if self._spectra and len(self._spectra) != len(self._energy):
+        if self._spectra is not None and len(self._spectra) != len(self._energy):
             self._spectra = np.array([])
             warnings.warn("Spectra values reset to None.")
 

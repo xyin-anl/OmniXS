@@ -1,3 +1,4 @@
+from typing import Union
 import os
 import pickle
 from functools import cached_property
@@ -33,10 +34,13 @@ class SpectraTable:
         if data is not None:
             self._data = data
         else:
+            self._data = None  # to avoid circular reference in cached_property
             self._data = self._get_cache() if use_cache else self.data
 
     @cached_property
     def data(self):
+        if self._data is not None:
+            return self._data
         data_class = FEFFData if self.simulation_type == "FEFF" else VASPData
         map_fn = lambda id: data_class(self.compound, self.parameters[id], id)
         return p_map(map_fn, self.ids)
@@ -92,6 +96,8 @@ class SpectraTable:
             return pickle.load(open(file_path, "rb"))
         else:
             data = self.data
+            os.makedirs(cache_dir, exist_ok=True)
+
             pickle.dump(data, open(file_path, "wb"))
             return data
 
@@ -106,5 +112,6 @@ class SpectraTable:
 
 
 if __name__ == "__main__":
-    SpectraTable("Cu", "VASP").resample().filter_anamolies().save()
-    SpectraTable("Ti", "VASP").resample().filter_anamolies().save()
+    SpectraTable("Cu", "FEFF").resample().filter_anamolies().save()
+    # SpectraTable("Cu", "VASP").resample().filter_anamolies().save()
+    # SpectraTable("Ti", "VASP").resample().filter_anamolies().save()
