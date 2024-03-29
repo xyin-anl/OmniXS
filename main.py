@@ -1,6 +1,5 @@
 import logging
 import sys
-from config.defaults import hydra_config_is_valid
 
 import hydra
 import lightning
@@ -17,7 +16,6 @@ from utils.src.lightning.pl_module import PLModule
 
 @hydra.main(version_base=None, config_path="config", config_name="defaults")
 def main(cfg: DictConfig):
-    hydra_config_is_valid(cfg)
     data_module = instantiate(cfg.data_module)
 
     # # determine input and output dimensions from the data
