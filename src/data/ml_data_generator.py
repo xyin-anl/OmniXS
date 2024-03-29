@@ -1,26 +1,45 @@
+import os
+import re
 from functools import cached_property
+
+import numpy as np
+import torch
+import torch.nn as nn
+from p_tqdm import p_map
+from pymatgen.core.structure import Structure
+from tqdm import tqdm
+
+from config.defaults import cfg
 from DigitalBeamline.digitalbeamline.extern.m3gnet.featurizer import (
     _load_default_featurizer,
+    featurize_material,
 )
-import re
-import torch
-from p_tqdm import p_map
-from tqdm import tqdm
-from config.defaults import cfg
-import os
-import numpy as np
-from DigitalBeamline.digitalbeamline.extern.m3gnet.featurizer import featurize_material
-from pymatgen.core.structure import Structure
-import torch.nn as nn
+from src.data.vasp_data_raw import RAWDataVASP
+
+
+class PoscarNotFound(FileNotFoundError):
+    pass
+
+
+class SiteInvalidError(ValueError):
+    pass
 
 
 class MLDataGenerator:
     """Contains methods to prepare data for ML"""
 
+    def __init__(self, compound, simulation_type):
+        self.compound = compound
+        self.simulation_type = simulation_type
+
     m3gnet = _load_default_featurizer()
 
-    @staticmethod
+    @cached_property
+    def vasp_poscar_paths(self):
+        return RAWDataVASP(self.compound, "VASP").poscar_paths
+
     def save(
+        self,
         compound,
         simulation_type,
         n_blocks=None,
@@ -47,7 +66,7 @@ class MLDataGenerator:
             raise FileExistsError(f"File already exists: {save_file}")
         os.makedirs(os.path.dirname(save_file), exist_ok=True)
 
-        ml_data = MLDataGenerator.prepare(
+        ml_data = self.prepare(
             compound,
             simulation_type,
             n_blocks,
@@ -69,8 +88,8 @@ class MLDataGenerator:
             spectras=spectras,
         )
 
-    @staticmethod
     def prepare(
+        self,
         compound,
         simulation_type,
         n_blocks=None,
@@ -83,24 +102,59 @@ class MLDataGenerator:
         )
         ids_and_sites = MLDataGenerator.parse_ids_and_site(compound, data_dir)
         if not return_graph:
-            ml_data = p_map(
-                lambda x: (
-                    x[0],
-                    x[1],
-                    MLDataGenerator.featurize(
+
+            # USED FOR DEBUGGING
+            poscar_not_found = []
+            site_invalid = []
+
+            def safe_featurize(id_site):
+                id, site = id_site
+                try:
+                    features = self.featurize(
                         compound,
-                        x[0],
-                        x[1],
-                        n_blocks,
-                        randomize_weights,
-                        seed,
-                    ),
-                    *MLDataGenerator.load_processed_data(
-                        compound, x[0], x[1], simulation_type
-                    ).T,
-                ),
-                ids_and_sites[:],
-            )
+                        id,
+                        site,
+                        n_blocks=n_blocks,
+                        randomize_weights=randomize_weights,
+                        seed=seed,
+                        simulation_type=simulation_type,
+                    )
+                except PoscarNotFound as e:
+                    print(e)
+                    poscar_not_found.append((id, site))
+                    return None
+                except SiteInvalidError as e:
+                    print(e)
+                    site_invalid.append((id, site))
+                    return None
+                data = MLDataGenerator.load_processed_data(
+                    compound, id, site, simulation_type
+                )
+                return (id, site, features, *data.T)
+
+            ml_data = [safe_featurize(id_site) for id_site in tqdm(ids_and_sites)]
+            np.savetxt("poscar_not_found.txt", poscar_not_found)
+            np.savetxt("site_invalid.txt", site_invalid)
+
+            # ml_data = p_map(
+            #     lambda x: (
+            #         x[0],
+            #         x[1],
+            #         self.featurize(
+            #             compound,
+            #             x[0],
+            #             x[1],
+            #             n_blocks,
+            #             randomize_weights,
+            #             seed,
+            #         ),
+            #         *MLDataGenerator.load_processed_data(
+            #             compound, x[0], x[1], simulation_type
+            #         ).T,
+            #     ),
+            #     ids_and_sites[:],
+            # )
+
         else:
 
             ml_data = []
@@ -130,35 +184,56 @@ class MLDataGenerator:
         g.ndata["site_mask"][site] = 1
         return g
 
-    @staticmethod
     def featurize(
+        self,
         compound: str,
         id: str,
-        site_str: str,
+        site: str,
         n_blocks=None,
         randomize_weights=False,
         seed=42,
+        simulation_type="FEFF",
     ):
-        structure = MLDataGenerator.get_structure(compound, id)  # reads from POSCAR
+        # structure = MLDataGenerator.get_structure(
+        structure = self.get_structure(
+            compound,
+            id,
+            site,
+            simulation_type=simulation_type,
+        )  # reads from POSCAR
         features_all = featurize_material(
             structure,
             n_blocks=n_blocks,
             randomize_weights=randomize_weights,
             seed=seed,
         )
+
+        site = int(site) if self.simulation_type == "FEFF" else 0
         # check if site infor from folder is valid for structure derived from POSCAR
-        site = int(site_str)
         site_is_in_strucutre = site >= 0 and site < features_all.shape[0]
-        site_is_of_correct_element = structure.species[site].symbol == compound
+        site_is_of_correct_element = structure[site].specie.symbol == compound
+
         if not site_is_in_strucutre or not site_is_of_correct_element:
-            raise ValueError(f"Site {site} is not valid for {id}")
+            raise SiteInvalidError(f"Site {site} is not valid for {id}")
+            # raise ValueError(f"Site {site} is not valid for {id}")
+
         return features_all[site]
 
-    @staticmethod
-    def get_structure(compound: str, id: str):
-        poscar_path = cfg.paths.poscar.format(compound=compound, id=id)
+    def get_structure(self, compound: str, id: str, site: str, simulation_type="FEFF"):
+        if simulation_type == "FEFF":
+            poscar_path = cfg.paths.poscar.format(compound=compound, id=id)
+        elif simulation_type == "VASP":
+            try:
+                site_with_compound = f"{site}_{compound}"
+                poscar_path = self.vasp_poscar_paths[(id, site_with_compound)]
+            except KeyError:
+                raise PoscarNotFound(f"POSCAR not found for {id} and site {site}")
+        else:
+            raise ValueError(f"Invalid simulation type: {simulation_type}")
+
         if not os.path.exists(poscar_path):
-            raise FileNotFoundError(f"POSCAR not found for {id}")
+            raise PoscarNotFound(f"POSCAR not found for {id}")
+            # raise FileNotFoundError(f"POSCAR not found for {id}")
         return Structure.from_file(poscar_path)
 
     @staticmethod
@@ -192,7 +267,21 @@ class MLDataGenerator:
 
 
 if __name__ == "__main__":
-    # simulation_type = "FEFF"
+
+    simulation_type = "VASP"
+    compound = "Ti"
+    ml_data_generator = MLDataGenerator(compound, simulation_type)
+    ml_data_generator.save(compound, simulation_type)
+    # MLDataGenerator.save("Ti", simulation_type)
+
+    # use for quick validation
+    from scripts.plots.plot_all_spectras import MLDATAPlotter
+    from matplotlib import pyplot as plt
+
+    plotter = MLDATAPlotter(compound, simulation_type)
+    plotter.plot_spectra_heatmap()
+    plt.show()
+
     # compounds = ["Co", "Cr", "Cu", "Fe", "Mn", "Ni", "Ti", "V"]
     # for compound in compounds:
     #     print(f"Preparing data for {compound}")
@@ -211,16 +300,16 @@ if __name__ == "__main__":
 
     # features_rnd = MLDataGenerator.prepare("Cu", "FEFF", return_graph=True)
 
-    # =========================================
-    # GRAPH BASED FEATURE FOR M3GNET FINETUNING
-    # =========================================
-    simulation_type = "FEFF"
-    for compound in cfg.compounds:
-        print(f"Preparing data for {compound}")
-        MLDataGenerator.save(
-            compound,
-            simulation_type,
-            return_graph=True,
-            file_name=f"{compound}_{simulation_type}_GRAPH",
-        )
-    # =========================================
+    # # =========================================
+    # # GRAPH BASED FEATURE FOR M3GNET FINETUNING
+    # # =========================================
+    # simulation_type = "FEFF"
+    # for compound in cfg.compounds:
+    #     print(f"Preparing data for {compound}")
+    #     MLDataGenerator.save(
+    #         compound,
+    #         simulation_type,
+    #         return_graph=True,
+    #         file_name=f"{compound}_{simulation_type}_GRAPH",
+    #     )
+    # # =========================================

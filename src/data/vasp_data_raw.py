@@ -57,6 +57,20 @@ class RAWDataVASP(RAWData):
             warnings.warn(f"{len(self.missing_data)} missing data for {self.compound}")
         return parameters
 
+    @property
+    def poscar_paths(self):
+        fn = lambda i, s: os.path.join(
+            self.base_dir or "",
+            i,
+            self.simulation_type,
+            s,
+            "POSCAR",
+        )
+        paths = {
+            (i, s): fn(i, s) for i in self._material_ids for s in self._sites.get(i, [])
+        }
+        return paths
+
     def volume(self, id, site):
         file_path = os.path.join(
             self.base_dir or "",
