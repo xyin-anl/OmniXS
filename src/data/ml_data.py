@@ -202,8 +202,9 @@ def load_all_data(
     def ml_split_size(ml_split):
         return len(ml_split.train.X) + len(ml_split.val.X) + len(ml_split.test.X)
 
-    data_all = load_xas_ml_data(DataQuery(cfg.compounds[0], sim_type))
-    for c in cfg.compounds[1:]:
+    compounds = ["Cu", "Ti"] if sim_type == "VASP" else cfg.compounds
+    data_all = load_xas_ml_data(DataQuery(compounds[0], sim_type))
+    for c in compounds[1:]:
         data = load_xas_ml_data(DataQuery(c, sim_type))
         data_all = MLSplits(
             train=DataSplit(
@@ -223,7 +224,7 @@ def load_all_data(
         min_size = min(
             [
                 ml_split_size(load_xas_ml_data(DataQuery(c, sim_type)))
-                for c in cfg.compounds
+                for c in compounds
             ]
         )
         split_fractions = split_fractions or cfg.data_module.split_fractions
@@ -242,7 +243,7 @@ def load_all_data(
 
     data_per_compound = {
         c: load_xas_ml_data(DataQuery(c, sim_type), split_fractions=split_fractions)
-        for c in cfg.compounds
+        for c in compounds
     }
     train_compounds, val_compounds, test_compounds = [], [], []
     for compound, data in data_per_compound.items():

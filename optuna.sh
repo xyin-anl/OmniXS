@@ -12,11 +12,11 @@
 
 # python main.py compound_name=Cu simulation_type=FEFF trainer.max_epochs=500 callbacks.early_stopping.patience=3 >Cu_FEFF.log &
 
-compounds=("Co" "Cr" "Cu" "Fe" "Mn" "Ni" "Ti" "V")
-# compounds=("Cu")
+# compounds=("Co" "Cr" "Cu" "Fe" "Mn" "Ni" "Ti" "V")
+compounds=("Cu" "Ti")
 # simulation_type=("ACSF" "SOAP" "FEFF")
 # simulation_type=("FEFF1" "FEFF2" "FEFF")
-simulation_type=("FEFF")
+simulation_type=("VASP")
 max_epochs=500
 for simulation_type in "${simulation_type[@]}"; do
     for compound in "${compounds[@]}"; do
@@ -25,7 +25,9 @@ for simulation_type in "${simulation_type[@]}"; do
         # nohup python main.py compound_name=$compound simulation_type=FEFF trainer.max_epochs=$max_epochs >$compound"_FEFF.log" &
         # nohup python main.py compound_name=$compound simulation_type=$simulation_type trainer.max_epochs=$max_epochs >$compound"_"$simulation_type".log" &
 
-        nohup python main.py compound_name=$compound simulation_type=$simulation_type trainer.max_epochs=$max_epochs model_name=ft_tl_2 >$compound"_"$simulation_type".log" &
+        # nohup python main.py compound_name=$compound simulation_type=$simulation_type trainer.max_epochs=$max_epochs model_name=ft_tl_2 >$compound"_"$simulation_type".log" &
+        # nohup python main.py compound_name=$compound simulation_type=$simulation_type trainer.max_epochs=$max_epochs model_name=per_compound_tl >$compound"_"$simulation_type".log" &
+        nohup python main.py compound_name=$compound simulation_type=$simulation_type trainer.max_epochs=$max_epochs model_name=ft_tl >$compound"_"$simulation_type".log" &
 
     done
 done

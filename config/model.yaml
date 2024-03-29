@@ -11,7 +11,8 @@ name_queries:
   universal:
     _target_: src.data.ml_data.DataQuery
     compound: "ALL"
-    simulation_type: ${simulation_type}
+    # simulation_type: $simulation_type}
+    simulation_type: FEFF # no univ for VASP yet
 
 named_models:
   default:
