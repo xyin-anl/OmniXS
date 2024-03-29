@@ -126,12 +126,26 @@ class MLDATAPlotter:
 
     def save(self, path):
         if path is None:
-            path = f"{self.compound}_{self.simulation_type}_{self.subset}.pdf"
+            path = f"{self.compound}_{self.simulation_type}.pdf"
         self.ax.figure.savefig(path)
 
 
 if __name__ == "__main__":
-    for compound, simulation_type in zip(["Cu", "Ti"], ["FEFF", "VASP"]):
-        plotter = MLDATAPlotter(compound, simulation_type)
-        plotter.plot_spectra_heatmap().save(f"{compound}_{simulation_type}_heatmap.pdf")
-        plt.show()
+    compounds = ["Cu", "Ti"]
+    simulation_types = ["FEFF", "VASP"]
+
+    # for compound in compounds:
+    #     for simulation_type in simulation_types:
+    #         heatmap_plotter = MLDATAPlotter(compound, simulation_type)
+    #         heatmap_plotter.plot_spectra_heatmap().save(
+    #             f"{compound}_{simulation_type}_heatmap.pdf"
+    #         )
+    #         heatmap_plotter.ax.clear()
+
+    for compound in compounds:
+        for simulation_type in simulation_types:
+            feature_plotter = MLDATAPlotter(
+                compound, simulation_type
+            ).plot_average_spectra()
+        feature_plotter.legend().save(f"{compound}_average_spectra.pdf")
+        feature_plotter.ax.clear()
