@@ -240,11 +240,14 @@ def load_all_data(
     split_fractions=None,
     seed=42,
     return_compound_name=False,
+    compounds=None,
 ):
     def ml_split_size(ml_split):
         return len(ml_split.train.X) + len(ml_split.val.X) + len(ml_split.test.X)
 
-    compounds = ["Cu", "Ti"] if sim_type == "VASP" else cfg.compounds
+    if compounds is None:
+        compounds = ["Cu", "Ti"] if sim_type == "VASP" else cfg.compounds
+
     data_all = load_xas_ml_data(DataQuery(compounds[0], sim_type))
     for c in compounds[1:]:
         data = load_xas_ml_data(DataQuery(c, sim_type))
