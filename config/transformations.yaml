@@ -9,6 +9,7 @@ transformations:
     Co: 7709.282
     Cr: 5989.168
     Cu: 8983.173
+    # Cu: 8990
     Fe: 7111.23
     Mn: 6537.886
     Ni: 8332.181
@@ -20,12 +21,14 @@ transformations:
     # Cu: 0
 
   emperical_offset:
-    Ti: 5114.08973
-    Cu: 9492.797
+    VASP:
+      Ti: 5114.08973
+      Cu: 9499.797 # # 9492.797 + 7 # 7 is dtw based offset from mean of vasp and feff data
 
   gamma:
     Ti: 0.89
-    Cu: 1.19
+    # Cu: 1.19
+    Cu: 3 # arbitrary to align with feff
 
   e_core:
     Ti: -4864.0371

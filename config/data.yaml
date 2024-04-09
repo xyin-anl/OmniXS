@@ -17,3 +17,7 @@ data_module:
   prefetch_factor: 4
   drop_last: False
   split_fractions: [0.8, 0.1, 0.1]
+
+ml_data: 
+  processing: 
+    anamolous_filter_std_threshold: 5
