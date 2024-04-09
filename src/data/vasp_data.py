@@ -71,7 +71,7 @@ class VASPData(ProcessedData):
         super().align_energy(theoretical_offset)
 
         if emperical_offset is None:
-            emperical_offset = cfg["emperical_offset"][self.compound]
+            emperical_offset = cfg["emperical_offset"]["VASP"][self.compound]
         super().align_energy(emperical_offset)
         return self
 

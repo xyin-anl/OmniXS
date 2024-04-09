@@ -75,6 +75,7 @@ class MLDataGenerator:
             return_graph=return_graph,
         )
         ids, sites, features, energies, spectras = map(np.array, zip(*ml_data))
+
         for energy in energies:
             if not np.all(energy == energies[0]):
                 raise ValueError("Not all energies are same")

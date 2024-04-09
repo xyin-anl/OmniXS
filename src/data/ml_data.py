@@ -267,10 +267,7 @@ def load_all_data(
         )
     if same_size:
         min_size = min(
-            [
-                ml_split_size(load_xas_ml_data(DataQuery(c, sim_type)))
-                for c in compounds
-            ]
+            [ml_split_size(load_xas_ml_data(DataQuery(c, sim_type))) for c in compounds]
         )
         split_fractions = split_fractions or cfg.data_module.split_fractions
         train_size = int(min_size * split_fractions[0])

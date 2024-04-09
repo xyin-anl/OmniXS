@@ -124,13 +124,18 @@ class MLDATAPlotter:
         self.ax.legend(fontsize=self.fontsize, loc="lower right")
         return self
 
-    def save(self, path):
+    def save(self, path=None):
         if path is None:
             path = f"{self.compound}_{self.simulation_type}.pdf"
-        self.ax.figure.savefig(path)
+        self.ax.figure.savefig(path, bbox_inches="tight", dpi=300)
 
 
 if __name__ == "__main__":
+
+    # MLDATAPlotter("Cu", "FEFF").plot_spectra_heatmap().save("Cu_FEFF_heatmap.pdf")
+    # MLDATAPlotter("Cu", "VASP").plot_spectra_heatmap()
+    # plt.show()
+
     compounds = ["Cu", "Ti"]
     simulation_types = ["FEFF", "VASP"]
 

@@ -17,7 +17,7 @@ class FEFFData(ProcessedData):
             do_transform=do_transform,
         )
 
-    def transform(self, include_emperical_truncation=True, resample=True):
+    def transform(self, include_emperical_truncation=True, resample=False):
         self.truncate().scale()
         if include_emperical_truncation:
             self.truncate_emperically()
