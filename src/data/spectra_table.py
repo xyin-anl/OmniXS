@@ -36,7 +36,17 @@ class SpectraTable:
             self._data = data
         else:
             self._data = None  # to avoid circular reference in cached_property
-            self._data = self._get_cache() if use_cache else self.data
+            if use_cache:
+                self._data = self._get_cache()
+            else:
+                # just remove cache just to be safe
+                cache_dir = appdirs.user_cache_dir("xas_ml")
+                file_name = f"SpectraTable_{self.compound}_{self.simulation_type}.pkl"
+                file_path = os.path.join(cache_dir, file_name)
+                if os.path.exists(file_path):
+                    warnings.warn(f"Cache file exists. Removing {file_path}")
+                    os.remove(file_path)
+                self._data = self.data
 
     @cached_property
     def data(self):
