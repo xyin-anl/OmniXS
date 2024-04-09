@@ -1,20 +1,19 @@
-from sklearn.preprocessing import StandardScaler
-from functools import cached_property
-import pickle
-from typing import Union
-import os
 import itertools
+import os
+import pickle
+import warnings
 from dataclasses import dataclass
-from typing import Any, List, Literal
+from functools import cached_property
+from typing import Any, List, Literal, Union
 
 import numpy as np
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
 import torch
 from omegaconf import OmegaConf
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 from torch.utils.data import TensorDataset
-from config.defaults import cfg
 
+from config.defaults import cfg
 from src.data.material_split import MaterialSplitter
 from utils.src.lightning.pl_data_module import PlDataModule
 
@@ -115,12 +114,52 @@ class FeatureProcessor:
             raise ValueError(msg)
 
 
+def filter_anamolous_spectras(
+    ml_splits: MLSplits,
+    std_factor: float = None,
+) -> MLSplits:
+
+    if std_factor is None:
+
+        # ml_data:
+        #   processing:
+        #     anamolous_filter_std_threshold: 5
+
+        std_factor = cfg.ml_data.processing.anamolous_filter_std_threshold
+    spectras = np.concatenate([ml_splits.train.y, ml_splits.val.y, ml_splits.test.y])
+    mean = np.mean(spectras, axis=0)
+    std = np.std(spectras, axis=0)
+    upper_bound = mean + std_factor * std
+    lower_bound = mean - std_factor * std
+    select_filters_count = 0
+    for data in [ml_splits.train, ml_splits.val, ml_splits.test]:
+        bound_condition = (data.y <= upper_bound) & (data.y >= lower_bound)
+        filter = np.all(bound_condition, axis=1)
+        select_filters_count += sum(filter)
+        data.y = data.y[filter]
+        data.X = data.X[filter]
+
+    remove_filter_count = len(spectras) - select_filters_count
+    remove_pct = remove_filter_count / len(spectras) * 100
+
+    msg = f"Removed {remove_filter_count}/{len(spectras)} ({remove_pct:.2f}%) anamolies"
+    msg += f"with std_factor={std_factor}"
+    warnings.warn(msg)
+
+    return MLSplits(
+        train=ml_splits.train,
+        val=ml_splits.val,
+        test=ml_splits.test,
+    )
+
+
 def load_xas_ml_data(
     query: DataQuery,
     split_fractions: Union[List[float], None] = None,
     reduce_dims: Union[bool, None] = None,
     normalize: bool = True,
     for_m3gnet: bool = False,
+    filter_anamolies: bool = True,
 ) -> MLSplits:
     """Loads data and does material splitting."""
 
@@ -165,6 +204,9 @@ def load_xas_ml_data(
         out.train.y *= 1000
         out.val.y *= 1000
         out.test.y *= 1000
+
+    if filter_anamolies:
+        out = filter_anamolous_spectras(out)
 
     return out
 
@@ -276,35 +318,51 @@ def load_all_data(
 
 
 if __name__ == "__main__":
+    pass
 
-    # =============================================================================
-    # tests if pca and scaler are cached
-    # =============================================================================
-    from p_tqdm import p_map
+    # # =============================================================================
+    # #  anmoly filter test
+    # # =============================================================================
+    # from utils.src.plots.heatmap_of_lines import heatmap_of_lines
+    # import matplotlib.pyplot as plt
+    # data = load_xas_ml_data(DataQuery("Cu", "VASP"), filter_anamolies=False)
+    # heatmap_of_lines(data.train.y)
+    # plt.show()
+    # data = load_xas_ml_data(DataQuery("Cu", "VASP"), filter_anamolies=True)
+    # heatmap_of_lines(data.train.y)
+    # plt.show
+    # # ==============================================================================
 
-    load_xas_ml_data(DataQuery("Cu", "SOAP"))
+    # # %%
 
-    # # should cache pca and scaler
-    # p_map(
-    #     lambda q: load_xas_ml_data(q),
-    #     [DataQuery(c, "SOAP") for c in cfg.compounds[-1]],
-    #     num_cpus=1,
-    # )
+    # # =============================================================================
+    # # tests if pca and scaler are cached
+    # # =============================================================================
+    # from p_tqdm import p_map
 
-    # for compound in cfg.compounds:
-    #     query = DataQuery(compound=compound, simulation_type="SOAP")
-    #     # caching pca
-    #     ml_split = load_xas_ml_data(query)
-    #     pca = FeatureProcessor(query).pca  # should load from cache
-    #     print(f"PCA components: {pca.n_components_} for {query}")
+    # load_xas_ml_data(DataQuery("Cu", "SOAP"))
 
-    # =============================================================================
-    print("dummy")
+    # # # should cache pca and scaler
+    # # p_map(
+    # #     lambda q: load_xas_ml_data(q),
+    # #     [DataQuery(c, "SOAP") for c in cfg.compounds[-1]],
+    # #     num_cpus=1,
+    # # )
 
-    # pl_data = XASPlData(query=DataQuery(compound="Cu", simulation_type="FEFF"))
-    # def print_fractions(xas_data):
-    #     dataset = [xas_data.train_dataset, xas_data.val_dataset, xas_data.test_dataset]
-    #     sizes = np.array([len(x) for x in dataset])
-    #     sizes = sizes / sizes.sum()
-    #     print(sizes)
-    # print_fractions(pl_data)  # [0.8 0.1 0.1]
+    # # for compound in cfg.compounds:
+    # #     query = DataQuery(compound=compound, simulation_type="SOAP")
+    # #     # caching pca
+    # #     ml_split = load_xas_ml_data(query)
+    # #     pca = FeatureProcessor(query).pca  # should load from cache
+    # #     print(f"PCA components: {pca.n_components_} for {query}")
+
+    # # =============================================================================
+    # print("dummy")
+
+    # # pl_data = XASPlData(query=DataQuery(compound="Cu", simulation_type="FEFF"))
+    # # def print_fractions(xas_data):
+    # #     dataset = [xas_data.train_dataset, xas_data.val_dataset, xas_data.test_dataset]
+    # #     sizes = np.array([len(x) for x in dataset])
+    # #     sizes = sizes / sizes.sum()
+    # #     print(sizes)
+    # # print_fractions(pl_data)  # [0.8 0.1 0.1]

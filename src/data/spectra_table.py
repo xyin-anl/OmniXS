@@ -1,3 +1,4 @@
+import warnings
 from typing import Union
 import os
 import pickle
@@ -24,7 +25,7 @@ class SpectraTable:
         self,
         compound: str,
         simulation_type: str,
-        use_cache: bool = True,
+        use_cache: bool = False,
         data: Union[Union[List[FEFFData], List[VASPData]], None] = None,
     ):
 
@@ -59,18 +60,7 @@ class SpectraTable:
         return raw_class(self.compound)
 
     def resample(self):
-        self._data = p_map(lambda x: x.resample(), self._data)
-        return self
-
-    def filter_anamolies(self, std_factor: float = 2.5):
-        spectras = np.array([x.spectra for x in self.data])
-        mean = np.mean(spectras, axis=0)
-        std = np.std(spectras, axis=0)
-        upper_bound = mean + std_factor * std
-        lower_bound = mean - std_factor * std
-        bound_condition = (spectras <= upper_bound) & (spectras >= lower_bound)
-        filter = np.all(bound_condition, axis=1)
-        self._data = np.array(self.data)[filter]
+        self._data = list(map(lambda x: x.resample().spectra, self._data))
         return self
 
     def _check_input_validity(self, compound, simulation_type, data):
@@ -112,6 +102,4 @@ class SpectraTable:
 
 
 if __name__ == "__main__":
-    SpectraTable("Cu", "FEFF").resample().filter_anamolies().save()
-    # SpectraTable("Cu", "VASP").resample().filter_anamolies().save()
-    # SpectraTable("Ti", "VASP").resample().filter_anamolies().save()
+    SpectraTable("Cu", "VASP", use_cache=True).resample().save()
