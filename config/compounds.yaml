@@ -2,11 +2,20 @@ defaults:
   - _self_
 
 compounds:
-  - Co
-  - Cr
-  - Cu
-  - Fe
-  - Mn
-  - Ni
   - Ti
   - V
+  - Cr
+  - Mn
+  - Fe
+  - Co
+  - Ni
+  - Cu
+
+  # - Co
+  # - Cr
+  # - Cu
+  # - Fe
+  # - Mn
+  # - Ni
+  # - Ti
+  # - V
