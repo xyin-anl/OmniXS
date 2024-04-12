@@ -31,7 +31,12 @@ class VASPData(ProcessedData):
             self.truncate_emperically()
         return self
 
-    def truncate(self, start_offset=0):
+    def truncate(
+        self,
+        start_offset=None,  # set to -gamma for broadening if None
+    ):
+        if start_offset is None:
+            start_offset = -RAWData.configs()["gamma"][self.compound]
         min_energy = (self.e_cbm - self.e_core) - start_offset
         self.filter(energy_range=[min_energy, None], spectral_range=[0, None])
         return self
