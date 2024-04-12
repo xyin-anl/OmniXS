@@ -116,22 +116,16 @@ class FeatureProcessor:
 
 def filter_anamolous_spectras(
     ml_splits: MLSplits,
-    std_factor: float = None,
+    std_cutoff: float,
 ) -> MLSplits:
 
-    if std_factor is None:
-
-        # ml_data:
-        #   processing:
-        #     anamolous_filter_std_threshold: 5
-
-        std_factor = cfg.ml_data.processing.anamolous_filter_std_threshold
     spectras = np.concatenate([ml_splits.train.y, ml_splits.val.y, ml_splits.test.y])
     mean = np.mean(spectras, axis=0)
     std = np.std(spectras, axis=0)
-    upper_bound = mean + std_factor * std
-    lower_bound = mean - std_factor * std
+    upper_bound = mean + std_cutoff * std
+    lower_bound = mean - std_cutoff * std
     select_filters_count = 0
+
     for data in [ml_splits.train, ml_splits.val, ml_splits.test]:
         bound_condition = (data.y <= upper_bound) & (data.y >= lower_bound)
         filter = np.all(bound_condition, axis=1)
@@ -143,7 +137,7 @@ def filter_anamolous_spectras(
     remove_pct = remove_filter_count / len(spectras) * 100
 
     msg = f"Removed {remove_filter_count}/{len(spectras)} ({remove_pct:.2f}%) anamolies"
-    msg += f"with std_factor={std_factor}"
+    msg += f"with std_cutoff = {std_cutoff}"
     warnings.warn(msg)
 
     return MLSplits(
@@ -160,7 +154,7 @@ def load_xas_ml_data(
     normalize: bool = True,
     for_m3gnet: bool = False,
     filter_anamolies: bool = True,
-    std_factor: float = None,
+    anomaly_std_cutoff: float = None,  # default loaded from config if None
 ) -> MLSplits:
     """Loads data and does material splitting."""
 
@@ -207,7 +201,15 @@ def load_xas_ml_data(
         out.test.y *= 1000
 
     if filter_anamolies:
-        out = filter_anamolous_spectras(out, std_factor=std_factor)
+        anamoly_std_cutoff = (
+            cfg.ml_data.anamoly_filter_std_cutoff.get(query.simulation_type)
+            if anomaly_std_cutoff is None
+            else anamoly_std_cutoff
+        )
+        out = filter_anamolous_spectras(
+            out,
+            std_cutoff=anamoly_std_cutoff,
+        )
 
     return out
 
