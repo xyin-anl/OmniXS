@@ -11,9 +11,7 @@ from tqdm import tqdm
 
 from config.defaults import cfg
 from DigitalBeamline.digitalbeamline.extern.m3gnet.featurizer import (
-    _load_default_featurizer,
-    featurize_material,
-)
+    _load_default_featurizer, featurize_material)
 from src.data.vasp_data_raw import RAWDataVASP
 
 
@@ -40,8 +38,6 @@ class MLDataGenerator:
 
     def save(
         self,
-        compound,
-        simulation_type,
         n_blocks=None,
         randomize_weights=False,
         seed=42,
@@ -51,7 +47,8 @@ class MLDataGenerator:
         if file_name is None:
             # avoid overwriting
             save_file = cfg.paths.ml_data.format(
-                compound=compound, simulation_type=simulation_type
+                compound=self.compound,
+                simulation_type=self.simulation_type,
             )
             if n_blocks is not None:
                 file_name, ext = os.path.splitext(save_file)
@@ -67,8 +64,6 @@ class MLDataGenerator:
         os.makedirs(os.path.dirname(save_file), exist_ok=True)
 
         ml_data = self.prepare(
-            compound,
-            simulation_type,
             n_blocks,
             randomize_weights,
             seed,
@@ -91,15 +86,14 @@ class MLDataGenerator:
 
     def prepare(
         self,
-        compound,
-        simulation_type,
         n_blocks=None,
         randomize_weights=False,
         seed=42,
         return_graph=False,
     ):
         data_dir = os.path.dirname(cfg.paths.processed_data).format(
-            compound=compound, simulation_type=simulation_type
+            compound=self.compound,
+            simulation_type=self.simulation_type,
         )
         ids_and_sites = MLDataGenerator.parse_ids_and_site(compound, data_dir)
         if not return_graph:
@@ -112,13 +106,11 @@ class MLDataGenerator:
                 id, site = id_site
                 try:
                     features = self.featurize(
-                        compound,
                         id,
                         site,
                         n_blocks=n_blocks,
                         randomize_weights=randomize_weights,
                         seed=seed,
-                        simulation_type=simulation_type,
                     )
                 except PoscarNotFound as e:
                     print(e)
@@ -129,7 +121,7 @@ class MLDataGenerator:
                     site_invalid.append((id, site))
                     return None
                 data = MLDataGenerator.load_processed_data(
-                    compound, id, site, simulation_type
+                    self.compound, id, site, self.simulation_type
                 )
                 return (id, site, features, *data.T)
 
@@ -164,7 +156,10 @@ class MLDataGenerator:
             ):  # cannot parallelize graph objects processing
                 features = MLDataGenerator.graph_featurize(compound, id, site)
                 data = MLDataGenerator.load_processed_data(
-                    compound, id, site, simulation_type
+                    self.compound,
+                    id,
+                    site,
+                    self.simulation_type,
                 )
                 ml_data.append((id, site, features, *data.T))
 
@@ -187,21 +182,15 @@ class MLDataGenerator:
 
     def featurize(
         self,
-        compound: str,
         id: str,
         site: str,
         n_blocks=None,
         randomize_weights=False,
         seed=42,
-        simulation_type="FEFF",
+        # simulation_type="FEFF",
     ):
         # structure = MLDataGenerator.get_structure(
-        structure = self.get_structure(
-            compound,
-            id,
-            site,
-            simulation_type=simulation_type,
-        )  # reads from POSCAR
+        structure = self.get_structure(id, site)  # reads from POSCAR
         features_all = featurize_material(
             structure,
             n_blocks=n_blocks,
@@ -220,17 +209,17 @@ class MLDataGenerator:
 
         return features_all[site]
 
-    def get_structure(self, compound: str, id: str, site: str, simulation_type="FEFF"):
-        if simulation_type == "FEFF":
-            poscar_path = cfg.paths.poscar.format(compound=compound, id=id)
-        elif simulation_type == "VASP":
+    def get_structure(self, id: str, site: str):
+        if self.simulation_type == "FEFF":
+            poscar_path = cfg.paths.poscar.format(compound=self.compound, id=id)
+        elif self.simulation_type == "VASP":
             try:
                 site_with_compound = f"{site}_{compound}"
                 poscar_path = self.vasp_poscar_paths[(id, site_with_compound)]
             except KeyError:
                 raise PoscarNotFound(f"POSCAR not found for {id} and site {site}")
         else:
-            raise ValueError(f"Invalid simulation type: {simulation_type}")
+            raise ValueError(f"Invalid simulation type: {self.simulation_type}")
 
         if not os.path.exists(poscar_path):
             raise PoscarNotFound(f"POSCAR not found for {id}")
@@ -269,24 +258,24 @@ class MLDataGenerator:
 
 if __name__ == "__main__":
 
-    simulation_type = "VASP"
-    compound = "Ti"
-    ml_data_generator = MLDataGenerator(compound, simulation_type)
-    ml_data_generator.save(compound, simulation_type)
-    # MLDataGenerator.save("Ti", simulation_type)
+    # simulation_type = "VASP"
+    # compound = "Ti"
+    # ml_data_generator = MLDataGenerator(compound, simulation_type)
+    # ml_data_generator.save(compound, simulation_type)
 
-    # use for quick validation
-    from scripts.plots.plot_all_spectras import MLDATAPlotter
-    from matplotlib import pyplot as plt
+    # # use for quick validation
+    # from scripts.plots.plot_all_spectras import MLDATAPlotter
+    # from matplotlib import pyplot as plt
 
-    plotter = MLDATAPlotter(compound, simulation_type)
-    plotter.plot_spectra_heatmap()
-    plt.show()
+    # plotter = MLDATAPlotter(compound, simulation_type)
+    # plotter.plot_spectra_heatmap()
+    # plt.show()
 
     # compounds = ["Co", "Cr", "Cu", "Fe", "Mn", "Ni", "Ti", "V"]
-    # for compound in compounds:
-    #     print(f"Preparing data for {compound}")
-    #     MLDataGenerator.save(compound=compound, simulation_type=simulation_type)
+    simulation_type = "FEFF"
+    for compound in cfg.compounds:
+        print(f"Preparing data for {compound}")
+        MLDataGenerator(compound, simulation_type).save()
 
     # from config.defaults import cfg
     # simulation_type = "FEFF"
