@@ -160,6 +160,7 @@ def load_xas_ml_data(
     normalize: bool = True,
     for_m3gnet: bool = False,
     filter_anamolies: bool = True,
+    std_factor: float = None,
 ) -> MLSplits:
     """Loads data and does material splitting."""
 
@@ -206,7 +207,7 @@ def load_xas_ml_data(
         out.test.y *= 1000
 
     if filter_anamolies:
-        out = filter_anamolous_spectras(out)
+        out = filter_anamolous_spectras(out, std_factor=std_factor)
 
     return out
 
