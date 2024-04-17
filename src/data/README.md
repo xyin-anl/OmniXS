@@ -4,6 +4,41 @@
   output: pdf_document
 ---
 
+# Methods and parameters for processing RAW data
+
+```yaml
+defaults:
+  - _self_
+
+transformations:
+  quarter_eV_resolution: 0.25 # used for interpolation
+  e_range_diff: 35 # energy range used
+
+  e_start:
+    Co: 7709.282
+    Cr: 5989.168
+    Cu: 8983.173
+    Fe: 7111.23
+    Mn: 6537.886
+    Ni: 8332.181
+    Ti: 4964.504
+    V: 5464.097
+    ALL: 0 # dummy for universal e_start
+
+  emperical_offset:
+    VASP:
+      Ti: 5114.08973
+      Cu: 9499.797 # # 9492.797 + 7 # 7 is dtw based offset from mean of vasp and feff data
+
+  gamma:
+    Ti: 0.89 # put same value in trucation offset
+    Cu: 3 # arbitrary to align with feff
+
+  e_core:
+    Ti: -4864.0371
+    Cu: -8850.2467
+```
+
 # Parsing and Pre-processing Algorithm for RAW FEFF and VASP Data
 
 ## VASP Data (`RAWDataVASP`)
@@ -32,7 +67,6 @@
 - **Core Electron Energy (e_core)**:
   - Values are dynamically loaded from a YAML configuration file
     (`cfg/transformations.yaml`).
-  - current values are: `-8850.2467(Cu)` and `-4864.0371(Ti)`.
 
 ## FEFF Data (`RAWDataFEFF`)
 
@@ -53,7 +87,7 @@ Both VASP and FEFF classes rely on a consistent directory structure and specific
 1. **Truncation**:
 
    - Minimum Energy Calculation: `min_energy = (e_cbm - e_core) - start_offset`
-   - Default `start_offset = 10 eV`.
+   - Default `start_offset = 0 eV` (need to determine this again for alignment with FEFF)
    - Truncate away energy < `min_energy`.
    - Truncate away spectra <= 0
 
@@ -66,7 +100,7 @@ Both VASP and FEFF classes rely on a consistent directory structure and specific
 
    - Lorentzian Broadening: `broadened_amplitude = lorentz_broaden(energy, energy, spectra, gamma)`
    - `lorentz_broaden` applies the Lorentzian function across the energy spectrum.
-   - `gamma` is read from config file: `1.19 (Cu) and 0.89 (Ti)`.
+   - `gamma` is read from config file
 
 4. **Alignment**:
 
