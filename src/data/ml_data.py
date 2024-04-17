@@ -151,7 +151,7 @@ def load_xas_ml_data(
     query: DataQuery,
     split_fractions: Union[List[float], None] = None,
     reduce_dims: Union[bool, None] = None,
-    normalize: bool = True,
+    scale: bool = True,
     for_m3gnet: bool = False,
     filter_anamolies: bool = True,
     anomaly_std_cutoff: float = None,  # default loaded from config if None
@@ -192,7 +192,7 @@ def load_xas_ml_data(
         reduce_dims = query.simulation_type in cfg.dscribe.features
     out = FeatureProcessor(query, splits).splits if reduce_dims else splits
 
-    if normalize:  # TODO: use standard scaler or stg
+    if scale:  # TODO: use standard scaler or stg
         out.train.X *= 1000
         out.val.X *= 1000
         out.test.X *= 1000
