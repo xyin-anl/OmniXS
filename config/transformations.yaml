@@ -22,12 +22,14 @@ transformations:
 
   emperical_offset:
     VASP:
-      Ti: 5114.08973
-      Cu: 9499.797 # # 9492.797 + 7 # 7 is dtw based offset from mean of vasp and feff data
+      # Ti: 5114.08973
+      Ti: 5108.58973
+      Cu: 9492.797
 
   gamma:
     Ti: 0.89 # put same value in trucation offset
-    Cu: 3 # arbitrary to align with feff
+    # Cu: 3 # arbitrary to align with feff
+    Cu: 3.458 # 1.729 # or 3.458
 
   e_core:
     Ti: -4864.0371

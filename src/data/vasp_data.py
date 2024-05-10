@@ -36,7 +36,7 @@ class VASPData(ProcessedData):
         start_offset=None,  # set to -gamma for broadening if None
     ):
         if start_offset is None:
-            start_offset = -RAWData.configs()["gamma"][self.compound]
+            start_offset = -1 * RAWData.configs()["gamma"][self.compound]
         min_energy = (self.e_cbm - self.e_core) - start_offset
         self.filter(energy_range=[min_energy, None], spectral_range=[0, None])
         return self
