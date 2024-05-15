@@ -1,3 +1,8 @@
+ml_data:
+  anamoly_filter_std_cutoff:
+    FEFF: 2.5
+    VASP: 5.0
+
 data_module:
   _target_: src.data.ml_data.XASPlData
   query:
@@ -9,15 +14,11 @@ data_module:
     # split: material
   # data_dir: "dataset/ML-231009/${compound_name}_K-edge_${simulation_type}_XANES/material-splits/data"
   random_seed: 42
-  batch_size: 64
-  num_workers: 10
-  persistent_workers: true
-  use_cache: True
-  pin_memory: True
-  prefetch_factor: 4
-  drop_last: False
+  batch_size: ${hparams.${simulation_type}.${compound_name}.batch_size}
+  # num_workers: 10
+  # persistent_workers: true
+  # use_cache: True
+  # pin_memory: True
+  # prefetch_factor: 4
+  # drop_last: False
   split_fractions: [0.8, 0.1, 0.1]
-
-ml_data: 
-  processing: 
-    anamolous_filter_std_threshold: 5

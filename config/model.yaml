@@ -11,20 +11,30 @@ name_queries:
   universal:
     _target_: src.data.ml_data.DataQuery
     compound: "ALL"
-    # simulation_type: $simulation_type}
     simulation_type: FEFF # no univ for VASP yet
 
 named_models:
   default:
-    _target_: src.models.xas_fc.FC_XAS
-    widths: [64, 200, 141]
+    _target_: utils.src.lightning.pl_module.PLModule
+    model:
+      _target_: src.models.xas_fc.FC_XAS
+      widths: [64, 200, 141]
+    learning_rate: 0.001
 
-  per_compound_tl: ${named_models.default}
+  per_compound_tl:
+    _target_: utils.src.lightning.pl_module.PLModule
+    model:
+      _target_: src.models.xas_fc.FC_XAS
+      widths: ${hparams.${simulation_type}.${compound_name}.widths}
 
-  universal_tl: ${named_models.default}
+  universal_tl:
+    _target_: utils.src.lightning.pl_module.PLModule
+    model:
+      _target_: src.models.xas_fc.FC_XAS
+      widths: ${hparams.${simulation_type}.ALL.widths}
 
   ft_tl:
     _target_: src.models.trained_models.PreTrainedFCXASModel
     query: ${name_queries.universal}
     name: universal_tl
-    widths: [64, 200, 141]
+    widths: ${named_models.universal_tl.model.widths}

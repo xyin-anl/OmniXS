@@ -1,0 +1,36 @@
+hparams:
+  FEFF:
+    Co:
+      batch_size: 32
+      widths: [64, 600, 550, 450, 141]
+    Cr:
+      batch_size: 32
+      widths: [64, 450, 350, 150, 141]
+    Cu:
+      batch_size: 32
+      widths: [64, 600, 600, 400, 141]
+    Fe:
+      batch_size: 64
+      widths: [64, 450, 400, 450, 141]
+    Mn:
+      batch_size: 64
+      widths: [64, 500, 400, 300, 141]
+    Ni:
+      batch_size: 32
+      widths: [64, 600, 300, 141]
+    Ti:
+      batch_size: 32
+      widths: [64, 600, 600, 450, 141]
+    V:
+      batch_size: 32
+      widths: [64, 600, 550, 450, 141]
+    ALL:
+      batch_size: 32
+      widths: [64, 500, 500, 550, 141]
+  VASP:
+    Ti:
+      batch_size: 64
+      widths: [64, 500, 600, 400, 141]
+    Cu:
+      batch_size: 64
+      widths: [64, 550, 600, 450, 141]
