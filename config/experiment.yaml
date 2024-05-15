@@ -13,29 +13,30 @@ tag: ${compound_name}_${simulation_type}_${model_name}
 task_name: ${compound_name}_${simulation_type}
 
 trainer:
-  max_epochs: 500
+  max_epochs: 10
   log_every_n_steps: 1
+  callbacks:
+    - _target_: lightning.pytorch.callbacks.lr_finder.LearningRateFinder
+    - _target_: lightning.pytorch.callbacks.early_stopping.EarlyStopping
+      monitor: val_loss
+      patience: 50
+      mode: min
+      verbose: False
 
 optuna:
   study_name: ${tag}
   storage: sqlite:///${optuna.study_name}.db
   params:
-    min_width: 500
-    max_width: 500
-    step_width: 10
-    min_depth: 2
-    max_depth: 2
+    min_width: 100
+    max_width: 800
+    step_width: 50
+    min_depth: 1
+    max_depth: 4
+    # min_lr: 1e-5
+    # max_lr: 1e-3
+    min_batch_size: 6 # 2^x
+    max_batch_size: 9
+    step_batch_size: 1
   load_if_exists: True
-  n_trials: 1
-
-callbacks:
-  model_summary:
-    max_depth: 2
-  model_checkpoint:
-    mode: "min"
-    save_last: True
-  early_stopping:
-    monitor: val_loss
-    min_delta: 0.
-    patience: 3
-    verbose: False
+  n_trials: 100
+  n_jobs: 10

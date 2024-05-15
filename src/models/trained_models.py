@@ -206,7 +206,7 @@ class Trained_FCModel(TrainedModel):
         assert len(dirs) > 0, f"Directory {directory} is empty"
         dirs.sort(  # Sort directories by creation time
             key=lambda x: os.path.getctime(os.path.join(directory, x)),
-            # reverse=True,
+            reverse=True,
         )
         return dirs[0]
 

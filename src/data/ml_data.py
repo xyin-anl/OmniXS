@@ -91,7 +91,9 @@ class FeatureProcessor:
     @cached_property
     def pca(self):
         # load from cache if cache exists
-        pca_cache_path = cfg.paths.cache.pca.format(**self.query.__dict__)
+        pca_cache_path = cfg.paths.cache.pca.format(
+            **self.query.__dict__
+        )  # TODO: use sys path
         if os.path.exists(pca_cache_path):
             with open(pca_cache_path, "rb") as f:
                 return pickle.load(f)
@@ -150,10 +152,10 @@ def filter_anamolous_spectras(
 def load_xas_ml_data(
     query: DataQuery,
     split_fractions: Union[List[float], None] = None,
-    reduce_dims: Union[bool, None] = None,
-    scale: bool = True,
+    pca_with_std_scaling: Union[bool, None] = None,
+    scale_feature_and_target: bool = True,
     for_m3gnet: bool = False,
-    filter_anamolies: bool = True,
+    filter_spectra_anomalies: bool = True,
     anomaly_std_cutoff: float = None,  # default loaded from config if None
 ) -> MLSplits:
     """Loads data and does material splitting."""
@@ -188,11 +190,11 @@ def load_xas_ml_data(
         test=to_split(test_idSites),
     )
 
-    if reduce_dims is None:
-        reduce_dims = query.simulation_type in cfg.dscribe.features
-    out = FeatureProcessor(query, splits).splits if reduce_dims else splits
+    if pca_with_std_scaling is None:
+        pca_with_std_scaling = query.simulation_type in cfg.dscribe.features
+    out = FeatureProcessor(query, splits).splits if pca_with_std_scaling else splits
 
-    if scale:  # TODO: use standard scaler or stg
+    if scale_feature_and_target:  # TODO: use standard scaler or stg
         out.train.X *= 1000
         out.val.X *= 1000
         out.test.X *= 1000
@@ -200,11 +202,11 @@ def load_xas_ml_data(
         out.val.y *= 1000
         out.test.y *= 1000
 
-    if filter_anamolies:
+    if filter_spectra_anomalies:
         anamoly_std_cutoff = (
             cfg.ml_data.anamoly_filter_std_cutoff.get(query.simulation_type)
             if anomaly_std_cutoff is None
-            else anamoly_std_cutoff
+            else anomaly_std_cutoff
         )
         out = filter_anamolous_spectras(
             out,

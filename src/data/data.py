@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 from typing import Union, Tuple
 from src.data.raw_data import RAWData
 import yaml
@@ -192,3 +193,7 @@ class ProcessedData(ABC):
         self.spectra = new_spectra
         self.energy = new_energy_grid
         return self
+
+    def plot(self, ax=plt.gca(), **kwargs):
+        ax.plot(self.energy, self.spectra, **kwargs)
+        return ax

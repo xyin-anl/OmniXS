@@ -11,7 +11,9 @@ from tqdm import tqdm
 
 from config.defaults import cfg
 from DigitalBeamline.digitalbeamline.extern.m3gnet.featurizer import (
-    _load_default_featurizer, featurize_material)
+    _load_default_featurizer,
+    featurize_material,
+)
 from src.data.vasp_data_raw import RAWDataVASP
 
 
@@ -95,7 +97,7 @@ class MLDataGenerator:
             compound=self.compound,
             simulation_type=self.simulation_type,
         )
-        ids_and_sites = MLDataGenerator.parse_ids_and_site(compound, data_dir)
+        ids_and_sites = MLDataGenerator.parse_ids_and_site(self.compound, data_dir)
         if not return_graph:
 
             # USED FOR DEBUGGING
@@ -154,7 +156,7 @@ class MLDataGenerator:
             for id, site in tqdm(
                 ids_and_sites
             ):  # cannot parallelize graph objects processing
-                features = MLDataGenerator.graph_featurize(compound, id, site)
+                features = MLDataGenerator.graph_featurize(self.compound, id, site)
                 data = MLDataGenerator.load_processed_data(
                     self.compound,
                     id,
@@ -201,7 +203,7 @@ class MLDataGenerator:
         site = int(site) if self.simulation_type == "FEFF" else 0
         # check if site infor from folder is valid for structure derived from POSCAR
         site_is_in_strucutre = site >= 0 and site < features_all.shape[0]
-        site_is_of_correct_element = structure[site].specie.symbol == compound
+        site_is_of_correct_element = structure[site].specie.symbol == self.compound
 
         if not site_is_in_strucutre or not site_is_of_correct_element:
             raise SiteInvalidError(f"Site {site} is not valid for {id}")
@@ -214,7 +216,7 @@ class MLDataGenerator:
             poscar_path = cfg.paths.poscar.format(compound=self.compound, id=id)
         elif self.simulation_type == "VASP":
             try:
-                site_with_compound = f"{site}_{compound}"
+                site_with_compound = f"{site}_{self.compound}"
                 poscar_path = self.vasp_poscar_paths[(id, site_with_compound)]
             except KeyError:
                 raise PoscarNotFound(f"POSCAR not found for {id} and site {site}")
@@ -257,25 +259,19 @@ class MLDataGenerator:
 
 
 if __name__ == "__main__":
+    pass
+    # MLDataGenerator("Cu", "VASP").save()
+    MLDataGenerator("Ti", "VASP").save()
 
-    # simulation_type = "VASP"
-    # compound = "Ti"
-    # ml_data_generator = MLDataGenerator(compound, simulation_type)
     # ml_data_generator.save(compound, simulation_type)
 
-    # # use for quick validation
-    # from scripts.plots.plot_all_spectras import MLDATAPlotter
-    # from matplotlib import pyplot as plt
+    # # # use for quick validation
+    # # from scripts.plots.plot_all_spectras import MLDATAPlotter
+    # # from matplotlib import pyplot as plt
 
-    # plotter = MLDATAPlotter(compound, simulation_type)
-    # plotter.plot_spectra_heatmap()
-    # plt.show()
-
-    # compounds = ["Co", "Cr", "Cu", "Fe", "Mn", "Ni", "Ti", "V"]
-    simulation_type = "FEFF"
-    for compound in cfg.compounds:
-        print(f"Preparing data for {compound}")
-        MLDataGenerator(compound, simulation_type).save()
+    # # plotter = MLDATAPlotter(compound, simulation_type)
+    # # plotter.plot_spectra_heatmap()
+    # # plt.show()
 
     # from config.defaults import cfg
     # simulation_type = "FEFF"

@@ -1,20 +1,8 @@
-defaults:
-  - callbacks:
-      - model_summary
-      - tb_train_val_loss
-      - tb_log_weights_hist
-      - tb_log_model_graph
-      - model_checkpoint
-      - early_stopping
-# - rich_progress_bar
-# callbacks:
-# - early_stopping:
-#   verbose: True
-# - early_stopping:
-#   stopping_threshold: null # stop training immediately once the monitored quantity reaches this threshold
-# - model_checkpoint:
-#   monitor: "val_loss"
-#   mode: "min"
-#   filename: "{epoch:02d}-{val_loss:.2f}"
-# - _target_: utils.src.lightning.pl_log_callbacks.TensorboardLogTestTrainLoss
-# - _target_: utils.src.lightning.pl_log_callbacks.TensorboardLogAllWeigthsHist
+callbacks:
+  - _target_: lightning.pytorch.callbacks.lr_finder.LearningRateFinder
+  - _target_: lightning.pytorch.callbacks.early_stopping.EarlyStopping
+    monitor: val_loss
+    patience: 50
+    mode: min
+    verbose: False
+  - _target_: utils.src.lightning.loggers.tb.log_train_val_loss.TensorboardLogTestTrainLoss
