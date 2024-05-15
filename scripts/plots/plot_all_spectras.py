@@ -17,10 +17,12 @@ class MLDATAPlotter:
         self,
         compound_name,
         simulation_type,
-        ax: plt.Axes = plt.gca(),
+        ax=None,
         fontsize=12,
         split: Literal["all", "train", "val", "test"] = "all",
     ):
+        if ax is None:
+            ax = plt.gca()
         self.compound = compound_name
         self.simulation_type = simulation_type
         self.ax = ax
@@ -73,7 +75,7 @@ class MLDATAPlotter:
     def plot_feature_heatmap(self):
         title = f"{self.subset.capitalize} features"
         self.add_texts(title, "Index", "Feature")
-        heatmap_of_lines(self.features(self.subset), ax=self.ax)
+        heatmap_of_lines(self.features(), ax=self.ax)
         return self
 
     def features(self):
@@ -106,17 +108,32 @@ class MLDATAPlotter:
         labels = np.linspace(self.energies.min(), self.energies.max(), 5)
         self.ax.set_xticks(loc, labels)
 
-    def plot_average_spectra(self):
+    def plot_average_spectra(self, include_std=False, **fill_kwargs):
         title = "Mean Spectra"
         legend = f"Mean +- Std of {self.compound} {self.simulation_type}"
         self.add_texts(title, "Energy (eV)", "Spectra (Arbitrary Units)")
         self.ax.plot(self.spectras.mean(axis=0), label=legend)
-        self.ax.fill_between(
-            range(len(self.energies)),
-            self.spectras.mean(axis=0) - self.spectras.std(axis=0),
-            self.spectras.mean(axis=0) + self.spectras.std(axis=0),
-            alpha=0.3,
-        )
+
+        # self.ax.plot(
+        #     self.spectras.mean(axis=0) + self.spectras.std(axis=0),
+        #     label="Mean + Std",
+        #     linestyle="--",
+        # )
+        # self.ax.plot(
+        #     self.spectras.mean(axis=0) - self.spectras.std(axis=0),
+        #     label="Mean - Std",
+        #     linestyle="--",
+        # )
+
+        if include_std:
+            self.ax.fill_between(
+                range(len(self.energies)),
+                self.spectras.mean(axis=0) - self.spectras.std(axis=0),
+                self.spectras.mean(axis=0) + self.spectras.std(axis=0),
+                alpha=0.3,
+                **fill_kwargs,
+            )
+
         self._set_energy_ticks()
         return self
 
@@ -136,21 +153,26 @@ if __name__ == "__main__":
     # MLDATAPlotter("Cu", "VASP").plot_spectra_heatmap()
     # plt.show()
 
-    compounds = ["Cu", "Ti"]
-    simulation_types = ["FEFF", "VASP"]
+    from config.defaults import cfg
 
-    # for compound in compounds:
-    #     for simulation_type in simulation_types:
-    #         heatmap_plotter = MLDATAPlotter(compound, simulation_type)
-    #         heatmap_plotter.plot_spectra_heatmap().save(
-    #             f"{compound}_{simulation_type}_heatmap.pdf"
-    #         )
-    #         heatmap_plotter.ax.clear()
+    # compounds = ["Cu", "Ti"]
+    # simulation_types = ["FEFF", "VASP"]
+
+    compounds = cfg.compounds
+    simulation_types = ["FEFF"]
 
     for compound in compounds:
         for simulation_type in simulation_types:
-            feature_plotter = MLDATAPlotter(
-                compound, simulation_type
-            ).plot_average_spectra()
-        feature_plotter.legend().save(f"{compound}_average_spectra.pdf")
-        feature_plotter.ax.clear()
+            heatmap_plotter = MLDATAPlotter(compound, simulation_type)
+            heatmap_plotter.plot_spectra_heatmap().save(
+                f"{compound}_{simulation_type}_heatmap.pdf"
+            )
+            heatmap_plotter.ax.clear()
+
+    # for compound in compounds:
+    #     for simulation_type in simulation_types:
+    #         feature_plotter = MLDATAPlotter(
+    #             compound, simulation_type
+    #         ).plot_average_spectra()
+    #     feature_plotter.legend().save(f"{compound}_average_spectra.pdf")
+    #     feature_plotter.ax.clear()

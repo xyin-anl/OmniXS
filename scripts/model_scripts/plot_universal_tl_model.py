@@ -2,6 +2,7 @@
 # Plots related to Universal-TL-MLP model
 # =============================================================================
 
+from src.models.trained_models import MeanModel
 from src.data.ml_data import load_all_data
 from src.data.ml_data import MLSplits, DataSplit
 from src.models.trained_models import Trained_FCModel
@@ -76,11 +77,12 @@ def plot_deciles_of_universal_tl_model():
 def plot_universal_tl_vs_per_compound_tl(
     model_names=["per_compound_tl", "ft_tl"],
     relative_to_per_compound_mean_model=False,
+    include_vasp: bool = False,
 ):
     plt.style.use(["default", "science"])
     fig, ax = plt.subplots(figsize=(10, 7))
     bar_width = 0.25
-    n_groups = len(cfg.compounds)
+    n_groups = len(cfg.compounds) if not include_vasp else len(cfg.compounds) + 2
     index = np.arange(n_groups)
 
     colors = {
@@ -89,10 +91,15 @@ def plot_universal_tl_vs_per_compound_tl(
         "ft_tl": "green",
     }
 
+    sims = list(zip(cfg.compounds, ["FEFF"] * len(cfg.compounds)))
+    if include_vasp:
+        sims += [("Cu", "VASP"), ("Ti", "VASP")]
+
     for i, model_name in enumerate(model_names, start=1):
         fc_models = [
-            Trained_FCModel(DataQuery(c, "FEFF"), name=model_name)
-            for c in cfg.compounds
+            Trained_FCModel(DataQuery(c, sim_type), name=model_name)
+            # for c in cfg.compounds
+            for c, sim_type in sims
         ]
         fc_mses = [
             (
@@ -109,11 +116,17 @@ def plot_universal_tl_vs_per_compound_tl(
             color=colors[model_name],
             label=model_name,
             edgecolor="black",
+            hatch=(
+                [""] * len(cfg.compounds) + ["\\"] * 2
+                if include_vasp
+                else [""] * len(cfg.compounds)
+            ),
         )
 
     univ_mses = universal_TL_mses(relative_to_per_compound_mean_model)
     ax.bar(
-        index,
+        # index,
+        np.arange(len(cfg.compounds)),  # VASP has no universal
         univ_mses["per_compound"].values(),
         bar_width,
         label="Universal-TL-MLP",
@@ -164,15 +177,24 @@ def plot_universal_tl_vs_per_compound_tl(
     ax.set_ylabel(y_label, fontsize=20)
     ax.set_title(title, fontsize=24)
     ax.set_xticks(index + bar_width)
-    ax.set_xticklabels(cfg.compounds, fontsize=18)
-    ax.legend(fontsize=18)
+    xlabels = (
+        cfg.compounds + ["Cu\nVASP", "Ti\nVASP"] if include_vasp else cfg.compounds
+    )
+    ax.set_xticklabels(
+        xlabels,
+        fontsize=18,
+    )
+    ax.legend(fontsize=16)
+
     plt.tight_layout()
     plt.savefig(file_name, bbox_inches="tight", dpi=300)
     plt.show()
 
 
 if __name__ == "__main__":
-    from src.models.trained_models import MeanModel
 
     # plot_universal_tl_vs_per_compound_tl(relative_to_per_compound_mean_model=True)
-    plot_universal_tl_vs_per_compound_tl(relative_to_per_compound_mean_model=False)
+    plot_universal_tl_vs_per_compound_tl(
+        relative_to_per_compound_mean_model=False,
+        # include_vasp=True,
+    )
