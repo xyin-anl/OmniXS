@@ -50,27 +50,40 @@ def universal_TL_mses(
     return {"global": global_mse, "per_compound": universal_mse_per_compound}
 
 
-def plot_deciles_of_universal_tl_model():
+def plot_deciles_of_top_predictions(
+    model_name="per_compound_tl",
+    fixed_model: Trained_FCModel = None,
+    compounds=cfg.compounds,
+    simulation_type="FEFF",
+):
     splits = 10
-    universal_top_predictions = {}
-    universal_model = Trained_FCModel(DataQuery("ALL", "FEFF"))
-    for c in cfg.compounds:
-        universal_model.data = load_xas_ml_data(DataQuery(c, "FEFF"))
-        universal_top_predictions[c] = universal_model.top_predictions(splits=splits)
-    fig, axs = plt.subplots(splits, len(cfg.compounds), figsize=(20, 16))
-    for i, compound in enumerate(cfg.compounds):
+    top_predictions = {}
+    # universal_model = Trained_FCModel(DataQuery("ALL", "FEFF"), name="universal_tl")
+    for c in compounds:
+        if fixed_model is not None:
+            model = fixed_model
+            model.data = load_xas_ml_data(DataQuery(c, "FEFF"))
+        else:
+            model = Trained_FCModel(DataQuery(c, simulation_type), name=model_name)
+        top_predictions[c] = model.top_predictions(splits=splits)
+
+    fig, axs = plt.subplots(splits, len(compounds), figsize=(20, 16))
+    for i, compound in enumerate(compounds):
         Plot().set_title(f"{compound}").plot_top_predictions(
-            universal_top_predictions[compound],
+            top_predictions[compound],
             splits=splits,
             axs=axs[:, i],
             compound=compound,
         )
     plt.suptitle(
-        f"Top {splits} predictions for Universal-TL-MLP for each compound", fontsize=24
+        f"{simulation_type}: Top {splits} predictions for {model_name}",
+        fontsize=24,
     )
     plt.tight_layout()
     plt.savefig(
-        "universal_tl_top_predictions_per_compound.pdf", bbox_inches="tight", dpi=300
+        f"top_predictions_{model_name}_{simulation_type}.pdf",
+        dpi=300,
+        bbox_inches="tight",
     )
 
 
@@ -78,9 +91,11 @@ def plot_universal_tl_vs_per_compound_tl(
     model_names=["per_compound_tl", "ft_tl"],
     relative_to_per_compound_mean_model=False,
     include_vasp: bool = False,
+    ax=None,
 ):
     plt.style.use(["default", "science"])
-    fig, ax = plt.subplots(figsize=(10, 7))
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 7))
     bar_width = 0.25
     n_groups = len(cfg.compounds) if not include_vasp else len(cfg.compounds) + 2
     index = np.arange(n_groups)
@@ -93,7 +108,7 @@ def plot_universal_tl_vs_per_compound_tl(
 
     sims = list(zip(cfg.compounds, ["FEFF"] * len(cfg.compounds)))
     if include_vasp:
-        sims += [("Cu", "VASP"), ("Ti", "VASP")]
+        sims += [("Ti", "VASP"), ("Cu", "VASP")]
 
     for i, model_name in enumerate(model_names, start=1):
         fc_models = [
@@ -178,7 +193,7 @@ def plot_universal_tl_vs_per_compound_tl(
     ax.set_title(title, fontsize=24)
     ax.set_xticks(index + bar_width)
     xlabels = (
-        cfg.compounds + ["Cu\nVASP", "Ti\nVASP"] if include_vasp else cfg.compounds
+        cfg.compounds + ["Ti\nVASP", "Cu\nVASP"] if include_vasp else cfg.compounds
     )
     ax.set_xticklabels(
         xlabels,
@@ -188,13 +203,39 @@ def plot_universal_tl_vs_per_compound_tl(
 
     plt.tight_layout()
     plt.savefig(file_name, bbox_inches="tight", dpi=300)
-    plt.show()
+    # plt.show()
+    return ax
 
 
 if __name__ == "__main__":
 
     # plot_universal_tl_vs_per_compound_tl(relative_to_per_compound_mean_model=True)
-    plot_universal_tl_vs_per_compound_tl(
-        relative_to_per_compound_mean_model=False,
-        # include_vasp=True,
+
+    # plot_universal_tl_vs_per_compound_tl(
+    #     relative_to_per_compound_mean_model=True,
+    #     include_vasp=True,
+    # )
+
+    # plot_deciles_of_top_predictions(
+    #     model_name="per_compound_tl",
+    #     fixed_model=None,
+    # )
+
+    # plot_deciles_of_top_predictions(
+    #     model_name="ft_tl",
+    #     fixed_model=None,
+    # )
+
+    # plot_deciles_of_top_predictions(
+    #     model_name="universal_tl",
+    #     fixed_model=Trained_FCModel(
+    #         DataQuery("ALL", "FEFF"), name="universal_tl"
+    #     ),  # uses same model for all predictions
+    # )
+
+    plot_deciles_of_top_predictions(
+        model_name="ft_tl",
+        fixed_model=None,
+        compounds=["Ti", "Cu"],
+        simulation_type="VASP",
     )

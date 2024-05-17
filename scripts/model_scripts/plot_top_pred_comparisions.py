@@ -28,8 +28,14 @@ def plot_top_pred_comparisions(
     for ax_col, compound in zip(axs.T, compounds):
         data = load_xas_ml_data(DataQuery(compound, sim_type))
 
-        model1 = Trained_FCModel(DataQuery(compound, sim_type), name=model1_name)
-        model2 = Trained_FCModel(DataQuery(compound, sim_type), name=model2_name)
+        if model1_name == "universal_tl":
+            model1 = Trained_FCModel(DataQuery("ALL", "FEFF"), name=model1_name)
+        else:
+            model1 = Trained_FCModel(DataQuery(compound, sim_type), name=model1_name)
+        if model2_name == "universal_tl":
+            model2 = Trained_FCModel(DataQuery("ALL", "FEFF"), name=model2_name)
+        else:  # TODO: Repetition
+            model2 = Trained_FCModel(DataQuery(compound, sim_type), name=model2_name)
 
         mode1_pred_sort_idxs = model1.sorted_predictions()[1]
         plot_idxs = mode1_pred_sort_idxs[:: len(mode1_pred_sort_idxs) // splits]
@@ -72,20 +78,25 @@ def plot_top_pred_comparisions(
 
     for c, ax in zip(compounds, axs[0, :]):
         ax.set_title(c, fontsize=fontsize)
-    suptitle = f"Top 5 predictions for {model1_name} and {model2_name} models"
+    suptitle = f"{sim_type}: top {splits} predictions for {model1_name} and {model2_name} models"
     suptitle += "\n Fill color is based on color of worst model"
     fig = axs[0, 0].get_figure()
     fig.suptitle(suptitle, fontsize=fontsize, y=1.01)
     fig.legend(["Ground Truth", model1_name, model2_name], fontsize=fontsize)
     plt.tight_layout()
-    plt.savefig(f"improvement_regions_{sim_type}.pdf", bbox_inches="tight", dpi=400)
+    plt.savefig(
+        f"improvement_regions_{sim_type}_{model1_name}_{model2_name}.pdf",
+        bbox_inches="tight",
+        dpi=300,
+    )
 
 
 if __name__ == "__main__":
 
     splits = 10
-    model1_name = "per_compound_tl"
-    model2_name = "ft_tl"
+    # model1_name = "per_compound_tl"
+    model2_name = "per_compound_tl"
+    model1_name = "ft_tl"
 
     # # =============================================================================
     # # FEFF

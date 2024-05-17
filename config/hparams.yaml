@@ -34,3 +34,6 @@ hparams:
     Cu:
       batch_size: 64
       widths: [64, 550, 600, 450, 141]
+    ALL:
+      batch_size: 32
+      widths: [64, 500, 500, 550, 141] # same as FEFF 
