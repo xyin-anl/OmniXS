@@ -104,12 +104,6 @@ else:
 data = np.array(data)
 
 
-ASPECT_RATIO = 4 / 3
-HEIGHT = 6
-WEIGHT = HEIGHT * ASPECT_RATIO
-DPI = 300
-FONTSIZE = 14
-
 hatches = {
     "Anomalies": "xxxxx",
     "Unconverged": "/////",
@@ -117,8 +111,13 @@ hatches = {
 }
 
 import matplotlib as mpl
+ASPECT_RATIO = 4 / 3
+HEIGHT = 6
+WEIGHT = HEIGHT * ASPECT_RATIO
+DPI = 300
+FONTSIZE = 14
 plt.style.use(["default", "science", "tableau-colorblind10"])
-mpl.rcParams["font.family"] = FONT
+mpl.rcParams["font.family"] = FONTSIZE
 mpl.rcParams["font.size"] = FONTSIZE
 mpl.rcParams["axes.labelsize"] = FONTSIZE
 mpl.rcParams["xtick.labelsize"] = FONTSIZE
@@ -146,7 +145,6 @@ tableau_colorblind10 = [
     "#FFBC79",
     "#CFCFCF",
 ]
-
 colors_ml = tableau_colorblind10[0]
 colors_anomalies = tableau_colorblind10[1]
 colors_unconverged = tableau_colorblind10[2]
@@ -194,6 +192,7 @@ for i, compound in enumerate(cfg.compounds + ["Ti\nVASP", "Cu\nVASP"]):
 from matplotlib.patches import Patch
 
 # make VASP text of last two compounds bold
+
 ax.set_xticklabels(
     cfg.compounds
     + [
@@ -202,6 +201,7 @@ ax.set_xticklabels(
         "Cu\n" + r"{\normalsize VASP}",
     ],
 )
+
 ax.legend(
     [
         Patch(facecolor=colors_ml),

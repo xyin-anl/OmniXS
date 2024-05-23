@@ -75,10 +75,12 @@ def plot_deciles_of_top_predictions(
             axs=axs[:, i],
             compound=compound,
         )
-    plt.suptitle(
-        f"{simulation_type}: Top {splits} predictions for {model_name}",
-        fontsize=24,
-    )
+
+    # plt.suptitle(
+    #     f"{simulation_type}: Top {splits} predictions for {model_name}",
+    #     fontsize=24,
+    # )
+
     plt.tight_layout()
     plt.savefig(
         f"top_predictions_{model_name}_{simulation_type}.pdf",
@@ -92,28 +94,54 @@ def plot_universal_tl_vs_per_compound_tl(
     relative_to_per_compound_mean_model=False,
     include_vasp: bool = False,
     ax=None,
+    add_weighted=False,
+    FONTSIZE=18,
 ):
     plt.style.use(["default", "science"])
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 7))
-    bar_width = 0.25
+    bar_width = 0.2
     n_groups = len(cfg.compounds) if not include_vasp else len(cfg.compounds) + 2
     index = np.arange(n_groups)
 
+    tableau_colorblind10 = [
+        "#006BA4",
+        "#FF800E",
+        "#ABABAB",
+        "#595959",
+        "#5F9ED1",
+        "#C85200",
+        "#898989",
+        "#A2C8EC",
+        "#FFBC79",
+        "#CFCFCF",
+    ]
+
     colors = {
-        "univ_TL_MLP": "red",
-        "per_compound_tl": "blue",
-        "ft_tl": "green",
+        "univ_TL_MLP": tableau_colorblind10[0],
+        "per_compound_tl": tableau_colorblind10[1],
+        "ft_tl": tableau_colorblind10[2],
     }
 
     sims = list(zip(cfg.compounds, ["FEFF"] * len(cfg.compounds)))
     if include_vasp:
         sims += [("Ti", "VASP"), ("Cu", "VASP")]
 
+    univ_mses = universal_TL_mses(relative_to_per_compound_mean_model)
+    ax.bar(
+        # index,
+        np.arange(len(cfg.compounds)),  # VASP has no universal
+        univ_mses["per_compound"].values(),
+        bar_width,
+        label="Universal-TL-MLP",
+        edgecolor=None,
+        color=colors["univ_TL_MLP"],
+        zorder=3,
+    )
+
     for i, model_name in enumerate(model_names, start=1):
         fc_models = [
             Trained_FCModel(DataQuery(c, sim_type), name=model_name)
-            # for c in cfg.compounds
             for c, sim_type in sims
         ]
         fc_mses = [
@@ -124,36 +152,31 @@ def plot_universal_tl_vs_per_compound_tl(
             )
             for model in fc_models
         ]
+
         ax.bar(
             index + i * bar_width,
             fc_mses,
             bar_width,
             color=colors[model_name],
             label=model_name,
-            edgecolor="black",
-            hatch=(
-                [""] * len(cfg.compounds) + ["\\"] * 2
-                if include_vasp
-                else [""] * len(cfg.compounds)
-            ),
+            # edgecolor="black",
+            edgecolor=None if i < 8 else colors[model_name],
+            fill=True if i < 8 else None,
+            # hatch=(
+            #     [""] * len(cfg.compounds) + ["....."] * 2
+            #     if include_vasp
+            #     else [""] * len(cfg.compounds)
+            # ),
+            zorder=3,
         )
 
-    univ_mses = universal_TL_mses(relative_to_per_compound_mean_model)
-    ax.bar(
-        # index,
-        np.arange(len(cfg.compounds)),  # VASP has no universal
-        univ_mses["per_compound"].values(),
-        bar_width,
-        label="Universal-TL-MLP",
-        edgecolor="black",
-        color=colors["univ_TL_MLP"],
-    )
-    ax.axhline(
-        univ_mses["global"],
-        color=colors["univ_TL_MLP"],
-        linestyle="--",
-        label="Universal_TL_global_MSE",
-    )
+    if add_weighted:
+        ax.axhline(
+            univ_mses["global"],
+            color=colors["univ_TL_MLP"],
+            linestyle="--",
+            label="Universal_TL_global_MSE",
+        )
 
     if (
         not relative_to_per_compound_mean_model
@@ -176,7 +199,10 @@ def plot_universal_tl_vs_per_compound_tl(
 
     title = "Per-compound-TL-MLP vs Universal-TL-MLP"
     x_label = "Compound"
-    y_label = "Relative MSE" if relative_to_per_compound_mean_model else "MSE"
+    y_label = (
+        "MSE mean model / MSE model" if relative_to_per_compound_mean_model else "MSE"
+    )
+
     title += (
         "\n(relative to per-compound-mean-model)"
         if relative_to_per_compound_mean_model
@@ -188,22 +214,31 @@ def plot_universal_tl_vs_per_compound_tl(
         else "per_compound_tl_vs_universal_tl_relative"
     ) + f"_{len(model_names)}.pdf"
 
-    ax.set_xlabel(x_label, fontsize=20)
-    ax.set_ylabel(y_label, fontsize=20)
-    ax.set_title(title, fontsize=24)
+    ax.set_xlabel("Compound", fontsize=FONTSIZE * 1.2, labelpad=-10)
+    ax.set_ylabel(y_label, fontsize=FONTSIZE * 1.2)
+    # ax.set_title(title, fontsize=24)
     ax.set_xticks(index + bar_width)
-    xlabels = (
-        cfg.compounds + ["Ti\nVASP", "Cu\nVASP"] if include_vasp else cfg.compounds
-    )
+
     ax.set_xticklabels(
-        xlabels,
-        fontsize=18,
+        cfg.compounds
+        + (
+            [
+                "Ti\n" + r"{\large VASP}",
+                "Cu\n" + r"{\large VASP}",
+            ]
+            if include_vasp
+            else []
+        ),
+        fontsize=FONTSIZE,
     )
-    ax.legend(fontsize=16)
+
+    ax.legend(fontsize=FONTSIZE)
+    ax.grid(axis="y", alpha=0.3, zorder=0)
 
     plt.tight_layout()
     plt.savefig(file_name, bbox_inches="tight", dpi=300)
-    # plt.show()
+    plt.savefig(file_name[:-4] + ".png", bbox_inches="tight", dpi=300)
+    plt.show()
     return ax
 
 
@@ -211,10 +246,35 @@ if __name__ == "__main__":
 
     # plot_universal_tl_vs_per_compound_tl(relative_to_per_compound_mean_model=True)
 
-    # plot_universal_tl_vs_per_compound_tl(
-    #     relative_to_per_compound_mean_model=True,
-    #     include_vasp=True,
-    # )
+    import matplotlib as mpl
+
+    ASPECT_RATIO = 4 / 3
+    HEIGHT = 6
+    WEIGHT = HEIGHT * ASPECT_RATIO
+    DPI = 300
+    FONTSIZE = 14
+    plt.style.use(["default", "science", "tableau-colorblind10"])
+
+    # mpl.rcParams["font.size"] = FONTSIZE
+    # mpl.rcParams["axes.labelsize"] = FONTSIZE
+    # mpl.rcParams["xtick.labelsize"] = FONTSIZE
+    # mpl.rcParams["ytick.labelsize"] = FONTSIZE
+    # mpl.rcParams["legend.fontsize"] = FONTSIZE
+    # mpl.rcParams["figure.dpi"] = DPI
+    # mpl.rcParams["figure.figsize"] = (WEIGHT, HEIGHT)
+    # mpl.rcParams["savefig.dpi"] = DPI
+    # mpl.rcParams["savefig.format"] = "pdf"
+    # mpl.rcParams["savefig.bbox"] = "tight"
+
+    fig, ax = plt.subplots(1, 1, figsize=(WEIGHT, HEIGHT), dpi=DPI)
+
+    plot_universal_tl_vs_per_compound_tl(
+        relative_to_per_compound_mean_model=True,
+        include_vasp=True,
+        ax=ax,
+        add_weighted=False,
+        FONTSIZE=FONTSIZE,
+    )
 
     # plot_deciles_of_top_predictions(
     #     model_name="per_compound_tl",
@@ -233,9 +293,9 @@ if __name__ == "__main__":
     #     ),  # uses same model for all predictions
     # )
 
-    plot_deciles_of_top_predictions(
-        model_name="ft_tl",
-        fixed_model=None,
-        compounds=["Ti", "Cu"],
-        simulation_type="VASP",
-    )
+    # plot_deciles_of_top_predictions(
+    #     model_name="ft_tl",
+    #     fixed_model=None,
+    #     compounds=["Ti", "Cu"],
+    #     simulation_type="VASP",
+    # )
