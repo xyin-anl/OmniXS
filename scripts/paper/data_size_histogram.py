@@ -109,17 +109,15 @@ HEIGHT = 6
 WEIGHT = HEIGHT * ASPECT_RATIO
 DPI = 300
 FONTSIZE = 14
-FONT = "Arial"
 
 hatches = {
     "Anomalies": "xxxxx",
     "Unconverged": "/////",
     "ML": None,
 }
+
 import matplotlib as mpl
-
 plt.style.use(["default", "science", "tableau-colorblind10"])
-
 mpl.rcParams["font.family"] = FONT
 mpl.rcParams["font.size"] = FONTSIZE
 mpl.rcParams["axes.labelsize"] = FONTSIZE
