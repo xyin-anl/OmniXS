@@ -1,4 +1,6 @@
 # %%
+import os
+import pickle
 from utils.src.plots.heatmap_of_lines import heatmap_of_lines
 import numpy as np
 from config.defaults import cfg
@@ -11,44 +13,71 @@ from src.data.vasp_data import VASPData
 
 # %%
 
-compound = "Cu"
-simulation_type = "FEFF"
 
-feff_raw = RAWDataFEFF(compound, simulation_type)
+def get_data_sizes(compound, simulation_type):
+
+    def data_count(ml_splits):
+        return len(ml_splits.train.X) + len(ml_splits.val.X) + len(ml_splits.test.X)
+
+    pre_filter_size = data_count(
+        load_xas_ml_data(
+            DataQuery(compound, simulation_type), filter_spectra_anomalies=False
+        )
+    )
+    post_filter_size = data_count(
+        load_xas_ml_data(
+            DataQuery(compound, simulation_type), filter_spectra_anomalies=True
+        )
+    )
+    anamolies = pre_filter_size - post_filter_size
+
+    raw_data = (
+        RAWDataFEFF(compound, simulation_type)
+        if simulation_type == "FEFF"
+        else RAWDataVASP(compound)
+    )
+    if simulation_type == "VASP":
+        unconverged_count = 0
+    else:
+        unconverged_count = len(
+            [
+                (mat_id, site)
+                for mat_id in raw_data._material_ids
+                for site in raw_data._sites.get(mat_id, [])
+                if not raw_data._check_convergence(mat_id, site)
+            ]
+        )
+
+    print(f"Compound: {compound}, Simulation Type: {simulation_type}")
+    print(f"RAW Data Size: {raw_data.total_sites}")
+    print(f"Unconverged: {unconverged_count}")
+    print(f"Missing: {len(raw_data.missing_data)}")
+    print(f"Pre-Filter Size: {pre_filter_size}")
+    print(f"Anomalies: {anamolies}")
+    print(f"Post-Filter Size: {post_filter_size}")
+
+    return {
+        "total": len(raw_data),
+        "unconverged": unconverged_count,
+        "anomalies": anamolies,
+        "ml": post_filter_size,
+    }
+
+
 # %%
 
-unconverged = [
-    (mat_id, site)
-    for mat_id in feff_raw._material_ids
-    for site in feff_raw._sites.get(mat_id, [])
-    if not feff_raw._check_convergence(mat_id, site)
-]
-print(f"Unconverged: {len(unconverged)}")
-print(f"Total: {len(feff_raw)}")
-ml_data = load_xas_ml_data(
-    DataQuery(compound, simulation_type), filter_spectra_anomalies=False
-)
-print(f"ML Data: {len(ml_data.train.X) + len(ml_data.val.X) + len(ml_data.test.X)}")
 
-# %%
-
-feff_raw._material_ids
-feff_raw._sites
-
-# c = "Cu"
-# load_xas_ml_data(DataQuery(c, "FEFF"), filter_spectra_anomalies=True)
-
-# %%
+def hex_to_rgb(hex_color):
+    """Convert hex color to RGB tuple."""
+    hex_color = hex_color.lstrip("#")
+    return tuple(int(hex_color[i : i + 2], 16) / 255.0 for i in (0, 2, 4))
 
 
-all_data = [
-    load_xas_ml_data(DataQuery(c, "FEFF"), filter_spectra_anomalies=True)
-    for c in cfg.compounds
-]
+def darken_color(color, factor=0.8):
+    if isinstance(color, str):
+        color = hex_to_rgb(color)
+    return tuple(max(0, min(1, c * factor)) for c in color)
 
-all_data = [np.concatenate([d.train.y, d.val.y, d.test.y]) for d in all_data]
-
-# %%
 
 nice_colors = [
     "#4e79a7",
@@ -60,50 +89,138 @@ nice_colors = [
     "#e74c3c",
     "#b07aa1",
 ]
-import scienceplots
 
-plt.style.use(["default", "science"])
-plt.style.use(["default", "science", "grid"])
-fontsize = 20
-fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-data_size = [len(x) for x in all_data]
-ax.bar(cfg.compounds, data_size, color="#9b59b6")
-ax.set_xlabel("Compounds", fontsize=fontsize)
-ax.set_xticklabels(cfg.compounds, fontsize=fontsize / 1.5)
-# plt.xticks([])
-# put y ticks labels in multiple of 100
-plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
-ax.set_ylabel("Data Size", fontsize=fontsize, labelpad=0)
-# name the compounds by puttin the text in middle of the bars
+compound_colors = {c: nice_colors[i] for i, c in enumerate(cfg.compounds)}
 
-from matplotlib.ticker import FuncFormatter
 
-ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: f"{int(x/1000):,}"))
-ax.text(
-    0,
-    1.02,
-    r"$\times 10^3$",
-    transform=ax.transAxes,
-    fontsize=12,
-    ha="left",
+if os.path.exists("data_size.pkl"):
+    data = pickle.load(open("data_size.pkl", "rb"))
+else:
+    data = []
+    for compound in cfg.compounds:
+        data.append(get_data_sizes(compound, "FEFF"))
+    data.append(get_data_sizes("Cu", "VASP"))
+    data.append(get_data_sizes("Ti", "VASP"))
+data = np.array(data)
+
+
+ASPECT_RATIO = 4 / 3
+HEIGHT = 6
+WEIGHT = HEIGHT * ASPECT_RATIO
+DPI = 300
+FONTSIZE = 14
+FONT = "Arial"
+
+hatches = {
+    "Anomalies": "xxxxx",
+    "Unconverged": "/////",
+    "ML": None,
+}
+import matplotlib as mpl
+
+plt.style.use(["default", "science", "tableau-colorblind10"])
+
+mpl.rcParams["font.family"] = FONT
+mpl.rcParams["font.size"] = FONTSIZE
+mpl.rcParams["axes.labelsize"] = FONTSIZE
+mpl.rcParams["xtick.labelsize"] = FONTSIZE
+mpl.rcParams["ytick.labelsize"] = FONTSIZE
+mpl.rcParams["legend.fontsize"] = FONTSIZE
+mpl.rcParams["figure.dpi"] = DPI
+mpl.rcParams["figure.figsize"] = (WEIGHT, HEIGHT)
+mpl.rcParams["savefig.dpi"] = DPI
+mpl.rcParams["savefig.format"] = "pdf"
+mpl.rcParams["savefig.bbox"] = "tight"
+
+# colors_ml = "#1b9e77"
+# colors_anomalies = "#d95f02"
+# colors_unconverged = "#7570b3"
+
+tableau_colorblind10 = [
+    "#006BA4",
+    "#FF800E",
+    "#ABABAB",
+    "#595959",
+    "#5F9ED1",
+    "#C85200",
+    "#898989",
+    "#A2C8EC",
+    "#FFBC79",
+    "#CFCFCF",
+]
+
+colors_ml = tableau_colorblind10[0]
+colors_anomalies = tableau_colorblind10[1]
+colors_unconverged = tableau_colorblind10[2]
+
+
+fig, ax = plt.subplots(1, 1, figsize=(WEIGHT, HEIGHT), dpi=DPI)
+for i, compound in enumerate(cfg.compounds + ["Ti\nVASP", "Cu\nVASP"]):
+    ax.bar(
+        i,
+        data[i]["ml"],
+        color=colors_ml,
+        hatch=hatches["ML"],
+        label=compound,
+        # edgecolor=darken_color(compound_colors[compound.split("\n")[0]]),
+        zorder=3,
+    )
+    ax.bar(
+        i,
+        data[i]["anomalies"],
+        bottom=data[i]["ml"],
+        # color=compound_colors[compound.split("\n")[0]],
+        color=colors_anomalies,
+        # alpha=0.8,
+        # fill=None,
+        # hatch=hatches["Anomalies"],
+        # edgecolor=darken_color(compound_colors[compound.split("\n")[0]]),
+        zorder=3,
+    )
+    ax.bar(
+        i,
+        data[i]["unconverged"],
+        bottom=data[i]["ml"] + data[i]["anomalies"],
+        # color=compound_colors[compound.split("\n")[0]],
+        color=colors_unconverged,
+        # alpha=0.8,
+        # fill=None,
+        # hatch=hatches["Unconverged"],
+        # edgecolor=darken_color(compound_colors[compound.split("\n")[0]]),
+        zorder=3,
+    )
+    ax.set_xticks(range(len(cfg.compounds) + 2))
+    ax.set_xticklabels(cfg.compounds + ["Ti\nVASP", "Cu\nVASP"])
+
+# add hatches for legend
+from matplotlib.patches import Patch
+
+# make VASP text of last two compounds bold
+ax.set_xticklabels(
+    cfg.compounds
+    + [
+        # use smaller font for vasp
+        "Ti\n" + r"{\normalsize VASP}",
+        "Cu\n" + r"{\normalsize VASP}",
+    ],
+)
+ax.legend(
+    [
+        Patch(facecolor=colors_ml),
+        Patch(facecolor=colors_anomalies),
+        Patch(facecolor=colors_unconverged),
+    ],
+    ["ML", "Anomalies", "Unconverged"],
+    fontsize=FONTSIZE,
+    frameon=True,
 )
 
-# make grid less visible
-ax.grid(alpha=0.2)
-
-for i, v in enumerate(data_size):
-    ax.text(
-        i,
-        v + 0.005 * v,
-        # put commas in the number
-        f"{v:,}",
-        ha="center",
-        va="bottom",
-        fontsize=12,
-        # color="white",
-    )
-
+ax.grid(axis="y", alpha=0.3, zorder=0)
+ax.set_xlabel("Compound", fontsize=FONTSIZE * 1.2, labelpad=-10)
+ax.set_ylabel("Number of Spectra", fontsize=FONTSIZE * 1.2)
+ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, loc: "{:,}".format(int(x))))
 plt.tight_layout()
-plt.savefig("data_size.png", dpi=300, bbox_inches="tight")
+plt.savefig("data_size.pdf")
+
 
 # %%
