@@ -55,31 +55,31 @@ class TrainedModel(ABC):  #
         pass
 
     @cached_property
+    def mae(self):
+        return mean_absolute_error(self.data.test.y, self.predictions)
+
+    @cached_property
     def mae_per_spectra(self):
         return np.mean(np.abs(self.data.test.y - self.predictions), axis=1)
+
+    @cached_property
+    def mse(self):
+        return mean_squared_error(self.data.test.y, self.predictions, squared=True)
 
     @cached_property
     def mse_per_spectra(self):
         return np.mean((self.data.test.y - self.predictions) ** 2, axis=1)
 
     @cached_property
-    def mae(self):
-        return mean_absolute_error(self.data.test.y, self.predictions)
-
-    @cached_property
     def mse_relative_to_mean_model(self):
         return MeanModel(query=self.query).mse / self.mse
-
-    @cached_property
-    def mse(self):
-        return mean_squared_error(self.data.test.y, self.predictions, squared=True)
 
     def sorted_predictions(self, sort_array=None):
         sort_array = sort_array or self.mae_per_spectra  # default sort by mae
         pair = np.column_stack((self.data.test.y, self.predictions))
         pair = pair.reshape(-1, 2, self.data.test.y.shape[1])
         pair = pair[sort_array.argsort()]
-        return pair
+        return pair, sort_array.argsort()
 
     def top_predictions(self, splits=10):
         # sort by mean residue, splits and return top of each split
@@ -134,7 +134,13 @@ class MeanModel(TrainedModel):
 
 
 class LinReg(TrainedModel):
-    name = "LinReg"
+    def __init__(self, query: DataQuery, name="LinReg"):
+        super().__init__(query)
+        self._name = "LinReg"
+
+    @property
+    def name(self):
+        return self._name
 
     @cached_property
     def model(self):
@@ -175,11 +181,13 @@ class Trained_FCModel(TrainedModel):
         weight_shapes = [
             state[k].shape for k in state.keys() if "layers" in k and "weight" in k
         ]
+
         input_sz = weight_shapes[0][1]
         hidden_sz = [w[0] for w in weight_shapes[:]]
+
         widths = [input_sz] + hidden_sz  # output is already included
 
-        model = FC_XAS(widths=widths)
+        model = FC_XAS(widths=widths, input_dim=None, output_dim=None)
         model.load_state_dict(model_params["state_dict"])
         model.eval()
         return model

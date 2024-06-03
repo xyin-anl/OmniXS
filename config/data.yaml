@@ -2,6 +2,8 @@ ml_data:
   anamoly_filter_std_cutoff:
     FEFF: 2.5
     VASP: 5.0
+    SOAP: 2.5
+    ACSF: 2.5
 
 data_module:
   _target_: src.data.ml_data.XASPlData
@@ -22,3 +24,15 @@ data_module:
   # prefetch_factor: 4
   # drop_last: False
   split_fractions: [0.8, 0.1, 0.1]
+
+feature_dims:
+  input_dim:
+    FEFF: 64
+    VASP: 64
+    SOAP: 17
+    ACSF: 4
+  output_dim:
+    FEFF: 141
+    VASP: 141
+    SOAP: 141
+    ACSF: 141

@@ -1,16 +1,34 @@
 from typing import List
 import torch
 from torch import nn
+from typing import Literal
+from src.data.ml_data import load_xas_ml_data, DataQuery
 
 
 class FC_XAS(nn.Module):
     def __init__(
         self,
         widths: List[int],
+        input_dim: Literal["DATADIM", None] = "DATADIM",
+        output_dim: int = None,
         dropout_rate=0.5,
+        compound: str = None,
+        simulation_type: str = None,
     ):
         super().__init__()
         self.widths = widths
+
+        if input_dim is not None:
+            if input_dim == "DATADIM":
+                ml_data = load_xas_ml_data(DataQuery(compound, simulation_type))
+                input_dim = ml_data.train.X.shape[1]
+            else:
+                input_dim = input_dim
+            self.widths = [input_dim] + self.widths
+
+        if output_dim is not None:
+            self.widths.append(output_dim)
+            
         self.pairs = [(w1, w2) for w1, w2 in zip(self.widths[:-1], self.widths[1:])]
         self.layers = nn.ModuleList()
         self.batch_norms = nn.ModuleList()
