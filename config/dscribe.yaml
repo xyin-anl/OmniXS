@@ -2,7 +2,9 @@
 dscribe:
   features: [SOAP, ACSF, LMBTR]
   pca:
-    n_components: 0.98
+    # n_components: 0.98
+    n_components: 0.99
+
   SOAP:
     r_cut: 6.0
     n_max: 3 # default is 12

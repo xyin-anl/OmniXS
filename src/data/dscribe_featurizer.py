@@ -1,3 +1,5 @@
+# %%
+
 import os
 from functools import cached_property
 
@@ -7,6 +9,7 @@ from p_tqdm import p_map
 
 from config.defaults import cfg
 from src.data.ml_data import DataQuery
+from typing import Literal
 
 
 class DscribeFeaturizer:
@@ -124,9 +127,17 @@ class DscribeFeaturizer:
         )
 
 
+# %%
+
 if __name__ == "__main__":
     from dscribe.descriptors import ACSF, SOAP, LMBTR
 
-    for compound in cfg.compounds:
-        # DscribeFeaturizer(ACSF, compound).save()
-        DscribeFeaturizer(SOAP, compound).save()
+    top_n = 40
+    simulation_type = f"ACSF{top_n}"
+    for name, cls in zip(["ACSF", "SOAP"], [ACSF, SOAP]):
+        for c in cfg.compounds:
+            DscribeFeaturizer(featurizer_class=cls, compound=c, top_n=top_n).save(
+                f"{c}_{name}{top_n}.npz"
+            )
+
+# %%
