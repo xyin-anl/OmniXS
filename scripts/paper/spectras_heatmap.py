@@ -29,6 +29,14 @@ all_data["Cu_vasp"] = load_xas_ml_data(
 
 # %%
 
+
+cmap = "tab10"
+compound_colors = plt.get_cmap(cmap)(np.linspace(0, 1, len(cfg.compounds) + 2))
+compound_colors = {
+    c: compound_colors[i] for i, c in enumerate(cfg.compounds + ["Ti_vasp", "Cu_vasp"])
+}
+
+
 import matplotlib as mpl
 
 FONTSIZE = 14
@@ -129,8 +137,11 @@ for ax, (c, data) in zip(axs, all_data.items()):
         ax=ax,
         aspect="auto",
         smooth=True,
+        # smooth=False, # for dbugging
         cmap="jet",
     )
+    ax.patch.set_facecolor(compound_colors[c])
+    ax.patch.set_alpha(0.2)
     ax.set_yticks([])
     ax.set_xticks([])
     ax.text(
@@ -142,6 +153,7 @@ for ax, (c, data) in zip(axs, all_data.items()):
         verticalalignment="top",
         horizontalalignment="left",
     )
+    # break
 
 plt.tick_params(axis="x", which="both", bottom=False, top=False)
 for i in [8, 9]:

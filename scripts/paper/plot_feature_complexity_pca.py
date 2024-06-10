@@ -1,7 +1,13 @@
 # %%
 import matplotlib.lines as mlines
 import matplotlib as mpl
-from src.models.trained_models import MeanModel
+from src.models.trained_models import (
+    MeanModel,
+    LinReg,
+    Trained_FCModel,
+    XGBReg,
+    ElastNet,
+)
 from scipy.stats import gaussian_kde
 from config.defaults import cfg
 import scienceplots
@@ -15,40 +21,70 @@ from src.data.ml_data import DataQuery, load_xas_ml_data
 import numpy as np
 from src.data.ml_data import FeatureProcessor
 from src.models.trained_models import Trained_FCModel, MeanModel, LinReg
+from p_tqdm import p_map
 
 # %%
 
 simulation_types = ["ACSF", "SOAP", "FEFF"]
+
+
+def get_pca_dims(simulation_type):
+    out = p_map(
+        lambda c: load_xas_ml_data(DataQuery(c, simulation_type)).train.X.shape[1],
+        cfg.compounds,
+        desc=f"PCA dims {simulation_type}",
+    )
+    out = {c: out[i] for i, c in enumerate(cfg.compounds)}
+    return out
+
+
 pca_dims_of_simulations = {
-    simulation_type: {
-        c: FeatureProcessor(
-            DataQuery(c, simulation_type),
-            data_splits=load_xas_ml_data(DataQuery(c, simulation_type)),
-        ).pca.n_components_
-        for c in cfg.compounds
-    }
+    simulation_type: get_pca_dims(simulation_type)
     for simulation_type in simulation_types
 }
+
+# %%
+
+
+def get_mse_relative_to_mean_model(simulation_type, model_class):
+    out = p_map(
+        lambda c: model_class(DataQuery(c, simulation_type)).mse_relative_to_mean_model,
+        cfg.compounds,
+        desc=f"{model_class.__name__} {simulation_type}",
+    )
+    out = {c: out[i] for i, c in enumerate(cfg.compounds)}
+    return out
+
 
 mlp_losses = {
-    simulation_type: {
-        c: Trained_FCModel(
-            DataQuery(c, simulation_type), name="per_compound_tl"
-        ).mse_relative_to_mean_model
-        for c in cfg.compounds
-    }
+    simulation_type: get_mse_relative_to_mean_model(simulation_type, XGBReg)
+    for simulation_type in simulation_types
+}
+linreg_losses = {
+    simulation_type: get_mse_relative_to_mean_model(simulation_type, LinReg)
     for simulation_type in simulation_types
 }
 
-linreg_losses = {
-    simulation_type: {
-        c: LinReg(
-            DataQuery(c, simulation_type), name="per_compound_tl"
-        ).mse_relative_to_mean_model
-        for c in cfg.compounds
-    }
-    for simulation_type in simulation_types
-}
+
+# mlp_losses = {
+#     simulation_type: {
+#         c: ElastNet(
+#             DataQuery(c, simulation_type), name="per_compound_tl"
+#         ).mse_relative_to_mean_model
+#         for c in cfg.compounds
+#     }
+#     for simulation_type in simulation_types
+# }
+# linreg_losses = {
+#     simulation_type: {
+#         c: XGBReg(
+#             DataQuery(c, simulation_type), name="per_compound_tl"
+#         ).mse_relative_to_mean_model
+#         for c in cfg.compounds
+#     }
+#     for simulation_type in simulation_types
+# }
+
 
 # convert to rmse
 for simulation_type in simulation_types:
@@ -76,6 +112,7 @@ mpl.rcParams["savefig.bbox"] = "tight"
 
 fig, ax = plt.subplots(figsize=(8, 6))
 plt.style.use(["default", "science", "tableau-colorblind10", "no-latex"])
+_markers = ["o", "s", "D"]
 ax.plot(
     [
         np.mean(list(pca_dims_of_simulations[sim_type].values()))
@@ -165,7 +202,7 @@ ax.set_xlabel(
 mean_pcas = {
     "ACSF": np.mean(list(pca_dims_of_simulations["ACSF"].values())),
     "SOAP": np.mean(list(pca_dims_of_simulations["SOAP"].values())),
-    "FEFF": np.mean(list(pca_dims_of_simulations["FEFF"].values())),
+    "M3GNet": np.mean(list(pca_dims_of_simulations["FEFF"].values())),
 }
 ax.set_xticks(list(mean_pcas.values()))
 ax.set_xticklabels(
@@ -192,10 +229,16 @@ mlp_soap = mlines.Line2D(
     [], [], color="red", marker="s", linestyle="-", markersize=10, label="MLP SOAP"
 )
 linreg_feff = mlines.Line2D(
-    [], [], color="blue", marker="d", linestyle="--", markersize=10, label="LinReg FEFF"
+    [],
+    [],
+    color="blue",
+    marker="d",
+    linestyle="--",
+    markersize=10,
+    label="LinReg M3GNet",
 )
 mlp_feff = mlines.Line2D(
-    [], [], color="red", marker="d", linestyle="-", markersize=10, label="MLP FEFF"
+    [], [], color="red", marker="d", linestyle="-", markersize=10, label="MLP M3GNet"
 )
 plt.legend(
     handles=[linreg_acsf, linreg_soap, linreg_feff, mlp_acsf, mlp_soap, mlp_feff],

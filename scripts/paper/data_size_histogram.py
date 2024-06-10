@@ -111,13 +111,13 @@ hatches = {
 }
 
 import matplotlib as mpl
+
 ASPECT_RATIO = 4 / 3
 HEIGHT = 6
 WEIGHT = HEIGHT * ASPECT_RATIO
 DPI = 300
 FONTSIZE = 14
 plt.style.use(["default", "science", "tableau-colorblind10"])
-mpl.rcParams["font.family"] = FONTSIZE
 mpl.rcParams["font.size"] = FONTSIZE
 mpl.rcParams["axes.labelsize"] = FONTSIZE
 mpl.rcParams["xtick.labelsize"] = FONTSIZE
@@ -150,40 +150,67 @@ colors_anomalies = tableau_colorblind10[1]
 colors_unconverged = tableau_colorblind10[2]
 
 
+cmap = "tab10"
+compound_colors = plt.get_cmap(cmap)(np.linspace(0, 1, len(cfg.compounds) + 2))
+compound_colors = {
+    c: compound_colors[i]
+    for i, c in enumerate(cfg.compounds + ["Ti\nVASP", "Cu\nVASP"])
+}
+hatches = {
+    "ML": None,
+    "Anomalies": "||",
+    "Unconverged": "..",
+}
+
+# hatches = {
+#     "universal_feff": "..",
+#     "per_compound_tl": ".....",
+#     "ft_tl": "",
+# }
+
 fig, ax = plt.subplots(1, 1, figsize=(WEIGHT, HEIGHT), dpi=DPI)
 for i, compound in enumerate(cfg.compounds + ["Ti\nVASP", "Cu\nVASP"]):
     ax.bar(
         i,
         data[i]["ml"],
-        color=colors_ml,
+        # color=colors_ml,
+        color=compound_colors[compound],
         hatch=hatches["ML"],
         label=compound,
+        # edgecolor="black",
         # edgecolor=darken_color(compound_colors[compound.split("\n")[0]]),
         zorder=3,
+        edgecolor="black",
     )
     ax.bar(
         i,
         data[i]["anomalies"],
         bottom=data[i]["ml"],
-        # color=compound_colors[compound.split("\n")[0]],
-        color=colors_anomalies,
-        # alpha=0.8,
+        # color=colors_anomalies,
+        color=compound_colors[compound],
+        # hatch=hatches["Anomalies"],
+        alpha=0.6,
+        # edgecolor="black",
         # fill=None,
         # hatch=hatches["Anomalies"],
         # edgecolor=darken_color(compound_colors[compound.split("\n")[0]]),
         zorder=3,
+        edgecolor="black",
     )
     ax.bar(
         i,
         data[i]["unconverged"],
         bottom=data[i]["ml"] + data[i]["anomalies"],
-        # color=compound_colors[compound.split("\n")[0]],
-        color=colors_unconverged,
-        # alpha=0.8,
+        color=compound_colors[compound],
+        # color=colors_unconverged,
+        alpha=0.3,
+        # edgecolor="black",
         # fill=None,
         # hatch=hatches["Unconverged"],
         # edgecolor=darken_color(compound_colors[compound.split("\n")[0]]),
+        edgecolor="black",
         zorder=3,
+        # hatch=hatches["Unconverged"],
     )
     ax.set_xticks(range(len(cfg.compounds) + 2))
     ax.set_xticklabels(cfg.compounds + ["Ti\nVASP", "Cu\nVASP"])
@@ -204,11 +231,11 @@ ax.set_xticklabels(
 
 ax.legend(
     [
-        Patch(facecolor=colors_ml),
-        Patch(facecolor=colors_anomalies),
-        Patch(facecolor=colors_unconverged),
+        Patch(facecolor="white", edgecolor="black", hatch=hatches["Unconverged"]),
+        Patch(facecolor="white", edgecolor="black", hatch=hatches["Anomalies"]),
+        Patch(facecolor="white", edgecolor="black", hatch=hatches["ML"]),
     ],
-    ["ML", "Anomalies", "Unconverged"],
+    ["Unconverged", "Anomalies", "ML"],
     fontsize=FONTSIZE,
     frameon=True,
 )
