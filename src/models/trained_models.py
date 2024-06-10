@@ -1,7 +1,12 @@
 import os
+from sklearn.svm import SVR
+from sklearn.linear_model import ElasticNet, Ridge
 from abc import ABC, abstractmethod
 from functools import cached_property
 from typing import List
+from xgboost import XGBRegressor
+
+from sklearn.ensemble import RandomForestRegressor
 
 import numpy as np
 import optuna
@@ -83,7 +88,7 @@ class TrainedModel(ABC):  #
 
     def top_predictions(self, splits=10):
         # sort by mean residue, splits and return top of each split
-        pair = self.sorted_predictions()
+        pair = self.sorted_predictions()[0]
         # for even split, some pairs are chopped off
         new_len = len(pair) - divmod(len(pair), splits)[1]
         pair = pair[:new_len]
@@ -136,7 +141,7 @@ class MeanModel(TrainedModel):
 class LinReg(TrainedModel):
     def __init__(self, query: DataQuery, name="LinReg"):
         super().__init__(query)
-        self._name = "LinReg"
+        self._name = name
 
     @property
     def name(self):
@@ -145,6 +150,79 @@ class LinReg(TrainedModel):
     @cached_property
     def model(self):
         return LinearRegression().fit(self.data.train.X, self.data.train.y)
+
+    @cached_property
+    def predictions(self):
+        return self.model.predict(self.data.test.X)
+
+
+class RidgeReg(TrainedModel):
+    def __init__(self, query: DataQuery, name="RidgeReg"):
+        super().__init__(query)
+        self._name = name
+
+    @property
+    def name(self):
+        return self._name
+
+    @cached_property
+    def model(self):
+        return Ridge().fit(self.data.train.X, self.data.train.y)
+
+    @cached_property
+    def predictions(self):
+        return self.model.predict(self.data.test.X)
+
+
+class RFReg(TrainedModel):
+    def __init__(self, query: DataQuery, name="RFReg"):
+        super().__init__(query)
+        self._name = name
+
+    @property
+    def name(self):
+        return self._name
+
+    @cached_property
+    def model(self):
+        return RandomForestRegressor().fit(self.data.train.X, self.data.train.y)
+
+    @cached_property
+    def predictions(self):
+        return self.model.predict(self.data.test.X)
+
+
+class XGBReg(TrainedModel):
+    def __init__(self, query: DataQuery, name="XGBReg"):
+        super().__init__(query)
+        self._name = name
+
+    @property
+    def name(self):
+        return self._name
+
+    @cached_property
+    def model(self):
+        return XGBRegressor().fit(self.data.train.X, self.data.train.y)
+
+    @cached_property
+    def predictions(self):
+        return self.model.predict(self.data.test.X)
+
+
+class ElastNet(TrainedModel):
+
+    def __init__(self, query: DataQuery, name="ElasticNet"):
+        super().__init__(query)
+        self._name = name
+
+    @property
+    def name(self):
+        return self._name
+
+    @cached_property
+    def model(self):
+        return ElasticNet().fit(self.data.train.X, self.data.train.y)
 
     @cached_property
     def predictions(self):
