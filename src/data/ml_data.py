@@ -69,17 +69,18 @@ class FeatureProcessor:
 
     def _reduce_feature_dims(self, data_splits: DataSplit):
         return DataSplit(
-            self.pca.transform(self.scaler.transform(data_splits.X)), data_splits.y
+            self.pca.transform(self.scaler.transform(data_splits.X)),
+            data_splits.y,
         )
 
     @cached_property
     def scaler(self):
-        # load from cache if cache exists
+        # # load from cache if cache exists
         scaler_cache_path = cfg.paths.cache.scaler.format(**self.query.__dict__)
         if os.path.exists(scaler_cache_path):  # load from cache
             with open(scaler_cache_path, "rb") as f:
                 return pickle.load(f)
-        # else fit scaler and save to cache
+        # # else fit scaler and save to cache
         if self.data_splits is None:
             raise ValueError("data_splits is None. Cannot fit scaler.")
         scaler = StandardScaler().fit(self.data_splits.train.X)

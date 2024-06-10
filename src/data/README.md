@@ -7,9 +7,6 @@
 # Methods and parameters for processing RAW data
 
 ```yaml
-defaults:
-  - _self_
-
 transformations:
   quarter_eV_resolution: 0.25 # used for interpolation
   e_range_diff: 35 # energy range used
@@ -28,11 +25,11 @@ transformations:
   emperical_offset:
     VASP:
       Ti: 5114.08973
-      Cu: 9499.797 # # 9492.797 + 7 # 7 is dtw based offset from mean of vasp and feff data
+      Cu: 9499.797
 
   gamma:
     Ti: 0.89 # put same value in trucation offset
-    Cu: 3 # arbitrary to align with feff
+    Cu: 3.458 # 1.729 # or 3.458 #Based on email conv with J.K.
 
   e_core:
     Ti: -4864.0371
