@@ -1,4 +1,5 @@
 # %%
+from p_tqdm import p_map
 import matplotlib.gridspec as gridspec
 import matplotlib.lines as mlines
 import matplotlib as mpl
@@ -37,29 +38,31 @@ mpl.rcParams["savefig.bbox"] = "tight"
 # for simulation_type in ["ACSF", "SOAP", "FEFF"]:
 
 # fig, axs = plt.subplots(1, 3, figsize=(12, 4), dpi=DPI, sharey=True)
-fig = plt.figure(figsize=(12, 4), dpi=DPI)
+fig = plt.figure(figsize=(6, 10), dpi=DPI)
+plt.style.use(["default", "science", "no-latex"])  # TODO: fix latex
 # fig.subplots_adjust(wspace=0, hspace=0)
 
-gs = gridspec.GridSpec(1, 3, wspace=0, hspace=0)
+gs = gridspec.GridSpec(3, 1, wspace=0, hspace=0)
 axs = [plt.subplot(gs[i]) for i in range(3)]
 
 cmap = "tab10"
 compound_colors = plt.get_cmap(cmap)(np.linspace(0, 1, len(cfg.compounds) + 2))
 
 for ax, simulation_type in zip(axs, ["ACSF", "SOAP", "FEFF"]):
-    feature_processors = {
-        c: FeatureProcessor(
+    pcas = p_map(
+        lambda c: FeatureProcessor(
             DataQuery(c, simulation_type),
             data_splits=load_xas_ml_data(DataQuery(c, simulation_type)),
-        )
-        for c in cfg.compounds
-    }
-
-    pca_dims = {c: feature_processors[c].pca.n_components_ for c in cfg.compounds}
+        ).pca,
+        cfg.compounds,
+    )
+    pcas = {c: v for c, v in zip(cfg.compounds, pcas)}
+    pca_dims = {c: pca.n_components_ for c, pca in pcas.items()}
 
     for i, c in enumerate(np.array(cfg.compounds)[np.argsort(list(pca_dims.values()))]):
 
-        pca = feature_processors[c].pca
+        # pca = feature_processors[c].pca
+        pca = pcas[c]
         n_components = pca.n_components_
 
         label = r"{c}: {pca.n_components_}"
@@ -78,23 +81,17 @@ for ax, simulation_type in zip(axs, ["ACSF", "SOAP", "FEFF"]):
     ]
     assert len(set(pre_reduced_dims)) == 1
     # misc
-    ax.set_xlabel("Principal Component Index", fontsize=FONTSIZE)
 
     x_value = cfg.dscribe.pca.n_components
 
-    ax.set_xlabel(
-        f"Principal Component Index \n (Original Dimensions: {pre_reduced_dims[0]})",
-        fontsize=FONTSIZE * 0.8,
-    )
-
-    ax.tick_params(axis="x", which="minor", bottom=False)
-
     # ax.set_title(rf"{simulation_type}" if simulation_type != "FEFF" else r"M3GNet")
 
+    txt = rf"{simulation_type}" if simulation_type != "FEFF" else r"M3GNet"
+    txt += f"\nDimension: {pre_reduced_dims[0]}"
     ax.text(
         0.5,
         0.5,
-        rf"{simulation_type}" if simulation_type != "FEFF" else r"M3GNet",
+        txt,
         horizontalalignment="center",
         verticalalignment="center",
         transform=ax.transAxes,
@@ -104,15 +101,22 @@ for ax, simulation_type in zip(axs, ["ACSF", "SOAP", "FEFF"]):
 
     # draw horizontal line at y = x_value
     ax.axhline(y=x_value, color="gray", linestyle="--")
-    ax.set_ylim(0.2, None)
+    ax.set_yticks(np.arange(0.2, 1.05, 0.2))
+    ax.set_yticklabels([f"{i:.1f}" for i in np.arange(0.2, 1.05, 0.2)])
+    ax.set_ylabel("η(d)", fontsize=FONTSIZE)
+    ax.set_ylim(0.1, 1.05)
 
-    # no y tick labels
-    ax.set_yticklabels([])
+    ax.set_xlim(0, 60)
 
 
 # use latex
-axs[0].set_ylabel(r"Cumulative Explained Variance", fontsize=FONTSIZE)
-axs[0].set_yticklabels([f"{i:.1f}" for i in np.arange(0, 1.1, 0.1)])
+
+axs[-1].set_xlabel(
+    "Principal Components (d)",
+    fontsize=FONTSIZE,
+)
+axs[-1].set_xticks(np.arange(0, 61, 10))
+axs[-1].set_xticklabels([f"{i}" for i in np.arange(0, 61, 10)])
 
 handles = [
     mlines.Line2D(
@@ -138,16 +142,27 @@ handles = [
     ),
     *handles,
 ]
-# put legend on right side in vertica
-fig.legend(
+# put legend on last axis
+axs[0].legend(
     handles=handles,
     title=r"Compound",
     fontsize=FONTSIZE * 0.8,
     title_fontsize=FONTSIZE * 0.8,
     # to right most of 3rd subplot
     loc="center right",
-    bbox_to_anchor=(1.08, 0.5),
+    # bbox_to_anchor=(1.08, 0.5),
 )
+
+# fig.legend(
+#     handles=handles,
+#     title=r"Compound",
+#     fontsize=FONTSIZE * 0.8,
+#     title_fontsize=FONTSIZE * 0.8,
+#     # to right most of 3rd subplot
+#     loc="center right",
+#     bbox_to_anchor=(1.08, 0.5),
+# )
+
 fig.tight_layout()
 fig.savefig("pca_explained_variance.pdf", bbox_inches="tight", dpi=DPI)
 
