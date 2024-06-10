@@ -44,7 +44,13 @@ class Plot:
         return {"FCModel": ".", "LinReg": "", "MeanModel": "o"}
 
     def plot_top_predictions(
-        self, top_predictions, compound, splits=10, axs=None, fill=True
+        self,
+        top_predictions,
+        compound,
+        splits=10,
+        axs=None,
+        fill=True,
+        color_background=False,
     ):
         if axs is None:
             fig, axs = plt.subplots(splits, 1, figsize=(8, 20))
@@ -52,31 +58,60 @@ class Plot:
         else:
             assert len(axs) == splits, "Number of subplots must match splits"
 
+        cmap = "tab10"
+        compound_colors = plt.get_cmap(cmap)(np.linspace(0, 1, len(cfg.compounds) + 2))
+        compound_colors = {
+            c: compound_colors[i] for i, c in enumerate(cfg.compounds + ["Ti", "Cu"])
+        }
+
         for i, ax in enumerate(axs):
             t = top_predictions[i][0]
             p = top_predictions[i][1]
 
-            ax.plot(t, "-", color="black", linewidth=1.5)
-            ax.plot(p, "--", color="red", linewidth=1.5)
+            if color_background:
+                ax.patch.set_facecolor(compound_colors[compound])
+                ax.patch.set_alpha(0.05)
+
+            ax.plot(
+                t,
+                "-",
+                color=compound_colors[compound],
+                linewidth=1.5,
+            )
+            ax.plot(
+                p,
+                # "--",
+                linestyle="",
+                color=compound_colors[compound],
+                linewidth=1.5,
+            )
 
             if fill:
                 ax.fill_between(
                     np.arange(len(top_predictions[i][0])),
                     t,
                     p,
-                    alpha=0.4,
+                    alpha=0.6,
                     label=f"Mean Residue {(t-p).__abs__().mean():.1e}",
-                    color="red",
+                    # color="red",
+                    color=compound_colors[compound],
                 )
 
-            ax.set_axis_off()
+            # ax.set_axis_off()
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+            ax.spines["left"].set_visible(False)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.tick_params(axis="y", which="both", left=False, labelleft=False)
+            ax.tick_params(axis="x", which="both", bottom=False, labelbottom=False)
 
-        # remove axis and ticks other than x-axis in last plot
-        axs[-1].set_axis_on()
-        axs[-1].spines["top"].set_visible(False)
-        axs[-1].spines["right"].set_visible(False)
-        axs[-1].spines["left"].set_visible(False)
-        axs[-1].tick_params(axis="y", which="both", left=False, labelleft=False)
+        # # remove axis and ticks other than x-axis in last plot
+        # axs[-1].set_axis_on()
+        # axs[-1].spines["top"].set_visible(False)
+        # axs[-1].spines["right"].set_visible(False)
+        # axs[-1].spines["left"].set_visible(False)
+        # axs[-1].tick_params(axis="y", which="both", left=False, labelleft=False)
 
         # set x-axis ticks labels based on cfg values
         e_start = cfg.transformations.e_start[compound]
@@ -129,7 +164,7 @@ class Plot:
             color=colors,
             edgecolor="black",
             hatch=self.hatch_for_models[model_name],
-            label=f"{model_name}"
+            label=f"{model_name}",
             # if not compare_with_mean_model
             # else f"MeanModel/{model_name}",
         )
