@@ -44,10 +44,36 @@ from src.models.trained_models import (
 # =============================================================================
 # %%
 
+# # =============================================================================
+# # FOR TABLE in the paper
+# # =============================================================================
+# df = pd.read_csv("dataset/model_performance.csv", index_col=[0])
+# df.columns = ["compound", "feature", "model", "normalized_mse"]
+# df_subset = deepcopy(
+#     df[(df["model"] == "LinReg") | (df["model"] == "XGBReg") | (df["model"] == "MLP")]
+# )
+# pivot_df = df_subset.pivot(
+#     index="compound", columns=["feature", "model"], values="normalized_mse"
+# )
+# new_order = []
+# for feature in ["ACSF", "SOAP", "FEFF"]:
+#     for model in ["LinReg", "XGBReg", "MLP"]:
+#         new_order.append((feature, model))
+# pivot_df = pivot_df.reindex(columns=pd.MultiIndex.from_tuples(new_order))
+# pivot_df = pivot_df.reindex(cfg.compounds)
+# pivot_df = pivot_df.rename(columns={"FEFF": "M3GNet"}, level=0)
+# pivot_df.to_csv("model_performance_by_feature.csv")
+# latex_output = pivot_df.to_latex()
+# with open("performance_table.tex", "w") as f:
+#     f.write(latex_output)
+# # =============================================================================
+
+
+# %%
+
 # first row
 df = pd.read_csv("dataset/model_performance.csv", index_col=[0])
 df.columns = ["compound", "feature", "model", "normalized_mse"]
-
 
 # plot scatter plot of mse for each model
 fig, ax = plt.subplots(figsize=(8, 6))
