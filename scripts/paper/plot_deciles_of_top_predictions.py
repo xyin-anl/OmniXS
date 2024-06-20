@@ -1,5 +1,7 @@
 # %%
 
+from itertools import product
+import scienceplots
 import pickle
 from copy import deepcopy
 from typing import Callable, Dict, List
@@ -77,6 +79,7 @@ def plot_deciles_of_top_predictions(
 
 
 model_name = "ft_tl"  # "per_compound_tl"
+plt.style.use(["default", "science"])
 plot_deciles_of_top_predictions(
     models={
         c: Trained_FCModel(DataQuery(c, "FEFF"), name=model_name) for c in cfg.compounds
@@ -128,5 +131,3 @@ p_map(
 )
 
 # %%
-
-load_xas_ml_data(DataQuery("Mn", "SOAP")).train.X.shape
