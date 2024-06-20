@@ -85,7 +85,7 @@ def generate_plots_for_report(
     residues = predictions - data
 
     # plot settings
-    plt.style.use(["science", "notebook", "high-vis", "no-latex"])  # TODO
+    plt.style.use(["science", "notebook", "high-vis"])
     width = 15
     fig = plt.figure(figsize=(width, 0.618 * 4 * width))
     gs = GridSpec(5, 2, figure=fig)

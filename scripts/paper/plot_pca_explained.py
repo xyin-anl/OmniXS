@@ -22,10 +22,10 @@ from src.models.trained_models import Trained_FCModel, MeanModel, LinReg
 # %%
 
 
-plt.style.use(["default", "science", "no-latex"])
+plt.style.use(["default", "science"])
 DPI = 300
 FONTSIZE = 14
-plt.style.use(["default", "science", "tableau-colorblind10", "no-latex"])
+plt.style.use(["default", "science", "tableau-colorblind10"])
 mpl.rcParams["font.size"] = FONTSIZE
 mpl.rcParams["figure.dpi"] = DPI
 mpl.rcParams["savefig.dpi"] = DPI
@@ -39,7 +39,7 @@ mpl.rcParams["savefig.bbox"] = "tight"
 
 # fig, axs = plt.subplots(1, 3, figsize=(12, 4), dpi=DPI, sharey=True)
 fig = plt.figure(figsize=(6, 10), dpi=DPI)
-plt.style.use(["default", "science", "no-latex"])  # TODO: fix latex
+plt.style.use(["default", "science"])
 # fig.subplots_adjust(wspace=0, hspace=0)
 
 gs = gridspec.GridSpec(3, 1, wspace=0, hspace=0)

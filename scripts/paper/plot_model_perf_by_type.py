@@ -80,7 +80,7 @@ ax.set_yticklabels([f"{int(x)}" for x in ax.get_yticks()], fontsize=FONTSIZE * 0
 FONTSIZE = 18
 ax.set_xticklabels(["Universal", "Expert", "Tuned-universal"], fontsize=FONTSIZE * 0.8)
 # ax.set_ylabel("MSE relative to Mean Model", fontsize=FONTSIZE)
-ax.set_ylabel(r"Performance against baseline ($\eta$)", fontsize=FONTSIZE)
+ax.set_ylabel(r"Performance over Baseline ($\eta$)", fontsize=FONTSIZE)
 ax.legend(fontsize=FONTSIZE * 0.8)
 ax.set_xlim(-0.5, 2.5)
 ax.set_ylim(0, None)

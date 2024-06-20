@@ -72,12 +72,12 @@ from src.models.trained_models import (
 # %%
 
 # first row
-df = pd.read_csv("dataset/model_performance.csv", index_col=[0])
+df = pd.read_csv("dataset/metrics/model_performance.csv", index_col=[0])
 df.columns = ["compound", "feature", "model", "normalized_mse"]
 
 # plot scatter plot of mse for each model
 fig, ax = plt.subplots(figsize=(8, 6))
-plt.style.use(["default", "science", "no-latex"])
+plt.style.use(["default", "science"])
 cmap = "tab10"
 colors = plt.get_cmap(cmap)(np.linspace(0, 1, len(cfg.compounds)))
 
@@ -115,14 +115,14 @@ model_colors = {
     "MLP": plt.get_cmap("tab10")(2),
 }
 
-for i, feature in enumerate(["ACSF", "SOAP", "FEFF"]):
-
-    for j, model in enumerate(["LinReg", "XGBReg", "MLP"]):
+WIDTH = 0.15
+for i, feature in enumerate(["ACSF", "SOAP", "FEFF"], start=0):
+    for j, model in enumerate(["LinReg", "XGBReg", "MLP"], start=-1):
         data = df[(df["model"] == model) & (df["feature"] == feature)]["normalized_mse"]
         ax.boxplot(
             data,
-            positions=[i * 1.5 + j * 0.2],
-            widths=0.15,
+            positions=[i + j * WIDTH],
+            widths=WIDTH,
             patch_artist=True,
             boxprops=dict(facecolor=lighten_color(model_colors[model], amount=0.5)),
             # capprops=dict(color=model_colors[model]),
@@ -138,13 +138,20 @@ for i, feature in enumerate(["ACSF", "SOAP", "FEFF"]):
     ax.set_ylim(1, 9)
     ax.yaxis.grid(True, which="major", linestyle="--", linewidth=0.5)
     ax.yaxis.grid(True, which="minor", linestyle="--", linewidth=0.5)
+
     ax.yaxis.set_minor_locator(plt.MultipleLocator(1))
     ax.yaxis.set_major_locator(plt.MultipleLocator(2))
     ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x:.0f}"))
     ax.yaxis.set_minor_formatter(plt.FuncFormatter(lambda x, _: f"{x:.0f}"))
-    ax.set_xticks(np.arange(3) * 1.5 + 0.2)
+
+    ax.set_xticks(np.arange(0, 3, 1))
     ax.set_xticklabels(["ACSF", "SOAP", "M3GNet"], fontsize=FONTSIZE * 0.8)
+
+    ax.set_yticks(np.arange(1, 10, 1))
+    ax.set_yticklabels([f"{int(x)}" for x in ax.get_yticks()], fontsize=FONTSIZE * 0.8)
     ax.xaxis.set_ticks_position("none")
+
+    ax.set_xlim(-2 * WIDTH, 2 + 2 * WIDTH)
 
 # handles by color for model
 handles = [
@@ -161,8 +168,8 @@ labels = ["Linear Regression", "XGBoost Regression", "MLP"]
 ax.legend(handles, labels, fontsize=FONTSIZE * 0.8)
 
 
-ax.set_ylabel("Normalized MSE", fontsize=FONTSIZE)
-ax.set_xlabel("Features", fontsize=FONTSIZE)
+ax.set_ylabel(r"Performance over Baseline ($\eta$)", fontsize=FONTSIZE, labelpad=10)
+ax.set_xlabel("Features", fontsize=FONTSIZE, labelpad=10)
 plt.tight_layout()
 plt.savefig("model_performance_by_feature_boxplot.png", bbox_inches="tight", dpi=300)
 plt.savefig("model_performance_by_feature_boxplot.pdf", bbox_inches="tight", dpi=300)

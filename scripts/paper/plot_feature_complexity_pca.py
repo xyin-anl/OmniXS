@@ -100,7 +100,7 @@ HEIGHT = 10
 WEIGHT = HEIGHT / ASPECT_RATIO
 DPI = 300
 FONTSIZE = 14
-plt.style.use(["default", "science", "tableau-colorblind10", "no-latex"])
+plt.style.use(["default", "science", "tableau-colorblind10"])
 mpl.rcParams["font.size"] = FONTSIZE
 mpl.rcParams["figure.dpi"] = DPI
 mpl.rcParams["figure.figsize"] = (WEIGHT, HEIGHT)
@@ -111,7 +111,7 @@ mpl.rcParams["savefig.bbox"] = "tight"
 # %%
 
 fig, ax = plt.subplots(figsize=(8, 6))
-plt.style.use(["default", "science", "tableau-colorblind10", "no-latex"])
+plt.style.use(["default", "science", "tableau-colorblind10"])
 _markers = ["o", "s", "D"]
 ax.plot(
     [

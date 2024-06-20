@@ -67,7 +67,7 @@ if __name__ == "__main__":
             }
             model_name, data, predictions = get_optimal_fc_predictions(query=query)
             # model_name, data, predictions = linear_model_predictions(query=query)
-            with plt.style.context(["nature", "no-latex"]):
+            with plt.style.context(["nature"]):
                 plot_mse_histogram(
                     mse=np.power(predictions - data, 2).mean(axis=1),
                     title=f"{query['compound']}_{query['simulation_type']} {model_name} {query['split']}_split MSE histogram",

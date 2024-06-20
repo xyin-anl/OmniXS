@@ -27,7 +27,7 @@ if __name__ == "__main__":
         - vasp_spectra._energy[np.argmax(vasp_spectra._spectra)]
     )  # align to vasp max
 
-    plt.style.use(["vibrant", "no-latex"])
+    plt.style.use(["vibrant"])
     plt.figure(figsize=(8, 5))
     plt.plot(vasp_spectra._energy, vasp_spectra._spectra, label="vasp", c="green")
     plt.plot(feff_spectra._energy, feff_spectra._spectra, label="feff")

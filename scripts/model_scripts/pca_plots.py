@@ -77,7 +77,7 @@ if __name__ == "__main__":
         # "split": "material",
     }
 
-    plt.style.use(["science", "high-vis", "no-latex"])
+    plt.style.use(["science", "high-vis"])
     selected_x_pca_dims = {"FEFF": {"Cu": 2, "Ti": 4}, "VASP": {"Ti": 2}}
     selected_x_pca_dim = selected_x_pca_dims[simulation_type][compound]
 

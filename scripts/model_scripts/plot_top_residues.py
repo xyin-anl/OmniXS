@@ -27,7 +27,7 @@ def plot_best_worst_residues(query, y_test, predictions, model_name, count=10):
     df_data = df_all[[col for col in column_names if "data" in col]]
     df_predictions = df_all[[col for col in column_names if "predictions" in col]]
 
-    plt.style.use(["science", "notebook", "high-vis", "no-latex"])
+    plt.style.use(["science", "notebook", "high-vis"])
     fig, axes = plt.subplots(count, 2, figsize=(20, 20), sharex=True, sharey=True)
 
     for i in range(count):
