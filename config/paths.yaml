@@ -25,3 +25,4 @@ paths:
     dir: ${paths.data_dir}/cache
     pca: ${paths.cache.dir}/pca/{compound}_{simulation_type}.pkl
     scaler: ${paths.cache.dir}/scaler/{compound}_{simulation_type}.pkl
+    splits: dataset/ML-data/splits/{compound}_{simulation_type}.npz

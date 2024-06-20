@@ -158,8 +158,22 @@ def load_xas_ml_data(
     for_m3gnet: bool = False,
     filter_spectra_anomalies: bool = True,
     anomaly_std_cutoff: float = None,  # default loaded from config if None
+    use_cache: bool = True, # TODO: flip to False
 ) -> MLSplits:
     """Loads data and does material splitting."""
+
+    if use_cache:
+        cache_file = cfg.paths.cache.splits.format(**query.__dict__)
+        if not os.path.exists(os.path.dirname(cache_file)):
+            os.makedirs(os.path.dirname(cache_file))
+        if os.path.exists(cache_file):
+            warnings.warn(f"Using cached data from {cache_file}")
+            data = np.load(cache_file, allow_pickle=True)
+            return MLSplits(
+                train=DataSplit(data["train_X"], data["train_y"]),
+                val=DataSplit(data["val_X"], data["val_y"]),
+                test=DataSplit(data["test_X"], data["test_y"]),
+            )
 
     if query.compound == "ALL":  # TODO: hacky
         return load_all_data(query.simulation_type, split_fractions=split_fractions)
@@ -212,6 +226,20 @@ def load_xas_ml_data(
         out = filter_anamolous_spectras(
             out,
             std_cutoff=anamoly_std_cutoff,
+        )
+
+    if use_cache:
+        cache_file = cfg.paths.cache.splits.format(**query.__dict__)
+        if not os.path.exists(os.path.dirname(cache_file)):
+            os.makedirs(os.path.dirname(cache_file))
+        np.savez(
+            cache_file,
+            train_X=out.train.X,
+            train_y=out.train.y,
+            val_X=out.val.X,
+            val_y=out.val.y,
+            test_X=out.test.X,
+            test_y=out.test.y,
         )
 
     return out
