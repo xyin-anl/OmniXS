@@ -43,7 +43,7 @@ mses_ft_tl = {
 # box plot of mse for each model
 FONTSIZE = 18
 fig, ax = plt.subplots(figsize=(8, 6))
-plt.style.use(["default", "science", "no-latex"])
+plt.style.use(["default", "science"])
 cmap = "tab10"
 colors = plt.get_cmap(cmap)(np.linspace(0, 1, len(cfg.compounds)))
 violins = ax.violinplot(
@@ -65,7 +65,7 @@ for violin, color in zip(violins["bodies"], colors):
 
 
 colors = ["tab:blue", "tab:orange", "tab:green"]
-labels = ["Universal TL", "Per Compound TL", "Fine-Tuned TL"]
+labels = ["Universal model", "Expert model", "Tuned-universal model"]
 for i, mses in enumerate([mses_univ_per_compound, mses_per_compound_tl, mses_ft_tl]):
     ax.scatter(
         np.ones(len(mses)) * i,
@@ -78,14 +78,13 @@ ax.yaxis.grid(True, which="major", linestyle="--", linewidth=0.5, zorder=0, alph
 ax.set_xticks([0, 1, 2])
 ax.set_yticklabels([f"{int(x)}" for x in ax.get_yticks()], fontsize=FONTSIZE * 0.8)
 FONTSIZE = 18
-ax.set_xticklabels(
-    ["Universal TL", "Per Compound TL", "Fine-Tuned TL"], fontsize=FONTSIZE * 0.8
-)
-ax.set_ylabel("MSE relative to Mean Model", fontsize=FONTSIZE)
+ax.set_xticklabels(["Universal", "Expert", "Tuned-universal"], fontsize=FONTSIZE * 0.8)
+# ax.set_ylabel("MSE relative to Mean Model", fontsize=FONTSIZE)
+ax.set_ylabel(r"Performance against baseline ($\eta$)", fontsize=FONTSIZE)
 ax.legend(fontsize=FONTSIZE * 0.8)
 ax.set_xlim(-0.5, 2.5)
 ax.set_ylim(0, None)
-ax.set_xlabel("Transfer Learning Strategy", fontsize=FONTSIZE, labelpad=10)
+ax.set_xlabel("Model Adaptation Strategy", fontsize=FONTSIZE, labelpad=10)
 plt.tight_layout()
 plt.savefig(
     "model_performance_by_transfer_learning_strategy.pdf", bbox_inches="tight", dpi=300

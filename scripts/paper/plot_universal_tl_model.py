@@ -5,7 +5,7 @@
 
 from matplotlib import colors as mcolors
 import scienceplots
-from universal_TL_mses import universal_model_mses
+from scripts.paper.universal_TL_mses import universal_model_mses
 from src.models.trained_models import MeanModel
 from src.models.trained_models import Trained_FCModel
 from src.data.ml_data import DataQuery
@@ -27,7 +27,7 @@ def plot_universal_tl_vs_per_compound_tl(
     plot_based_on_rmse=False,
     # include_linreg=False,
 ):
-    plt.style.use(["default", "science", "no-latex"])
+    plt.style.use(["default", "science"])
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 7))
 
@@ -253,8 +253,7 @@ def plot_universal_tl_vs_per_compound_tl(
             y_label = "RMSE"
     else:
         if relative_to_per_compound_mean_model:
-            # y_label = "MSE mean model / MSE model"
-            y_label = "MSE mean model / MSE model"
+            y_label = r"Performance over baseline ($\eta$)"
         else:
             y_label = "MSE"
     ax.set_ylabel(y_label, fontsize=FONTSIZE * 1.2)
@@ -320,9 +319,15 @@ def plot_universal_tl_vs_per_compound_tl(
         for model_name, fill in bar_fill_dict.items()
     ]
 
+    name_dict = {
+        "universal_feff": "Universal",
+        "per_compound_tl": "Expert",
+        "ft_tl": "Tuned-Universal",
+    }
+
     legend = ax.legend(
         handles,
-        model_names,
+        [name_dict[model_name] for model_name in model_names],
         fontsize=FONTSIZE,
         # handletextpad=0.1,
         # labelspacing=0,  # Remove space between legend entries
@@ -345,70 +350,70 @@ def plot_universal_tl_vs_per_compound_tl(
     return ax
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    # plot_universal_tl_vs_per_compound_tl(relative_to_per_compound_mean_model=True)
+# plot_universal_tl_vs_per_compound_tl(relative_to_per_compound_mean_model=True)
 
-    import matplotlib as mpl
+import matplotlib as mpl
 
-    ASPECT_RATIO = 4 / 3
-    HEIGHT = 6
-    WEIGHT = HEIGHT * ASPECT_RATIO
-    DPI = 300
-    FONTSIZE = 14
-    plt.style.use(["default", "science", "tableau-colorblind10"])
-    mpl.rcParams["font.size"] = FONTSIZE
-    mpl.rcParams["axes.labelsize"] = FONTSIZE
-    mpl.rcParams["xtick.labelsize"] = FONTSIZE
-    mpl.rcParams["ytick.labelsize"] = FONTSIZE
-    mpl.rcParams["legend.fontsize"] = FONTSIZE
-    mpl.rcParams["figure.dpi"] = DPI
-    mpl.rcParams["figure.figsize"] = (WEIGHT, HEIGHT)
-    mpl.rcParams["savefig.dpi"] = DPI
-    mpl.rcParams["savefig.format"] = "pdf"
-    mpl.rcParams["savefig.bbox"] = "tight"
+ASPECT_RATIO = 4 / 3
+HEIGHT = 6
+WEIGHT = HEIGHT * ASPECT_RATIO
+DPI = 300
+FONTSIZE = 14
+plt.style.use(["default", "science", "tableau-colorblind10"])
+mpl.rcParams["font.size"] = FONTSIZE
+mpl.rcParams["axes.labelsize"] = FONTSIZE
+mpl.rcParams["xtick.labelsize"] = FONTSIZE
+mpl.rcParams["ytick.labelsize"] = FONTSIZE
+mpl.rcParams["legend.fontsize"] = FONTSIZE
+mpl.rcParams["figure.dpi"] = DPI
+mpl.rcParams["figure.figsize"] = (WEIGHT, HEIGHT)
+mpl.rcParams["savefig.dpi"] = DPI
+mpl.rcParams["savefig.format"] = "pdf"
+mpl.rcParams["savefig.bbox"] = "tight"
 
-    fig, ax = plt.subplots(1, 1, figsize=(WEIGHT, HEIGHT), dpi=DPI)
-    plot_universal_tl_vs_per_compound_tl(
-        model_names=[
-            # "acsf",
-            # "soap",
-            # "linreg",
-            "universal_feff",
-            "per_compound_tl",
-            "ft_tl",
-        ],
-        relative_to_per_compound_mean_model=True,
-        include_vasp=True,
-        ax=ax,
-        add_weighted=False,
-        FONTSIZE=FONTSIZE,
-        plot_based_on_rmse=False,
-        # include_linreg=True,
-    )
+fig, ax = plt.subplots(1, 1, figsize=(WEIGHT, HEIGHT), dpi=DPI)
+plot_universal_tl_vs_per_compound_tl(
+    model_names=[
+        # "acsf",
+        # "soap",
+        # "linreg",
+        "universal_feff",
+        "per_compound_tl",
+        "ft_tl",
+    ],
+    relative_to_per_compound_mean_model=True,
+    include_vasp=True,
+    ax=ax,
+    add_weighted=False,
+    FONTSIZE=FONTSIZE,
+    plot_based_on_rmse=False,
+    # include_linreg=True,
+)
 
-    # plot_deciles_of_top_predictions(
-    #     model_name="per_compound_tl",
-    #     fixed_model=None,
-    # )
+# plot_deciles_of_top_predictions(
+#     model_name="per_compound_tl",
+#     fixed_model=None,
+# )
 
-    # plot_deciles_of_top_predictions(
-    #     model_name="ft_tl",
-    #     fixed_model=None,
-    # )
+# plot_deciles_of_top_predictions(
+#     model_name="ft_tl",
+#     fixed_model=None,
+# )
 
-    # plot_deciles_of_top_predictions(
-    #     model_name="universal_tl",
-    #     fixed_model=Trained_FCModel(
-    #         DataQuery("ALL", "FEFF"), name="universal_tl"
-    #     ),  # uses same model for all predictions
-    # )
+# plot_deciles_of_top_predictions(
+#     model_name="universal_tl",
+#     fixed_model=Trained_FCModel(
+#         DataQuery("ALL", "FEFF"), name="universal_tl"
+#     ),  # uses same model for all predictions
+# )
 
-    # plot_deciles_of_top_predictions(
-    #     model_name="ft_tl",
-    #     fixed_model=None,
-    #     compounds=["Ti", "Cu"],
-    #     simulation_type="VASP",
-    # )
+# plot_deciles_of_top_predictions(
+#     model_name="ft_tl",
+#     fixed_model=None,
+#     compounds=["Ti", "Cu"],
+#     simulation_type="VASP",
+# )
 
-    # %%
+# %%
