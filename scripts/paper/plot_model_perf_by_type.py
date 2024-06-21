@@ -78,13 +78,13 @@ ax.yaxis.grid(True, which="major", linestyle="--", linewidth=0.5, zorder=0, alph
 ax.set_xticks([0, 1, 2])
 ax.set_yticklabels([f"{int(x)}" for x in ax.get_yticks()], fontsize=FONTSIZE * 0.8)
 FONTSIZE = 18
-ax.set_xticklabels(["Universal", "Expert", "Tuned-universal"], fontsize=FONTSIZE * 0.8)
+ax.set_xticklabels(["Universal", "Expert", "Tuned-universal"], fontsize=FONTSIZE * 0.9)
 # ax.set_ylabel("MSE relative to Mean Model", fontsize=FONTSIZE)
 ax.set_ylabel(r"Performance over Baseline ($\eta$)", fontsize=FONTSIZE)
 ax.legend(fontsize=FONTSIZE * 0.8)
 ax.set_xlim(-0.5, 2.5)
 ax.set_ylim(0, None)
-ax.set_xlabel("Model Adaptation Strategy", fontsize=FONTSIZE, labelpad=10)
+ax.set_xlabel("M3XAS Variants", fontsize=FONTSIZE, labelpad=10)
 plt.tight_layout()
 plt.savefig(
     "model_performance_by_transfer_learning_strategy.pdf", bbox_inches="tight", dpi=300

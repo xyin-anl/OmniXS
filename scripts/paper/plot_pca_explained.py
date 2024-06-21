@@ -23,14 +23,16 @@ from src.models.trained_models import Trained_FCModel, MeanModel, LinReg
 
 
 plt.style.use(["default", "science"])
+
 DPI = 300
-FONTSIZE = 14
-plt.style.use(["default", "science", "tableau-colorblind10"])
-mpl.rcParams["font.size"] = FONTSIZE
-mpl.rcParams["figure.dpi"] = DPI
-mpl.rcParams["savefig.dpi"] = DPI
-mpl.rcParams["savefig.format"] = "pdf"
-mpl.rcParams["savefig.bbox"] = "tight"
+FONTSIZE = 18
+
+# plt.style.use(["default", "science", "tableau-colorblind10"])
+# mpl.rcParams["font.size"] = FONTSIZE
+# mpl.rcParams["figure.dpi"] = DPI
+# mpl.rcParams["savefig.dpi"] = DPI
+# mpl.rcParams["savefig.format"] = "pdf"
+# mpl.rcParams["savefig.bbox"] = "tight"
 
 # =============================================================================
 # PLOT PCA EXPLAINED VARIANCE for all compounds for ACSF and SOAP
@@ -49,6 +51,7 @@ cmap = "tab10"
 compound_colors = plt.get_cmap(cmap)(np.linspace(0, 1, len(cfg.compounds) + 2))
 
 for ax, simulation_type in zip(axs, ["ACSF", "SOAP", "FEFF"]):
+
     pcas = p_map(
         lambda c: FeatureProcessor(
             DataQuery(c, simulation_type),
@@ -56,6 +59,7 @@ for ax, simulation_type in zip(axs, ["ACSF", "SOAP", "FEFF"]):
         ).pca,
         cfg.compounds,
     )
+
     pcas = {c: v for c, v in zip(cfg.compounds, pcas)}
     pca_dims = {c: pca.n_components_ for c, pca in pcas.items()}
 
@@ -71,15 +75,18 @@ for ax, simulation_type in zip(axs, ["ACSF", "SOAP", "FEFF"]):
         x = np.arange(1, n_components + 1)
         y = pca.explained_variance_ratio_
         y = np.cumsum(y)
+
         ax.plot(x, y, color=compound_colors[i], **kwargs)
-    pre_reduced_dims = [
-        load_xas_ml_data(
-            DataQuery(c, simulation_type),
-            pca_with_std_scaling=False,
-        ).train.X.shape[1]
-        for c in cfg.compounds
-    ]
-    assert len(set(pre_reduced_dims)) == 1
+        ax.set_ylim(0.1, 1.05)
+
+    # pre_reduced_dims = [
+    #     load_xas_ml_data(
+    #         DataQuery(c, simulation_type),
+    #         pca_with_std_scaling=False,
+    #     ).train.X.shape[1]
+    #     for c in cfg.compounds
+    # ]
+    # assert len(set(pre_reduced_dims)) == 1
     # misc
 
     x_value = cfg.dscribe.pca.n_components
@@ -87,7 +94,7 @@ for ax, simulation_type in zip(axs, ["ACSF", "SOAP", "FEFF"]):
     # ax.set_title(rf"{simulation_type}" if simulation_type != "FEFF" else r"M3GNet")
 
     txt = rf"{simulation_type}" if simulation_type != "FEFF" else r"M3GNet"
-    txt += f"\nDimension: {pre_reduced_dims[0]}"
+    # txt += f"\nDimension: {pre_reduced_dims[0]}"
     ax.text(
         0.5,
         0.5,
@@ -95,7 +102,7 @@ for ax, simulation_type in zip(axs, ["ACSF", "SOAP", "FEFF"]):
         horizontalalignment="center",
         verticalalignment="center",
         transform=ax.transAxes,
-        fontsize=FONTSIZE * 1.2,
+        fontsize=FONTSIZE ,
         color="black",
     )
 
@@ -103,8 +110,8 @@ for ax, simulation_type in zip(axs, ["ACSF", "SOAP", "FEFF"]):
     ax.axhline(y=x_value, color="gray", linestyle="--")
     ax.set_yticks(np.arange(0.2, 1.05, 0.2))
     ax.set_yticklabels([f"{i:.1f}" for i in np.arange(0.2, 1.05, 0.2)])
-    ax.set_ylabel("η(d)", fontsize=FONTSIZE)
-    ax.set_ylim(0.1, 1.05)
+    # ax.set_ylabel(r"$\eta(d)$", fontsize=FONTSIZE)
+    ax.set_ylabel("Explained Variance Ratio", fontsize=FONTSIZE * 0.8)
 
     ax.set_xlim(0, 60)
 
@@ -146,7 +153,7 @@ handles = [
 axs[0].legend(
     handles=handles,
     title=r"Compound",
-    fontsize=FONTSIZE * 0.8,
+    fontsize=FONTSIZE * 0.6,
     title_fontsize=FONTSIZE * 0.8,
     # to right most of 3rd subplot
     loc="center right",
@@ -165,5 +172,6 @@ axs[0].legend(
 
 fig.tight_layout()
 fig.savefig("pca_explained_variance.pdf", bbox_inches="tight", dpi=DPI)
+fig.show()
 
 # %%

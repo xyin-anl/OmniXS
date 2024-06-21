@@ -145,7 +145,7 @@ for i, feature in enumerate(["ACSF", "SOAP", "FEFF"], start=0):
     ax.yaxis.set_minor_formatter(plt.FuncFormatter(lambda x, _: f"{x:.0f}"))
 
     ax.set_xticks(np.arange(0, 3, 1))
-    ax.set_xticklabels(["ACSF", "SOAP", "M3GNet"], fontsize=FONTSIZE * 0.8)
+    ax.set_xticklabels(["MLP-ACSF", "MLP-SOAP", "M3XAS"], fontsize=FONTSIZE * 0.8)
 
     ax.set_yticks(np.arange(1, 10, 1))
     ax.set_yticklabels([f"{int(x)}" for x in ax.get_yticks()], fontsize=FONTSIZE * 0.8)
@@ -169,7 +169,7 @@ ax.legend(handles, labels, fontsize=FONTSIZE * 0.8)
 
 
 ax.set_ylabel(r"Performance over Baseline ($\eta$)", fontsize=FONTSIZE, labelpad=10)
-ax.set_xlabel("Features", fontsize=FONTSIZE, labelpad=10)
+ax.set_xlabel("Models", fontsize=FONTSIZE, labelpad=10)
 plt.tight_layout()
 plt.savefig("model_performance_by_feature_boxplot.png", bbox_inches="tight", dpi=300)
 plt.savefig("model_performance_by_feature_boxplot.pdf", bbox_inches="tight", dpi=300)
