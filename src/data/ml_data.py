@@ -1,4 +1,5 @@
 import itertools
+from typing import List, Union, Literal
 import os
 import pickle
 import warnings
@@ -158,7 +159,7 @@ def load_xas_ml_data(
     for_m3gnet: bool = False,
     filter_spectra_anomalies: bool = True,
     anomaly_std_cutoff: float = None,  # default loaded from config if None
-    use_cache: bool = True, # TODO: flip to False
+    use_cache: bool = True,  # TODO: flip to False
 ) -> MLSplits:
     """Loads data and does material splitting."""
 
@@ -270,85 +271,87 @@ class XASPlData(PlDataModule):
 
 def load_all_data(
     sim_type="FEFF",
-    same_size=False,  # TODO:
     split_fractions=None,
     seed=42,
     return_compound_name=False,
     compounds=None,
+    sample_method: Literal[
+        "same_size", "all", "stratified"
+    ] = "same_size",  # TODO: revert to default
 ):
-    def ml_split_size(ml_split):
-        return len(ml_split.train.X) + len(ml_split.val.X) + len(ml_split.test.X)
 
     if compounds is None:
         compounds = ["Cu", "Ti"] if sim_type == "VASP" else cfg.compounds
 
-    data_all = load_xas_ml_data(DataQuery(compounds[0], sim_type))
-    for c in compounds[1:]:
-        data = load_xas_ml_data(DataQuery(c, sim_type))
-        data_all = MLSplits(
-            train=DataSplit(
-                X=np.concatenate([data_all.train.X, data.train.X]),
-                y=np.concatenate([data_all.train.y, data.train.y]),
-            ),
-            val=DataSplit(
-                X=np.concatenate([data_all.val.X, data.val.X]),
-                y=np.concatenate([data_all.val.y, data.val.y]),
-            ),
-            test=DataSplit(
-                X=np.concatenate([data_all.test.X, data.test.X]),
-                y=np.concatenate([data_all.test.y, data.test.y]),
-            ),
-        )
-    if same_size:
-        min_size = min(
-            [ml_split_size(load_xas_ml_data(DataQuery(c, sim_type))) for c in compounds]
-        )
-        split_fractions = split_fractions or cfg.data_module.split_fractions
-        train_size = int(min_size * split_fractions[0])
-        val_size = int(min_size * split_fractions[1])
-        test_size = min_size - train_size - val_size
-        data_all = MLSplits(
-            train=DataSplit(
-                X=data_all.train.X[:train_size], y=data_all.train.y[:train_size]
-            ),
-            val=DataSplit(X=data_all.val.X[:val_size], y=data_all.val.y[:val_size]),
-            test=DataSplit(
-                X=data_all.test.X[:test_size], y=data_all.test.y[:test_size]
-            ),
-        )
+    data_dict = {c: load_xas_ml_data(DataQuery(c, sim_type)) for c in compounds}
 
-    data_per_compound = {
-        c: load_xas_ml_data(DataQuery(c, sim_type), split_fractions=split_fractions)
-        for c in compounds
-    }
-    train_compounds, val_compounds, test_compounds = [], [], []
-    for compound, data in data_per_compound.items():
-        train_size = len(data.train.X)
-        val_size = len(data.val.X)
-        test_size = len(data.test.X)
-        train_compounds.extend([compound] * train_size)
-        val_compounds.extend([compound] * val_size)
-        test_compounds.extend([compound] * test_size)
-    train_compounds = np.array(train_compounds)
-    val_compounds = np.array(val_compounds)
-    test_compounds = np.array(test_compounds)
+    if sample_method == "same_size":
+        sizes = np.array(
+            [
+                np.array([len(data.train.X), len(data.val.X), len(data.test.X)])
+                for data in data_dict.values()
+            ]
+        )
+        split_sizes = sizes.min(axis=0)
+        warnings.warn(
+            f"Using same size splits: {split_sizes} for {compounds} with {sim_type}"
+        )
+        for c in compounds:
+            data = data_dict[c]
+            data_dict[c] = MLSplits(
+                train=DataSplit(
+                    data.train.X[: split_sizes[0]], data.train.y[: split_sizes[0]]
+                ),
+                val=DataSplit(
+                    data.val.X[: split_sizes[1]], data.val.y[: split_sizes[1]]
+                ),
+                test=DataSplit(
+                    data.test.X[: split_sizes[2]], data.test.y[: split_sizes[2]]
+                ),
+            )
 
+    train_compounds = [[c] * len(data_dict[c].train.X) for c in compounds]
+    val_compounds = [[c] * len(data_dict[c].val.X) for c in compounds]
+    test_compounds = [[c] * len(data_dict[c].test.X) for c in compounds]
+
+    data_all = MLSplits(
+        train=DataSplit(
+            np.concatenate([data.train.X for data in data_dict.values()]),
+            np.concatenate([data.train.y for data in data_dict.values()]),
+        ),
+        val=DataSplit(
+            np.concatenate([data.val.X for data in data_dict.values()]),
+            np.concatenate([data.val.y for data in data_dict.values()]),
+        ),
+        test=DataSplit(
+            np.concatenate([data.test.X for data in data_dict.values()]),
+            np.concatenate([data.test.y for data in data_dict.values()]),
+        ),
+    )
+    train_compounds = np.concatenate(train_compounds)
+    val_compounds = np.concatenate(val_compounds)
+    test_compounds = np.concatenate(test_compounds)
+
+    # randomize Merged data
     np.random.seed(seed)
-    idx = np.random.permutation(len(data_all.train.X))
-    data_all.train.X = data_all.train.X[idx]
-    data_all.train.y = data_all.train.y[idx]
-    train_compounds = train_compounds[idx]
-    idx = np.random.permutation(len(data_all.val.X))
-    data_all.val.X = data_all.val.X[idx]
-    data_all.val.y = data_all.val.y[idx]
-    val_compounds = val_compounds[idx]
-    idx = np.random.permutation(len(data_all.test.X))
-    data_all.test.X = data_all.test.X[idx]
-    data_all.test.y = data_all.test.y[idx]
-    test_compounds = test_compounds[idx]
+    train_shuffle = np.random.permutation(len(data_all.train.X))
+    val_shuffle = np.random.permutation(len(data_all.val.X))
+    test_shuffle = np.random.permutation(len(data_all.test.X))
 
-    compound_list = train_compounds, val_compounds, test_compounds
-    return (data_all, compound_list) if return_compound_name else data_all
+    data_all = MLSplits(
+        train=DataSplit(
+            data_all.train.X[train_shuffle], data_all.train.y[train_shuffle]
+        ),
+        val=DataSplit(data_all.val.X[val_shuffle], data_all.val.y[val_shuffle]),
+        test=DataSplit(data_all.test.X[test_shuffle], data_all.test.y[test_shuffle]),
+    )
+    train_compounds = train_compounds[train_shuffle]
+    val_compounds = val_compounds[val_shuffle]
+    test_compounds = test_compounds[test_shuffle]
+
+    compound_names = (train_compounds, val_compounds, test_compounds)
+
+    return (data_all, compound_names) if return_compound_name else data_all
 
 
 if __name__ == "__main__":
