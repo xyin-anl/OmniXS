@@ -28,7 +28,7 @@ class FC_XAS(nn.Module):
 
         if output_dim is not None:
             self.widths.append(output_dim)
-            
+
         self.pairs = [(w1, w2) for w1, w2 in zip(self.widths[:-1], self.widths[1:])]
         self.layers = nn.ModuleList()
         self.batch_norms = nn.ModuleList()

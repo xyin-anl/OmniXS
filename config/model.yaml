@@ -48,6 +48,7 @@ named_models:
     query: ${name_queries.universal}
     name: universal_tl
     widths: ${named_models.universal_tl.model.widths}
+    input_dim: ${feature_dims.input_dim.${simulation_type}}
     output_dim: ${feature_dims.output_dim.${simulation_type}}
     compound: ${compound_name}
     simulation_type: ${simulation_type}

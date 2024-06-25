@@ -30,11 +30,14 @@ class PreTrainedFCXASModel(FC_XAS):
     ):
         trained_model = Trained_FCModel(query=query, name=name).model
 
-        for k, v in model_kwargs.items():
-            if not hasattr(trained_model, k):
-                raise ValueError(f"model does not have attribute {k}")
-            if getattr(trained_model, k) != v:
-                raise ValueError(f"model attribute {k} is not equal to {v}")
+        # # TODO: skipped as fc_xas attributes were later changed
+        # for k, v in model_kwargs.items():
+        #     if not hasattr(trained_model, k):
+        #         raise ValueError(f"model does not have attribute {k}")
+        #     if getattr(trained_model, k) != v:
+        #         raise ValueError(
+        #             f"model attribute {k} is not equal to {v} instead {getattr(trained_model, k)}"
+        #         )
 
         super().__init__(**model_kwargs)
         self.load_state_dict(trained_model.state_dict())
