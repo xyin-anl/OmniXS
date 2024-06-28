@@ -32,7 +32,7 @@ def plot_universal_tl_vs_per_compound_tl(
         fig, ax = plt.subplots(figsize=(10, 7))
 
     # bar_width = 0.15
-    bar_width = 0.8 / len(model_names)
+    bar_width = 0.95 / len(model_names)
 
     # compound_colors = [ # Tableau colorblind 10
     #     "#006BA4",
@@ -267,9 +267,35 @@ def plot_universal_tl_vs_per_compound_tl(
     ax.set_xlabel("Compound", fontsize=FONTSIZE * 1.2, labelpad=-10)
     xticks = np.arange(len(sims)) * BAR_CENTER_FACTOR + bar_width
     if include_vasp:
+        # add vertical line before vap
+        # ax.axvline(x=xticks[-2] - bar_width * 1.5, color="grey", linestyle="--")
+        # add background color just for the vasp region
+        ax.axvspan(
+            xticks[-2] - bar_width * 1.5,
+            # xticks[-1] + bar_width * 1.5,
+            # end of fig
+            ax.get_xlim()[1],
+            alpha=0.1,
+            color="grey",
+        )
+        # mentsion is text that that region is VASP at center of that region on middle of y axis
+        ax.text(
+            xticks[-1] - bar_width / 2,
+            ax.get_ylim()[1] * 0.75,
+            "VASP",
+            fontsize=FONTSIZE * 1.2,
+            ha="center",
+            va="center",
+            # alpha=0.5,
+            color="grey",
+            # rotation=90,
+        )
+
         # set the tick position of VASPs by one bar to right
         xticks[-2:] = xticks[-2:] + bar_width * 1.5
     ax.set_xticks(xticks)
+    # set xlim
+    ax.set_xlim(-bar_width * 2, ax.get_xlim()[1] - 3 * bar_width)
     # ax.set_xticks(np.arange(len(sims)) + bar_width)
 
     ax.set_xticklabels(
@@ -331,7 +357,7 @@ def plot_universal_tl_vs_per_compound_tl(
         fontsize=FONTSIZE,
         # handletextpad=0.1,
         # labelspacing=0,  # Remove space between legend entries
-        loc="upper right",  # Position the legend above the plot
+        # loc="upper right",  # Position the legend above the plot
         # bbox_to_anchor=(0.5, 1.10),  # Adjust the exact position
         # ncol=len(model_names),  # Arrange all labels in one row
         # borderaxespad=0,  # Remove space around the legend
@@ -391,6 +417,7 @@ plot_universal_tl_vs_per_compound_tl(
     plot_based_on_rmse=False,
     # include_linreg=True,
 )
+
 
 # plot_deciles_of_top_predictions(
 #     model_name="per_compound_tl",
