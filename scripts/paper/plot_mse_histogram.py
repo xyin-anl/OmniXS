@@ -85,7 +85,7 @@ for i, ax, (compound, simulation_type) in zip(
         bins=np.linspace(-4, 0, bin_count),
         color=compound_colors[i],
         edgecolor="black",
-        zorder=2,
+        zorder=1,
         alpha=0.5,
     )
 
@@ -132,7 +132,9 @@ for i, ax, (compound, simulation_type) in zip(
     )
     ax.set_xlim(xticks[0], xticks[-1])
 
-    yticks = np.arange(0.2, 1.5, 0.3)
+    # yticks = np.arange(0.2, 1.5, 0.3)
+    # yticks = [0.4, 0.8, 1.2]
+    yticks = [0.4, 0.8, 1.2]
     ax.set_yticks(yticks)
     ax.set_yticklabels([f"{y:.1f}" for y in yticks], fontsize=FONTSIZE * 0.8)
     ax.minorticks_off()
@@ -150,11 +152,30 @@ for i, ax, (compound, simulation_type) in zip(
             color="black",
         )
 
+    # add vertical line where there is MSE of the MeanModel
+    mean_model_mse = MeanModel(DataQuery(compound, simulation_type)).mse
+    ax.axvline(
+        np.log10(mean_model_mse),
+        color="black",
+        linestyle=":",
+        alpha=0.5,
+        label=r"$\text{MSE}_{\text{baseline}}$",
+        # put it behind histogram
+        zorder=0,
+    )
 
-for ax in axs[:, 0]:
-    ax.set_ylabel("Density", fontsize=FONTSIZE)
+
+# for ax in axs[:, 0]:
+#     ax.set_ylabel("Density", fontsize=FONTSIZE)
+axs[2, 0].set_ylabel("Density", fontsize=FONTSIZE)
+
 for ax in axs[-1, :]:
     ax.set_xlabel("MSE", fontsize=FONTSIZE)
+
+# add legend about mean model mse in first subplot
+axs[0, 0].legend(fontsize=FONTSIZE * 0.8)
+
+
 # axs[0, 0].legend(["KDE"], fontsize=FONTSIZE, loc="upper left")
 plt.tight_layout()
 plt.savefig("mse_hist.pdf", bbox_inches="tight", dpi=DPI)
