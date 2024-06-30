@@ -1,5 +1,7 @@
 # %%
 
+from matplotlib.colors import Normalize, LogNorm, SymLogNorm, PowerNorm
+
 # do tsne
 from sklearn.manifold import TSNE
 
@@ -29,13 +31,19 @@ test_colors = [colors[k] for k in compound_names[2]]
 # %%
 
 
-def plot_umap_1(ax, data, plt_colors, n_neighbors=20, min_dist=0.3, umap_data=None):
+def plot_umap_1(
+    data,
+    n_neighbors=20,
+    min_dist=0.3,
+    umap_data=None,
+    seed=7,
+):
     if umap_data is None:
         umap_data = umap.UMAP(
             n_components=2,
             n_neighbors=n_neighbors,
             min_dist=min_dist,
-            random_state=7,
+            random_state=seed,
         ).fit_transform(data)
 
 
@@ -113,17 +121,17 @@ text_pos = {
     "V": (11, 8.5),
     "Cr": (5, 7),
 }
-for c, pos in text_pos.items():
+for d, pos in text_pos.items():
     ax.text(
         pos[0],
         pos[1],
-        c,
+        d,
         fontsize=FONTSIZE * 0.8,
         # color=colors[c],
         fontweight="bold",
         # put backgroud color
         # bbox=dict(facecolor="white", alpha=0.5, edgecolor=colors[c]),
-        bbox=dict(facecolor="white", alpha=0.5, edgecolor=colors[c]),
+        bbox=dict(facecolor="white", alpha=0.5, edgecolor=colors[d]),
     )
 ax.set_title(
     "UMAP Projection",
@@ -144,5 +152,7 @@ plt.savefig("umap_projection.pdf", dpi=300, bbox_inches="tight")
 
 np.save("umap_proj.npy", umap_proj)
 np.save("umap_plt_colors.npy", umap_plt_colors)
+# umap_proj = np.load("umap_proj.npy")
+# umap_plt_colors = np.load("umap_plt_colors.npy")
 
 # %%
