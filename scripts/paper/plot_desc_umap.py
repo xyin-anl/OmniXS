@@ -88,8 +88,8 @@ cmap_dict = {
     "MOOD": "jet",
 }
 FONTSIZE = 22
-# X, Y = "umap_f0", "umap_f1"
-X, Y = "umap_s0", "umap_s1"
+X, Y = "umap_f0", "umap_f1"
+# X, Y = "umap_s0", "umap_s1"
 
 
 def series_to_color(s, cmap="jet"):
@@ -112,25 +112,29 @@ gs = fig.add_gridspec((len(color_by) + 1) // 2, 2, hspace=0, wspace=0)
 axs = gs.subplots(sharex=True, sharey=True)
 for ax, d in zip(axs.flatten(), color_by):
 
-    # COLOR EACH COMPOUND BLOCK AT A TIME
-    for c in cfg.compounds:
-        ax.scatter(
-            df_unique[df_unique.compound == c][X],
-            df_unique[df_unique.compound == c][Y],
-            c=series_to_color(df_unique[df_unique.compound == c][d], cmap=cmap_dict[d]),
-            s=0.8,
-            # alpha=0.8,
-            label=c,
-        )
+    # # COLOR EACH COMPOUND BLOCK AT A TIME
+    # for c in cfg.compounds:
+    #     ax.scatter(
+    #         df_unique[df_unique.compound == c][X],
+    #         df_unique[df_unique.compound == c][Y],
+    #         c=series_to_color(df_unique[df_unique.compound == c][d], cmap=cmap_dict[d]),
+    #         s=0.8,
+    #         # alpha=0.8,
+    #         label=c,
+    #     )
+    # fig.suptitle("Local color scaling", fontsize=FONTSIZE * 1.2, y=0.9)
+    # filename = f"umap_desc_{X}_{Y}_local.pdf"
 
-    # # COLOR ALL POINTS AT ONCE
-    # ax.scatter(
-    #     df_unique[X],
-    #     df_unique[Y],
-    #     c=series_to_color(df_unique[d], cmap=cmap_dict[d]),
-    #     s=2,
-    #     alpha=0.8,
-    # )
+    # COLOR ALL POINTS AT ONCE
+    ax.scatter(
+        df_unique[X],
+        df_unique[Y],
+        c=series_to_color(df_unique[d], cmap=cmap_dict[d]),
+        s=2,
+        alpha=0.8,
+    )
+    fig.suptitle("Global color scaling", fontsize=FONTSIZE * 1.2, y=0.9)
+    filename = f"umap_desc_{X}_{Y}_global.pdf"
 
     # title top top left inside of the axes
     if d != "compound_idx":
@@ -139,9 +143,9 @@ for ax, d in zip(axs.flatten(), color_by):
         ax.set_title("Element", fontsize=FONTSIZE, loc="left", x=0.01, y=0.9)
     ax.set_xticks([])
     ax.set_yticks([])
-    # break
 
-fig.savefig(f"umap_desc_{X}_{Y}.pdf", dpi=300, bbox_inches="tight")
+
+fig.savefig(filename, dpi=500, bbox_inches="tight")
 
 # %%
 df_unique.to_csv("umap_descriptors.csv", index=False)
