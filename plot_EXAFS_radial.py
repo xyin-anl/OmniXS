@@ -22,6 +22,11 @@ def calculate_average_exafs(exafs_list):
 def plot_exafs(exafs_data, compounds, simulation_types, model_names):
     COLS = len(compounds)
     ROWS = len(model_names) + 1  # Add one row for the average plot
+    BIN_COUNT = 100
+    CMAP = "tab10"
+    ALPHA = 1
+    LINEWIDTH = 0.5
+    FONTSIZE = 22
 
     fig = plt.figure(figsize=(6 * COLS, 8 * ROWS))
     gs = fig.add_gridspec(ROWS, COLS, hspace=0, wspace=0)
@@ -137,31 +142,42 @@ def plot_exafs(exafs_data, compounds, simulation_types, model_names):
     plt.show()
 
 
-plt.style.use(["default", "science"])
-BIN_COUNT = 100
-CMAP = "tab10"
-ALPHA = 1
-LINEWIDTH = 0.5
-FONTSIZE = 22
-compounds = cfg.compounds
-simulation_types = ["FEFF"]
-model_names = ["simulation", "universal", "expert", "tuned_universal"]
+# %%
 
-# Generate and save EXAFS data (or load if already exists)
-exafs_data = EXAFS_compound(
-    compounds,
-    simulation_types,
-    model_names,
-    use_cache=False,
-)
+
+# DEFINE VARIABLES
+# simulation_types = ["FEFF", "VASP"]
+models = ["simulation", "universal", "expert", "tuned_universal"]
+vasp_compounds = ["Cu", "Ti"]
+vasp_models = ["simulation", "expert", "tuned_universal"]
+
+# # VASP PARAMETERS
+# simulation_type = "VASP"
+# compounds = vasp_compounds
+# models = vasp_models
+
+# FEFF PARAMETERS
+simulation_type = "FEFF"
+compounds = cfg.compounds
+models = ["simulation", "universal", "expert", "tuned_universal"]
+
+
+exafs_data = {}
+for compound in compounds:
+    exafs_data[compound] = {}
+    exafs_data[compound][simulation_type] = {}
+    for model_name in models:
+        exafs_data[compound][simulation_type][model_name] = EXAFS_compound(
+            compound, simulation_type, model_name
+        )
+
 
 # # Plot EXAFS data
 # plot_exafs(exafs_data, compounds, simulation_types, model_names)
 
-# If you want to load existing data later
-# plot_exafs(exafs_data, compounds, simulation_types, model_names)
-
 # %%
+
+PLOT_RESIDUALS = False
 
 fig = plt.figure(figsize=(20, 10))
 gs = fig.add_gridspec(3, len(compounds), hspace=0, wspace=0.0)
@@ -170,70 +186,58 @@ ax_all = gs.subplots(
     sharey=True,
     subplot_kw={"projection": "polar"},
 )
+plt.style.use(["default", "science"])
 
 
 for COMPOUND, axs in zip(compounds, ax_all.T):
-    # Your existing setup
-    # COMPOUND = "Ni"
-    simulation_type = "FEFF"
-    model_names = [
-        "expert",
-        "universal",
-        "tuned_universal",
-    ]
 
-    # fig = plt.figure(figsize=(20, 6))
-    # gs = fig.add_gridspec(1, len(model_names), hspace=0, wspace=0.2)
-    # axs = gs.subplots(sharex=True, sharey=True, subplot_kw={"projection": "polar"})
+    if PLOT_RESIDUALS:
+        baseline_model = "simulation"
+        base_line_exafs = np.array(
+            exafs_data[COMPOUND][simulation_type][baseline_model]
+        )
+        baseline_theta = np.angle(base_line_exafs[:, 1])
+        baseline_r = np.abs(base_line_exafs[:, 1])
 
-    # axs = gs.subplots(sharex=True, sharey=True)
-    plt.style.use(["default", "science"])
+    for ax, PRED_NAME in zip(axs, models):
+        print(f"Plotting {PRED_NAME} for {COMPOUND} - {simulation_type}")
 
-    baseline_model = "simulation"
-    base_line_exafs = np.array(exafs_data[COMPOUND][simulation_type][baseline_model])
-    baseline_theta = np.angle(base_line_exafs[:, 1])
-    baseline_r = np.abs(base_line_exafs[:, 1])
-
-    for ax, PRED_NAME in zip(axs, model_names):
         exafs = np.array(exafs_data[COMPOUND][simulation_type][PRED_NAME])
         exafs_freqs = exafs[:, 0]
         exafs_values = exafs[:, 1]
 
+        print(f"Lenth of exafs_values for {COMPOUND} = {len(exafs_values)}")
+
         r = np.abs(exafs_values)
         theta = np.angle(exafs_values)
 
-        r -= baseline_r
-        theta -= baseline_theta
+        if PLOT_RESIDUALS:
+            r -= baseline_r
+            theta -= baseline_theta
 
-        # Scatter plot with color mapping
         scatter = ax.scatter(
-            theta, r, s=1, c=np.real(exafs_freqs), cmap="jet", norm=LogNorm(), zorder=2
+            theta,
+            r,
+            s=1,
+            c=np.real(exafs_freqs),
+            cmap="jet",
+            norm=LogNorm(),
+            # zorder=2,
         )
-
-        # # Add circular histogram
-        # max_r = r.max()
-        # circular_histogram(ax, theta, bins=100, max_height=1.3 * max_r)
-        # ax.set_ylim(0, 1.3 * max_r)  # Adjust radial limit to accommodate histogram
 
         ax.set_yticklabels([])
         ax.set_yscale("log")
         ax.set_title(f"{PRED_NAME} - {COMPOUND} - {simulation_type}")
+        plt.tight_layout()
+        print("\n")
         break
+    print("\n")
+    break
 
-        # # Add colorbar
-        # plt.colorbar(scatter, ax=ax, label="Frequency")
+filename = "exafs_polar_residuals.pdf" if PLOT_RESIDUALS else "exafs_polar.pdf"
+plt.savefig(filename, bbox_inches="tight", dpi=300)
 
-    plt.tight_layout()
-    # fig.savefig(
-    #     f"exafs_fft_residuals_{COMPOUND}_{simulation_type}.pdf",
-    #     bbox_inches="tight",
-    #     dpi=300,
-    # )
-fig.savefig(
-    f"exafs_fft_residuals_{simulation_type}.pdf",
-    bbox_inches="tight",
-    dpi=300,
-)
+# %%
 
 
 # %%
