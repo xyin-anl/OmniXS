@@ -7,18 +7,27 @@
 #  find k - wavenumber = sqrt(2m(E-E0)/hbar) ~ sqrt(E-E0 + delta) (delta makes k real)
 #  find common k grid
 #  find chi(k)
-#  multiply by k^2 to get EXAFS signal for visualization
+#  multiply by k^2 to get EXAFS signal for
 #  use window function to avoid leakage (Tukey window)
+#  do fft to get chi(R) - EXAFS signal in real space
+
+
+import os
+import pickle
+import warnings
+
 import numpy as np
+import scienceplots
+import torch
 from scipy.fft import fft
 from scipy.interpolate import UnivariateSpline, interp1d
-import scienceplots
 
 from config.defaults import cfg
 from src.data.ml_data import DataQuery, load_xas_ml_data
+from src.models.trained_models import Trained_FCModel
 
 
-class EXAFS:
+class EXAFSSpectrum:
     def __init__(
         self,
         mu_E,
@@ -112,27 +121,28 @@ class EXAFS:
         return k_grid, interp(k_grid)
 
     @property
-    def chi_k_windowed(self):
+    def chi_k2_windowed(self):
         """Apply a window function to chi(k)."""
-        k_grid, chi_k = self.chi_k
-        window = np.hanning(len(chi_k))  # Apply a Hanning window
-        chi_k_windowed = chi_k * window
-        return k_grid, chi_k_windowed
+        k_grid, chik = self.chi_k
+        chi_k2 = chik * k_grid**2
+        window = np.hanning(len(chi_k2))  # Apply a Hanning window
+        chi_k2_windowed = chi_k2 * window
+        return k_grid, chi_k2_windowed
 
     @property
-    def chi_k_fft(self):
+    def chi_k2_fft(self):
         """Compute the Fourier Transform of the windowed chi(k) to obtain chi(R)."""
-        k_grid, chi_k_windowed = self.chi_k_windowed
+        k_grid, chi_k2_windowed = self.chi_k2_windowed
 
-        chi_k_fft = fft(chi_k_windowed)
+        chi_k2_fft = fft(chi_k2_windowed)
         R = np.fft.fftfreq(
-            len(chi_k_windowed), d=(k_grid[1] - k_grid[0])
+            len(chi_k2_windowed), d=(k_grid[1] - k_grid[0])
         )  # Compute the R grid
         R = np.fft.fftshift(R)
-        chi_k_fft = np.fft.fftshift(chi_k_fft)
-        chi_k_fft = chi_k_fft[R >= 0]
+        chi_k2_fft = np.fft.fftshift(chi_k2_fft)
+        chi_k2_fft = chi_k2_fft[R >= 0]
         R = R[R >= 0]
-        return R, chi_k_fft
+        return R, chi_k2_fft
 
     def _load_E(self):
         # data = load_xas_ml_data(DataQuery(self.compound, self.simulation_type))
@@ -144,7 +154,7 @@ class EXAFS:
         return data["energies"]
 
     def chi_r_peak(self):
-        R, chi_R = self.chi_k_fft
+        R, chi_R = self.chi_k2_fft
         idx = np.argmax(np.abs(chi_R))
         return R[idx], chi_R[idx]
 
@@ -188,14 +198,14 @@ class EXAFS:
         ax[1, 0].set_title("EXAFS signal")
 
         # plot after windowing
-        k, chi_k_windowed = self.chi_k_windowed
+        k, chi_k_windowed = self.chi_k2_windowed
         ax[1, 0].plot(k, chi_k_windowed * k**2)
         ax[1, 0].set_xlabel(r"$k$ ($\AA^{-1}$)")
         ax[1, 0].set_ylabel(r"$\chi(k) \cdot k^2$")
         ax[1, 0].set_title("EXAFS signal after windowing")
         ax[1, 0].legend(["Original", "Windowed"])
 
-        R, chi_R = self.chi_k_fft
+        R, chi_R = self.chi_k2_fft
         # plot both magnitude and phase
         ax[1, 1].plot(R, np.abs(chi_R), label="Magnitude", marker="o")
         ax[1, 1].set_xlabel(r"$R$ ($\AA$)")
@@ -223,13 +233,81 @@ class EXAFS:
         plt.show()
 
 
+def EXAFSs(
+    compounds,
+    simulation_types,
+    model_names,
+    use_cache=True,
+):
+
+    # filename = "exafs_data.pkl"
+    filename = cfg.paths.cache.exafs
+
+    if not use_cache and os.path.exists(filename):
+        warnings.warn(f"Loading existing EXAFS data from {filename}")
+        with open(filename, "rb") as f:
+            return pickle.load(f)
+
+    exafs_data = {}
+
+    for compound in compounds:
+        exafs_data[compound] = {}
+        for simulation_type in simulation_types:
+            exafs_data[compound][simulation_type] = {}
+
+            data = load_xas_ml_data(DataQuery(compound, simulation_type)).test
+            spectras = data.y
+            features = data.X
+
+            for model_name in model_names:
+                if model_name == "simulation":
+                    preds = spectras
+                elif model_name == "universal":
+                    preds = (
+                        Trained_FCModel(
+                            DataQuery("ALL", simulation_type), name="universal_tl"
+                        )
+                        .model(torch.tensor(features))
+                        .detach()
+                        .numpy()
+                    )
+                elif model_name == "expert":
+                    preds = Trained_FCModel(
+                        DataQuery(compound, simulation_type), name="per_compound_tl"
+                    ).predictions
+                elif model_name == "tuned_universal":
+                    preds = Trained_FCModel(
+                        DataQuery(compound, simulation_type), name="ft_tl"
+                    ).predictions
+
+                exafs_list = []
+                for spectra in preds:
+                    exafs = EXAFSSpectrum(
+                        spectra, compound=compound, simulation_type=simulation_type
+                    )
+                    R, chi_R = exafs.chi_k2_fft
+                    exafs_list.append((R, chi_R))  # Store full complex data
+
+                exafs_data[compound][simulation_type][model_name] = exafs_list
+
+    with open(filename, "wb") as f:
+        pickle.dump(exafs_data, f)
+
+    return exafs_data
+
+
+# %%
+
 if __name__ == "__main__":
     # PLOT PROCESSING STEPS
     compound = "Cu"
     simulation_type = "FEFF"
     data = load_xas_ml_data(DataQuery(compound, simulation_type))
     spectras = data.test.y
+    # np.random.seed(0)
     idx = np.random.randint(0, len(spectras))
     spectra = spectras[idx]
-    exafs = EXAFS(spectra, compound=compound, simulation_type=simulation_type)
+    exafs = EXAFSSpectrum(spectra, compound=compound, simulation_type=simulation_type)
     exafs.plot()
+
+# %%
