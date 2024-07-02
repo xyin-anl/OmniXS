@@ -8,7 +8,7 @@ from matplotlib.colors import LogNorm
 from scipy.stats import circmean
 
 from config.defaults import cfg
-from EXAFS import EXAFSs
+from EXAFS import EXAFS_compound
 
 
 def calculate_average_exafs(exafs_list):
@@ -148,7 +148,7 @@ simulation_types = ["FEFF"]
 model_names = ["simulation", "universal", "expert", "tuned_universal"]
 
 # Generate and save EXAFS data (or load if already exists)
-exafs_data = EXAFSs(
+exafs_data = EXAFS_compound(
     compounds,
     simulation_types,
     model_names,

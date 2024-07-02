@@ -233,7 +233,7 @@ class EXAFSSpectrum:
         plt.show()
 
 
-def EXAFSs(
+def EXAFS_compound(
     compounds,
     simulation_types,
     model_names,
@@ -311,3 +311,17 @@ if __name__ == "__main__":
     exafs.plot()
 
 # %%
+
+if __name__ == "__main__":
+    # COMPUTE ALL EXAFS for element and cache
+
+    EXAFS_compound(
+        cfg.compounds,
+        simulation_types=["FEFF"],
+        model_names=[
+            "simulation",
+            "universal",
+            "expert",
+            "tuned_universal",
+        ],
+    )
