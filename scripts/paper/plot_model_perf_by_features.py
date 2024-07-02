@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from p_tqdm import p_map
 
 from config.defaults import cfg
-from src.analysis.plots import Plot
+from scripts.paper.plot_utils import Plot
 from src.data.ml_data import DataQuery, load_xas_ml_data
 from src.models.trained_models import (
     ElastNet,

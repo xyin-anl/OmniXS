@@ -5,7 +5,7 @@ model: ${named_models.${model_name}}
 name_queries:
   per_compound:
     _target_: src.data.ml_data.DataQuery
-    compound: ${compound}
+    compound: ${compound_name}
     simulation_type: ${simulation_type}
 
   universal:
@@ -30,7 +30,9 @@ named_models:
     model:
       _target_: src.models.xas_fc.FC_XAS
       widths: ${hparams.${simulation_type}.${compound_name}.widths}
-      output_dim: ${feature_dims.output_dim.${simulation_type}}
+      # output_dim: ${feature_dims.output_dim.${simulation_type}}
+      input_dim: DATADIM
+      output_dim: DATADIM
       compound: ${compound_name}
       simulation_type: ${simulation_type}
 
@@ -48,7 +50,20 @@ named_models:
     query: ${name_queries.universal}
     name: universal_tl
     widths: ${named_models.universal_tl.model.widths}
-    input_dim: ${feature_dims.input_dim.${simulation_type}}
     output_dim: ${feature_dims.output_dim.${simulation_type}}
     compound: ${compound_name}
     simulation_type: ${simulation_type}
+
+  # feff_ft_tl:
+  #   _target_: src.models.trained_models.PreTrainedFCXASModel
+  #   query:
+  #     _target_: src.data.ml_data.DataQuery
+  #     compound: ${compound_name}
+  #     simulation_type: FEFF
+  #   name: per_compound_tl
+  #   widths: ${hparams.FEFF.${compound_name}.widths}
+  #   # input_dim: ${feature_dims.input_dim.${simulation_type}}
+  #   input_dim: DATADIM
+  #   output_dim: DATADIM
+  #   compound: ${compound_name}
+  #   simulation_type: ${simulation_type}

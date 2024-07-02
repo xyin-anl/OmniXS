@@ -1,3 +1,4 @@
+# %%
 import re
 from src.models.trained_models import MeanModel
 from functools import cached_property
@@ -35,8 +36,9 @@ class Plot:
         self.title = None
         return self
 
-    def set_title(self, title):
+    def set_title(self, title, fontsize=18):
         self.title = title
+        plt.title(title, fontsize=fontsize)
         return self
 
     @property
@@ -47,54 +49,93 @@ class Plot:
         self,
         top_predictions,
         compound,
+        color=None,
         splits=10,
         axs=None,
         fill=True,
         color_background=False,
     ):
+
         if axs is None:
-            fig, axs = plt.subplots(splits, 1, figsize=(8, 20))
+            axs_count = len(top_predictions)
+            fig, axs = plt.subplots(axs_count, 1, figsize=(8, 20))
             axs = axs.flatten()
         else:
-            assert len(axs) == splits, "Number of subplots must match splits"
+            assert (
+                len(axs) == splits - 1
+            ), f"Expected {splits-1} subplots. Got {len(axs)}."
 
-        cmap = "tab10"
-        compound_colors = plt.get_cmap(cmap)(np.linspace(0, 1, len(cfg.compounds) + 2))
-        compound_colors = {
-            c: compound_colors[i] for i, c in enumerate(cfg.compounds + ["Ti", "Cu"])
-        }
+        if color is None:
+            cmap = "tab10"
+            compound_colors = plt.get_cmap(cmap)(
+                np.linspace(0, 1, len(cfg.compounds) + 2)
+            )
+            compound_colors = {
+                c: compound_colors[i]
+                for i, c in enumerate(cfg.compounds + ["Ti", "Cu"])
+            }
+            color = compound_colors[compound]
 
         for i, ax in enumerate(axs):
             t = top_predictions[i][0]
             p = top_predictions[i][1]
 
+            # # interpolate t and p
+            # t = np.interp(
+            #     np.linspace(0, len(t), len(t) * 10),
+            #     np.arange(len(t)),
+            #     t,
+            # )
+            # p = np.interp(
+            #     np.linspace(0, len(p), len(p) * 10),
+            #     np.arange(len(p)),
+            #     p,
+            # )
+
             if color_background:
-                ax.patch.set_facecolor(compound_colors[compound])
+                ax.patch.set_facecolor(color)
                 ax.patch.set_alpha(0.05)
+
+            # ax.plot(
+            #     p,
+            #     linestyle="--",
+            #     color=color,
+            #     # alpha=0.75,
+            #     # color="black",
+            #     linewidth=0.5,
+            # )
 
             ax.plot(
                 t,
-                "-",
-                color=compound_colors[compound],
-                linewidth=1.5,
+                linestyle=":",
+                color=color,
+                # alpha=0.75,
+                # color="black",
+                linewidth=0.8,
+                # zorder=3,
+                label="Ground Truth",
             )
+
             ax.plot(
                 p,
-                # "--",
-                linestyle="",
-                color=compound_colors[compound],
-                linewidth=1.5,
+                linestyle="-",
+                color=color,
+                linewidth=0.4,
+                label="Predictions",
             )
 
             if fill:
                 ax.fill_between(
-                    np.arange(len(top_predictions[i][0])),
+                    # np.arange(len(top_predictions[i][0])),
+                    np.arange(len(t)),
                     t,
                     p,
-                    alpha=0.6,
+                    alpha=0.4,
                     label=f"Mean Residue {(t-p).__abs__().mean():.1e}",
                     # color="red",
-                    color=compound_colors[compound],
+                    color=color,
+                    linewidth=0,
+                    # zorder=2,
                 )
 
             # ax.set_axis_off()
@@ -125,7 +166,7 @@ class Plot:
             ],
             fontsize=14,
         )
-        axs[-1].set_xlabel(compound, fontsize=20)
+        # axs[-1].set_xlabel(compound, fontsize=20)
         return self
 
     def save(self, file_name=None, ext="pdf"):
@@ -275,18 +316,18 @@ class Plot:
         return r2
 
 
+# %%
 if __name__ == "__main__":
     from src.models.trained_models import LinReg
 
-    splits = 10
-    top_predictions = {
-        c: LinReg(c).top_predictions(splits=splits) for c in cfg.compounds
-    }
+    simulation_type = "FEFF"
+    Plot().plot_top_predictions(
+        LinReg(DataQuery("Mn", simulation_type)).top_predictions(
+            splits=10, drop_last_split=True
+        ),
+        compound="Mn",
+        color="red",
+        splits=10,
+    )
 
-    fig, axs = plt.subplots(splits, len(cfg.compounds), figsize=(20, 16))
-    for i, compound in enumerate(cfg.compounds):
-        Plot().set_title(f"{compound}").plot_top_predictions(
-            top_predictions[compound], splits=splits, axs=axs[:, i]
-        )
-    plt.tight_layout(pad=0)
-    plt.savefig(f"top_{splits}_predictions.pdf", bbox_inches="tight", dpi=300)
+# %%

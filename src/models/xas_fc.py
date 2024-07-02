@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 import torch
 from torch import nn
 from typing import Literal
@@ -9,8 +9,8 @@ class FC_XAS(nn.Module):
     def __init__(
         self,
         widths: List[int],
-        input_dim: Literal["DATADIM", None] = "DATADIM",
-        output_dim: int = None,
+        input_dim: Union[int, Literal["DATADIM"], None] = "DATADIM",
+        output_dim: Union[int, Literal["DATADIM"], None] = "DATADIM",
         dropout_rate=0.5,
         compound: str = None,
         simulation_type: str = None,
@@ -18,16 +18,16 @@ class FC_XAS(nn.Module):
         super().__init__()
         self.widths = widths
 
-        if input_dim is not None:
+        if input_dim == "DATADIM" or output_dim == "DATADIM":
+            ml_data = load_xas_ml_data(DataQuery(compound, simulation_type))
             if input_dim == "DATADIM":
-                ml_data = load_xas_ml_data(DataQuery(compound, simulation_type))
-                input_dim = ml_data.train.X.shape[1]
-            else:
-                input_dim = input_dim
+                self.widhts = [ml_data.train.X.shape[1]] + self.widths
+            if output_dim == "DATADIM":
+                self.width = self.widths + [ml_data.train.y.shape[1]]
+        if input_dim is not None:
             self.widths = [input_dim] + self.widths
-
         if output_dim is not None:
-            self.widths.append(output_dim)
+            self.widths = self.widths + [output_dim]
 
         self.pairs = [(w1, w2) for w1, w2 in zip(self.widths[:-1], self.widths[1:])]
         self.layers = nn.ModuleList()

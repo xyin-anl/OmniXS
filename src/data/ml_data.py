@@ -277,7 +277,7 @@ def load_all_data(
     compounds=None,
     sample_method: Literal[
         "same_size", "all", "stratified"
-    ] = "same_size",  # TODO: revert to default
+    ] = "all",  # TODO: revert to default
 ):
 
     if compounds is None:

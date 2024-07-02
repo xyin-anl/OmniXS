@@ -15,7 +15,7 @@ from scipy.stats import gaussian_kde
 
 from config.defaults import cfg
 from scripts.paper.universal_TL_mses import universal_model_mses
-from src.analysis.plots import Plot
+from scripts.paper.plot_utils import Plot
 from src.data.ml_data import DataQuery, DataSplit, MLSplits, load_xas_ml_data
 from src.models.trained_models import (
     ElastNet,

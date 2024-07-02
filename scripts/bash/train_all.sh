@@ -39,8 +39,9 @@ nohup_run() {
 #     nohup run "$compound" "VASP" "per_compound_tl"
 # done
 
-feffcompounds=("Co" "Cr" "Cu" "Fe" "Mn" "Ni" "Ti" "V")
-for compound in "${feffcompounds[@]}"; do
-    nohup_run "$compound" "ACSF" "per_compound_tl"
-    nohup_run "$compound" "SOAP" "per_compound_tl"
-done
+# PRELIMNS FOR element specific FFT to tuned-universal VASP (currently not working)
+# # feffcompounds=("Co" "Cr" "Cu" "Fe" "Mn" "Ni" "Ti" "V")
+# feffcompounds=("Cu")
+# for compound in "${feffcompounds[@]}"; do
+#     # nohup_run "$compound" "VASP" "feff_ft_tl"
+# done

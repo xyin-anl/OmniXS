@@ -209,7 +209,7 @@ from src.data.ml_data import load_all_data
 from src.data.ml_data import MLSplits, DataSplit
 from src.models.trained_models import Trained_FCModel
 from src.data.ml_data import DataQuery, load_xas_ml_data
-from src.analysis.plots import Plot
+from scripts.paper.plot_utils import Plot
 from config.defaults import cfg
 import numpy as np
 import matplotlib.pyplot as plt

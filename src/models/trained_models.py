@@ -1,4 +1,5 @@
 import os
+from typing import Literal
 from sklearn.svm import SVR
 from sklearn.linear_model import ElasticNet, Ridge
 from abc import ABC, abstractmethod
@@ -89,13 +90,17 @@ class TrainedModel(ABC):  #
         pair = pair[sort_array.argsort()]
         return pair, sort_array.argsort()
 
-    def top_predictions(self, splits=10):
+    def top_predictions(self, splits=10, drop_last_split=True):
         # sort by mean residue, splits and return top of each split
         pair = self.sorted_predictions()[0]
         # for even split, some pairs are chopped off
         new_len = len(pair) - divmod(len(pair), splits)[1]
         pair = pair[:new_len]
-        top_spectra = [s[0] for s in np.split(pair, splits)]
+
+        top_spectra = [s[-1] for s in np.split(pair, splits)]  # bottom of each split
+        if drop_last_split:
+            top_spectra = top_spectra[:-1]
+
         return np.array(top_spectra)
 
     @cached_property
@@ -250,6 +255,7 @@ class Trained_FCModel(TrainedModel):
     @cached_property
     def model(self):
         # model = instantiate(cfg.model)
+
         model_params = torch.load(self._ckpt_path)
         # change keys of state_dict to remove the "model." prefix
         model_params["state_dict"] = {
@@ -265,10 +271,19 @@ class Trained_FCModel(TrainedModel):
 
         input_sz = weight_shapes[0][1]
         hidden_sz = [w[0] for w in weight_shapes[:]]
-
+        output_sz = weight_shapes[-1][0]
         widths = [input_sz] + hidden_sz  # output is already included
 
         model = FC_XAS(widths=widths, input_dim=None, output_dim=None)
+
+        # model = FC_XAS(
+        #     widths=hidden_sz,
+        #     input_dim=None,
+        #     output_dim=None,
+        #     compound=self.compound,
+        #     simulation_type=self.simulation_type,
+        # )
+
         model.load_state_dict(model_params["state_dict"])
         model.eval()
         return model
