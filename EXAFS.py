@@ -11,10 +11,10 @@
 #  use window function to avoid leakage (Tukey window)
 #  do fft to get chi(R) - EXAFS signal in real space
 
-
 import os
 import pickle
 import warnings
+from typing import Literal
 
 import numpy as np
 import scienceplots
@@ -234,66 +234,61 @@ class EXAFSSpectrum:
 
 
 def EXAFS_compound(
-    compounds,
-    simulation_types,
-    model_names,
-    use_cache=True,
+    compound,
+    simulation_type: Literal["FEFF", "VASP"],
+    model_name: Literal["simulation", "universal", "expert", "tuned_universal"],
+    use_cache=False,
 ):
 
-    # filename = "exafs_data.pkl"
-    filename = cfg.paths.cache.exafs
+    # # cache file
+    # filename = cfg.paths.cache.exafs.format(
+    #     compound=compound,
+    #     simulation_type=simulation_type,
+    #     model_name=model_name,
+    # )
+    # os.makedirs(os.path.dirname(filename), exist_ok=True)
+    # if use_cache and os.path.exists(filename):
+    #     warnings.warn(f"Loading existing EXAFS data from {filename}")
+    #     with open(filename, "rb") as f:
+    #         return np.load(f, allow_pickle=True)
 
-    if not use_cache and os.path.exists(filename):
-        warnings.warn(f"Loading existing EXAFS data from {filename}")
-        with open(filename, "rb") as f:
-            return pickle.load(f)
+    data = load_xas_ml_data(DataQuery(compound, simulation_type)).test
+    spectras = data.y
+    features = data.X
 
-    exafs_data = {}
+    if model_name == "simulation":
+        preds = spectras
+    elif model_name == "universal":
+        preds = (
+            Trained_FCModel(DataQuery("ALL", simulation_type), name="universal_tl")
+            .model(torch.tensor(features))
+            .detach()
+            .numpy()
+        )
+    elif model_name == "expert":
+        preds = Trained_FCModel(
+            DataQuery(compound, simulation_type), name="per_compound_tl"
+        ).predictions
+    elif model_name == "tuned_universal":
+        preds = Trained_FCModel(
+            DataQuery(compound, simulation_type), name="ft_tl"
+        ).predictions
 
-    for compound in compounds:
-        exafs_data[compound] = {}
-        for simulation_type in simulation_types:
-            exafs_data[compound][simulation_type] = {}
+    exafs_list = []
+    for spectra in preds:
+        exafs = EXAFSSpectrum(
+            spectra, compound=compound, simulation_type=simulation_type
+        )
+        R, chi_R = exafs.chi_k2_fft
+        exafs_list.append((R, chi_R))  # Store full complex data
 
-            data = load_xas_ml_data(DataQuery(compound, simulation_type)).test
-            spectras = data.y
-            features = data.X
+    # with open(filename, "wb") as f:
+    #     warnings.warn(f"{filename} will be loaded next time when use_cache=True")
+    #     np.save(f, exafs_list)
 
-            for model_name in model_names:
-                if model_name == "simulation":
-                    preds = spectras
-                elif model_name == "universal":
-                    preds = (
-                        Trained_FCModel(
-                            DataQuery("ALL", simulation_type), name="universal_tl"
-                        )
-                        .model(torch.tensor(features))
-                        .detach()
-                        .numpy()
-                    )
-                elif model_name == "expert":
-                    preds = Trained_FCModel(
-                        DataQuery(compound, simulation_type), name="per_compound_tl"
-                    ).predictions
-                elif model_name == "tuned_universal":
-                    preds = Trained_FCModel(
-                        DataQuery(compound, simulation_type), name="ft_tl"
-                    ).predictions
+    exafs_list = np.array(exafs_list)  # assumed to be of same shapes
 
-                exafs_list = []
-                for spectra in preds:
-                    exafs = EXAFSSpectrum(
-                        spectra, compound=compound, simulation_type=simulation_type
-                    )
-                    R, chi_R = exafs.chi_k2_fft
-                    exafs_list.append((R, chi_R))  # Store full complex data
-
-                exafs_data[compound][simulation_type][model_name] = exafs_list
-
-    with open(filename, "wb") as f:
-        pickle.dump(exafs_data, f)
-
-    return exafs_data
+    return exafs_list
 
 
 # %%
@@ -315,13 +310,29 @@ if __name__ == "__main__":
 if __name__ == "__main__":
     # COMPUTE ALL EXAFS for element and cache
 
-    EXAFS_compound(
-        cfg.compounds,
-        simulation_types=["FEFF"],
-        model_names=[
-            "simulation",
-            "universal",
-            "expert",
-            "tuned_universal",
-        ],
+    MODEL_NAMES = [
+        "simulation",
+        "universal",
+        "expert",
+        "tuned_universal",
+    ]
+    exaf_data = EXAFS_compound(
+        compound="Cu",
+        simulation_type="FEFF",
+        model_name="simulation",
+        use_cache=False,
     )
+    print(f"EXAFS data shape: {exaf_data.shape}")
+
+    # # CACHING
+    # for compound in cfg.compounds:
+    #     for simulation_type in ["FEFF"]:
+    #         for model_name in MODEL_NAMES:
+    #             EXAFS_compound(
+    #                 compound=compound,
+    #                 simulation_type=simulation_type,
+    #                 model_name=model_name,
+    #                 use_cache=True,  # set to false to reset
+    #             )
+
+# %%

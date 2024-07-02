@@ -27,4 +27,4 @@ paths:
     pca: ${paths.cache.dir}/pca/{compound}_{simulation_type}.pkl
     scaler: ${paths.cache.dir}/scaler/{compound}_{simulation_type}.pkl
     splits: dataset/ML-data/splits/{compound}_{simulation_type}.npz
-    exafs: ${paths.cache.dir}/exafs_data.pkl
+    # exafs: ${paths.cache.dir}/exafs/exafs_{compound}_{simulation_type}_{model_name}.npz
