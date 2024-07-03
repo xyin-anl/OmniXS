@@ -19,8 +19,6 @@ from src.models.trained_models import Trained_FCModel
 # %%
 
 data, compound_names = load_all_data(return_compound_name=True, sample_method="all")
-
-
 colors = plt.cm.tab10.colors[:8]
 colors = {c: col for c, col in zip(cfg.compounds, colors)}
 plt_colors = [colors[k] for k in compound_names[2]]

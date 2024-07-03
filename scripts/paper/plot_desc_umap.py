@@ -56,26 +56,61 @@ def get_balanced_df_with_unique_ids():
 
 df_unique = get_balanced_df_with_unique_ids()
 
-# %%
-
-# UMAP OF FEATURES
-umap_proj = umap.UMAP(
-    n_components=2, n_neighbors=25, min_dist=0.45, random_state=7
-).fit_transform(df_unique.features.tolist())
-df_unique["umap_f0"] = umap_proj[:, 0]
-df_unique["umap_f1"] = umap_proj[:, 1]
-
-# %%
-# UMAP OF SPECTRAS
-umap_proj = umap.UMAP(
-    n_components=2, n_neighbors=25, min_dist=0.45, random_state=7
-).fit_transform(df_unique.spectras.tolist())
-df_unique["umap_s0"] = umap_proj[:, 0]
-df_unique["umap_s1"] = umap_proj[:, 1]
-
+df = pd.concat([get_desc_df(c) for c in cfg.compounds])
+df["compound_idx"] = pd.Categorical(
+    df.compound,
+    categories=cfg.compounds,
+).codes
 
 # %%
 
+# # ORIGNAL PRAMS
+# umap_proj = umap.UMAP(
+#     n_components=2,
+#     n_neighbors=25,
+#     min_dist=0.45,
+#     random_state=7,
+# ).fit_transform(df_unique.features.tolist())
+# umap_proj = umap.UMAP(
+#     n_components=2,
+#     n_neighbors=25,
+#     min_dist=0.45,
+#     random_state=7,
+# ).fit_transform(df_unique.features.tolist())
+
+# %%
+
+plot_df = df.copy()
+# plot_df = df_unique.copy()
+
+# # # UMAP OF FEATURES
+# features_umap_kwargs = {
+#     "n_components": 2,
+#     "n_neighbors": 50,
+#     "min_dist": 0.45,
+#     "random_state": 7,
+# }
+# umap_proj = umap.UMAP(**features_umap_kwargs).fit_transform(plot_df.features.tolist())
+# plot_df["umap_f0"] = umap_proj[:, 0]
+# plot_df["umap_f1"] = umap_proj[:, 1]
+# X, Y = "umap_f0", "umap_f1"
+
+# SPECTRA UMAP
+spectra_umap_kwargs = {
+    "n_components": 2,
+    "n_neighbors": 50,
+    "min_dist": 0.45,
+    "random_state": 7,
+}
+umap_proj_spectra = umap.UMAP(**spectra_umap_kwargs).fit_transform(
+    plot_df.spectras.tolist()
+)
+plot_df["umap_s0"] = umap_proj_spectra[:, 0]
+plot_df["umap_s1"] = umap_proj_spectra[:, 1]
+X, Y = "umap_s0", "umap_s1"
+
+
+# %%
 
 DESCRIPTORS = ["OS", "CN", "OCN", "NNRS", "MOOD"]
 color_by = ["compound_idx", "OS", "CN", "OCN", "NNRS", "MOOD"]
@@ -88,18 +123,18 @@ cmap_dict = {
     "MOOD": "jet",
 }
 FONTSIZE = 22
-X, Y = "umap_f0", "umap_f1"
 # X, Y = "umap_s0", "umap_s1"
 
 
 def series_to_color(s, cmap="jet"):
     """Utility function to convert a series to a color array for plotting."""
     select_idx = ~s.isna() & ~np.isinf(s)
+
     if cmap != "tab10":
         normalizer = Normalize()
-        non_outliers = plt.cm.get_cmap(cmap)(normalizer(s[select_idx]))
+        non_outliers = plt.get_cmap(cmap)(normalizer(s[select_idx]))
     else:
-        non_outliers = plt.cm.get_cmap(cmap)(s[select_idx])
+        non_outliers = plt.get_cmap(cmap)(s[select_idx])
     c = np.zeros((len(s), 4))
     c[select_idx] = non_outliers
     c[~select_idx] = (0, 0, 0, 0)
@@ -112,12 +147,12 @@ gs = fig.add_gridspec((len(color_by) + 1) // 2, 2, hspace=0, wspace=0)
 axs = gs.subplots(sharex=True, sharey=True)
 for ax, d in zip(axs.flatten(), color_by):
 
-    # # COLOR EACH COMPOUND BLOCK AT A TIME
+    # # COLOR EACH """ COMPOUND BLOCK AT A TIME
     # for c in cfg.compounds:
     #     ax.scatter(
-    #         df_unique[df_unique.compound == c][X],
-    #         df_unique[df_unique.compound == c][Y],
-    #         c=series_to_color(df_unique[df_unique.compound == c][d], cmap=cmap_dict[d]),
+    #         plot_df[plot_df.compound == c][X],
+    #         plot_df[plot_df.compound == c][Y],
+    #         c=series_to_color(plot_df[plot_df.compound == c][d], cmap=cmap_dict[d]),
     #         s=0.8,
     #         # alpha=0.8,
     #         label=c,
@@ -125,11 +160,11 @@ for ax, d in zip(axs.flatten(), color_by):
     # fig.suptitle("Local color scaling", fontsize=FONTSIZE * 1.2, y=0.9)
     # filename = f"umap_desc_{X}_{Y}_local.pdf"
 
-    # COLOR ALL POINTS AT ONCE
+    # # COLOR ALL POINTS AT ONCE
     ax.scatter(
-        df_unique[X],
-        df_unique[Y],
-        c=series_to_color(df_unique[d], cmap=cmap_dict[d]),
+        plot_df[X],
+        plot_df[Y],
+        c=series_to_color(plot_df[d], cmap=cmap_dict[d]),
         s=2,
         alpha=0.8,
     )
@@ -144,8 +179,11 @@ for ax, d in zip(axs.flatten(), color_by):
     ax.set_xticks([])
     ax.set_yticks([])
 
-
 fig.savefig(filename, dpi=500, bbox_inches="tight")
 
 # %%
-df_unique.to_csv("umap_descriptors.csv", index=False)
+plot_df.to_csv("umap_descriptors.csv", index=False)
+
+# %%
+
+plot_df.NNRS.hasnans
