@@ -1,16 +1,6 @@
 # %%
 
-#  steps:
-#  find mu0(E) - background absorption
-#  find chi(E) = (mu(E) - mu0(E))/mu0(E)
-#  find E0 - edge energy, max derivative of mu(E), ...
-#  find k - wavenumber = sqrt(2m(E-E0)/hbar) ~ sqrt(E-E0 + delta) (delta makes k real)
-#  find common k grid
-#  find chi(k)
-#  multiply by k^2 to get EXAFS signal for
-#  use window function to avoid leakage (Tukey window)
-#  do fft to get chi(R) - EXAFS signal in real space
-
+import matplotlib.pyplot as plt
 import os
 import pickle
 import warnings
@@ -21,6 +11,7 @@ import scienceplots
 import torch
 from scipy.fft import fft
 from scipy.interpolate import UnivariateSpline, interp1d
+from sklearn.preprocessing import MinMaxScaler
 
 from config.defaults import cfg
 from src.data.ml_data import DataQuery, load_xas_ml_data
@@ -53,13 +44,9 @@ class EXAFSSpectrum:
 
     @property
     def E0(self):
-
-        # return self.E[int(0.5 * len(self.E))] # arbitrary
-
         """Determine the absorption edge energy E0 using first and second derivatives."""
         d_mu_dE = np.gradient(self.mu_E, self.E)
         E0_index = np.argmax(d_mu_dE)
-        # return self.mu_E[E0_index]
 
         E0_initial = self.E[E0_index]
 
@@ -103,45 +90,41 @@ class EXAFSSpectrum:
 
     @property
     def dk(self):
-        return np.sqrt(self.dE) / 10
+        return np.sqrt(self.dE) / 2
+
+    @property
+    def k(self):
+        return np.sqrt(self.E)
 
     @property
     def chi_k(self):
-        idx = self.E > self.E0
-        k = np.sqrt(self.E[idx] - self.E0)
-
-        # BASED on E grid
-        # k_grid = np.arange(k[0], k[-1], self.dk)
-
-        # COMMON k grid
-        K_COUNT = 100
-        k_grid = np.linspace(k[0], k[-1], K_COUNT)
-        interp = interp1d(k, self.X_E[idx], kind="cubic")
-
-        return k_grid, interp(k_grid)
+        E_interp = np.arange(self.E[0], self.E[-1], self.dE)
+        X_E_interp = np.interp(E_interp, self.E, self.X_E)
+        k_interp = np.sqrt(np.abs(E_interp - self.E0)) * np.sign(E_interp - self.E0)
+        return k_interp, X_E_interp
 
     @property
-    def chi_k2_windowed(self):
-        """Apply a window function to chi(k)."""
-        k_grid, chik = self.chi_k
-        chi_k2 = chik * k_grid**2
-        window = np.hanning(len(chi_k2))  # Apply a Hanning window
-        chi_k2_windowed = chi_k2 * window
-        return k_grid, chi_k2_windowed
+    def chi_k2_normalized(self):
+
+        k, chi_k = self.chi_k
+        chi_k2 = chi_k * k**2
+        scaler = MinMaxScaler(feature_range=(-1, 1))
+        chi_k2_normalized = scaler.fit_transform(chi_k2.reshape(-1, 1)).reshape(-1)
+        return k, chi_k2_normalized
 
     @property
     def chi_k2_fft(self):
-        """Compute the Fourier Transform of the windowed chi(k) to obtain chi(R)."""
-        k_grid, chi_k2_windowed = self.chi_k2_windowed
-
+        _, chi_k2_normalized = self.chi_k2_normalized
+        window = np.hanning(len(chi_k2_normalized))  # Apply a Hanning window
+        chi_k2_windowed = chi_k2_normalized * window
         chi_k2_fft = fft(chi_k2_windowed)
-        R = np.fft.fftfreq(
-            len(chi_k2_windowed), d=(k_grid[1] - k_grid[0])
-        )  # Compute the R grid
+        R = np.fft.fftfreq(len(chi_k2_windowed), d=self.dk)
         R = np.fft.fftshift(R)
         chi_k2_fft = np.fft.fftshift(chi_k2_fft)
+
         chi_k2_fft = chi_k2_fft[R >= 0]
         R = R[R >= 0]
+
         return R, chi_k2_fft
 
     def _load_E(self):
@@ -191,38 +174,41 @@ class EXAFSSpectrum:
         ax[0, 1].set_ylabel(r"$\chi(E)$")
 
         # plot chi_k * k^2
-        k, chi_k = self.chi_k
-        ax[1, 0].plot(k, chi_k * k**2)
+        k, chi_k2 = self.chi_k2_normalized
+        window = np.hanning(len(chi_k2))  # Apply a Hanning window
+        chi_k2_windowed = chi_k2 * window
+        ax[1, 0].plot(k, chi_k2_windowed, label="Windowed")
         ax[1, 0].set_xlabel(r"$k$ ($\AA^{-1}$)")
         ax[1, 0].set_ylabel(r"$\chi(k) \cdot k^2$")
         ax[1, 0].set_title("EXAFS signal")
 
         # plot after windowing
-        k, chi_k_windowed = self.chi_k2_windowed
-        ax[1, 0].plot(k, chi_k_windowed * k**2)
+        # k, chi_k_windowed = self.chi_k2_windowed
+        # ax[1, 0].plot(k, chi_k_windowed * k**2)
+        k, chi_k2_normalized = self.chi_k2_normalized
+        ax[1, 0].plot(k, chi_k2_normalized, label="Normalized")
         ax[1, 0].set_xlabel(r"$k$ ($\AA^{-1}$)")
         ax[1, 0].set_ylabel(r"$\chi(k) \cdot k^2$")
         ax[1, 0].set_title("EXAFS signal after windowing")
-        ax[1, 0].legend(["Original", "Windowed"])
+        ax[1, 0].legend()
 
         R, chi_R = self.chi_k2_fft
-        # plot both magnitude and phase
-        ax[1, 1].plot(R, np.abs(chi_R), label="Magnitude", marker="o")
-        ax[1, 1].set_xlabel(r"$R$ ($\AA$)")
-        ax[1, 1].set_ylabel(r"$|\chi(R)|$")
-        ax[1, 1].set_title("Fourier Transform of EXAFS signal")
-        ax[1, 1].set_xlim(0, 5)
-        print(f"R_peak: {self.chi_r_peak()}")
-        ax[1, 1].vlines(
-            self.chi_r_peak()[0],
-            0,
-            np.abs(self.chi_r_peak()[1]),
-            color="r",
-            linestyle="--",
-            label=r"$" + f"{self.chi_r_peak()[0]:.2f}" + r"$ $\AA$",
-            alpha=0.5,
-        )
-        ax[1, 1].legend()
+
+        # ax[1, 1].plot(R, np.abs(chi_R), label="Magnitude", marker="o")
+        # ax[1, 1].set_xlabel(r"$R$ ($\AA$)")
+        # ax[1, 1].set_ylabel(r"$|\chi(R)|$")
+        # ax[1, 1].set_title("Fourier Transform of EXAFS signal")
+        # print(f"R_peak: {self.chi_r_peak()}")
+        # ax[1, 1].vlines(
+        #     self.chi_r_peak()[0],
+        #     0,
+        #     np.abs(self.chi_r_peak()[1]),
+        #     color="r",
+        #     linestyle="--",
+        #     label=r"$" + f"{self.chi_r_peak()[0]:.3f}" + r"$ $\AA$",
+        #     alpha=0.5,
+        # )
+        # ax[1, 1].legend()
 
         ax1t = ax[1, 1].twinx()
         ax1t.plot(R, np.angle(chi_R), color="gray", label="Phase")
@@ -274,24 +260,37 @@ def EXAFS_compound(
             DataQuery(compound, simulation_type), name="ft_tl"
         ).predictions
 
+    R_list = []
     exafs_list = []
     for spectra in preds:
         exafs = EXAFSSpectrum(
             spectra, compound=compound, simulation_type=simulation_type
         )
         R, chi_R = exafs.chi_k2_fft
-        exafs_list.append((R, chi_R))  # Store full complex data
+        R_list.append(R)
+        exafs_list.append(chi_R)
+    # make sure all R values are same
+    assert all(
+        np.all(R_list[0] == R) for R in R_list
+    ), "R values are not same for all EXAFS signals"
+
+    R = R_list[0]
+    chi_R = np.array(exafs_list)
+
+    # # check if all values are same
+    # exafs_list = np.array(exafs_list)  # assumed to be of same shapes
+    # assert np.all(
+    #     np.abs(exafs_list[:][:, 0]) == np.abs(exafs_list[::-1][:, 0])
+    # ), "R values are not same"
+    # R = exafs_list[0][0]
+    # chi_R = np.mean(exafs_list[:][:, 1], axis=0)
 
     # with open(filename, "wb") as f:
     #     warnings.warn(f"{filename} will be loaded next time when use_cache=True")
     #     np.save(f, exafs_list)
 
-    exafs_list = np.array(exafs_list)  # assumed to be of same shapes
+    return R, chi_R
 
-    return exafs_list
-
-
-# %%
 
 if __name__ == "__main__":
     # PLOT PROCESSING STEPS
@@ -320,10 +319,9 @@ if __name__ == "__main__":
         compound="Cu",
         simulation_type="FEFF",
         model_name="simulation",
-        use_cache=False,
     )
-    print(f"EXAFS data shape: {exaf_data.shape}")
-
+    R, chi_R = exaf_data
+    print(f"EXAFS data shape: {R.shape}, {chi_R.shape}")
     # # CACHING
     # for compound in cfg.compounds:
     #     for simulation_type in ["FEFF"]:
@@ -336,3 +334,87 @@ if __name__ == "__main__":
     #             )
 
 # %%
+
+if __name__ == "__main__":
+    ## RADIAL EXAFS
+    compound = "Ni"
+    simulation_type = "FEFF"
+
+    # fig, ax = plt.subplots(1, 1, figsize=(8, 6), subplot_kw={"projection": "polar"})
+    # plt.style.use(["default", "science"])
+
+    FigPolar = plt.figure(figsize=(30, 20))
+    compounds = cfg.compounds
+    models = ["simulation", "expert", "universal", "tuned_universal"]
+    # models = ["universal", "tuned_universal"]
+    # models = ["tuned_universal"]
+    base_line_model = "expert"
+
+    # gs = FigPolar.add_gridspec(len(models), len(compounds), hspace=0, wspace=0.0)
+
+    gs = FigPolar.add_gridspec(len(models) + 1, len(compounds), hspace=0, wspace=0.0)
+
+    ax_all = gs.subplots(
+        sharex=True,
+        sharey=True,
+        subplot_kw={"projection": "polar"},
+    )
+
+    model_colors = plt.get_cmap("tab10")(np.linspace(0, 1, len(models)))
+    model_colors = {m: c for m, c in zip(models, model_colors)}
+
+    for axs, compound in zip(ax_all.T, compounds):
+        axs[0].set_title(compound)
+        for ax, model in zip(axs, models):
+            R, chi_R = EXAFS_compound(compound, simulation_type, model)
+            _, chi_baseline = EXAFS_compound(compound, simulation_type, base_line_model)
+            cmap = "jet"
+            colors = plt.get_cmap(cmap)(np.linspace(0, 1, chi_R.shape[1]))
+            ang = np.linspace(0, 2 * np.pi, chi_R.shape[0])
+
+            for i, chi in enumerate(chi_R.T):
+                # for i, chi in enumerate(chi_R.T - chi_baseline.T):
+                ax.scatter(
+                    ang,
+                    np.abs(chi),
+                    s=1,
+                    alpha=0.2,
+                    color=colors[i],
+                )
+
+            # if model != base_line_model:
+            if True:
+
+                # axs[-1].plot(
+                #     ang,
+                #     np.abs(chi_baseline.mean(axis=1)),
+                #     color=model_colors[model],
+                #     label=model,
+                # )
+
+                # plot moving average instead of mean to smooth the curve
+                window = 5
+                chi_mean = np.abs(chi_R.mean(axis=1))
+                chi_mean = np.convolve(chi_mean, np.ones(window), "valid") / window
+                axs[-1].plot(
+                    ang[window // 2 : -window // 2 + 1],
+                    chi_mean,
+                    color=model_colors[model],
+                    label=model,
+                )
+
+            ax.set_yscale("log")
+            ax.set_rlim(None, 30)
+            ax.set_xticks([])
+            ax.set_yticks([])
+        axs[-1].legend()
+
+    for ax, model in zip(ax_all[0], models):
+        ax.set_ylabel(model, rotation=0, labelpad=20)
+        ax.yaxis.set_label_position("right")
+
+    plt.savefig("radial_exafs.png", bbox_inches="tight", dpi=300)
+
+    # %%
+
+    # %%
