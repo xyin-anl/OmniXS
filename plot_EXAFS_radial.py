@@ -70,7 +70,7 @@ def plot_exafs(exafs_data, compounds, simulation_types, model_names):
                 axs[row, col].text(
                     0.05,
                     0.001,
-                    f"median({r'$R_{peak}$'}) = {median_peak:.3f} $\AA$",
+                    r"median({r'$R_{peak}$'}) = {median_peak:.3f} $\AA$",
                     fontsize=FONTSIZE * 0.5,
                 )
                 axs[row, col].vlines(

@@ -237,7 +237,7 @@ def EXAFS_compound(
     compound,
     simulation_type: Literal["FEFF", "VASP"],
     model_name: Literal["simulation", "universal", "expert", "tuned_universal"],
-    use_cache=False,
+    # use_cache=False,
 ):
 
     # # cache file

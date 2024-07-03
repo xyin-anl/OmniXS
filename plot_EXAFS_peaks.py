@@ -82,7 +82,7 @@ for i, (model, preds) in enumerate(model_preds.items()):
     ax[i].text(
         0.05,
         0.001,
-        f"median({r'$R_{peak}$'}) = {median_peak:.3f} $\AA$",
+        r"median({r'$R_{peak}$'}) = {median_peak:.3f} $\AA$",
     )
     ax[i].vlines(
         median_peak,
