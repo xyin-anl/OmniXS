@@ -1,4 +1,5 @@
 import os
+from typing import Union
 from typing import Literal
 from sklearn.svm import SVR
 from sklearn.linear_model import ElasticNet, Ridge
@@ -62,6 +63,11 @@ class TrainedModel(ABC):  #
     @abstractmethod
     def predictions(self):
         pass
+
+    def __call__(self, X: Union[np.ndarray, torch.Tensor]):
+        if isinstance(X, np.ndarray):
+            X = torch.Tensor(X)
+        return self.model(X).detach().numpy()
 
     @cached_property
     def mae(self):
@@ -137,9 +143,9 @@ class TrainedModel(ABC):  #
 class MeanModel(TrainedModel):
     name = "MeanModel"
 
-    @cached_property
+    @property
     def model(self):
-        raise NotImplementedError
+        return lambda *args, **kwargs: torch.Tensor(self.predictions)
 
     @cached_property
     def predictions(self):
