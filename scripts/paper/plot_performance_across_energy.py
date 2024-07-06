@@ -233,7 +233,6 @@ axs = gs.subplots(sharex=True, sharey=False)
 FONTSIZE = 18
 compare_mse_per_energy(model_names, cfg.compounds, axs=axs, fontsize=FONTSIZE)
 
-#  legend outide the top axes
 axs[0].legend(
     fontsize=FONTSIZE * 0.8,
     loc="upper center",
@@ -258,5 +257,45 @@ fig.text(
 )
 fig.tight_layout()
 fig.savefig("performance_across_energy.pdf", bbox_inches="tight", dpi=300)
+
+# %%
+
+fig = plt.figure(figsize=(8, 5))
+plt.style.use(["default", "science"])
+gs = fig.add_gridspec(2, 1, hspace=0.0, wspace=0)
+axs = gs.subplots(sharex=True, sharey=False)
+FONTSIZE = 18
+compare_mse_per_energy(
+    ["per_compound_tl", "ft_tl"],
+    ["Cu", "Ti"],
+    axs=axs,
+    fontsize=FONTSIZE,
+    simulation_type="VASP",
+)
+
+axs[0].legend(
+    fontsize=FONTSIZE * 0.8,
+    loc="upper center",
+    bbox_to_anchor=(0.5, 1.7),
+    ncol=2,
+    frameon=False,
+)
+axs[-1].set_xlabel(r"$\Delta E$ (0.25 eV)", fontsize=FONTSIZE)
+axs[-1].set_xticks(np.arange(0, 141, 20))
+
+# axs[4].set_ylabel(r"$\eta_{E}$", fontsize=FONTSIZE * 1.2)
+
+# add label on center of figure
+fig.text(
+    0,
+    0.5,
+    r"$\eta_{E}$",
+    va="center",
+    rotation="vertical",
+    fontsize=FONTSIZE * 1.5,
+    ha="center",
+)
+fig.tight_layout()
+fig.savefig("performance_across_energy_vasp.pdf", bbox_inches="tight", dpi=300)
 
 # %%
