@@ -211,9 +211,24 @@ def compare_mse_per_energy(
                 facecolor=compound_colors[compound], alpha=0.2, edgecolor="white"
             ),
         )
+
+        if simulation_type == "VASP":
+            # add text bleow the compound name saying VASP with size 12
+            axs[idx].text(
+                0.9325,
+                0.58,
+                "VASP",
+                fontsize=10,
+                color="#101010",
+                transform=axs[idx].transAxes,
+                verticalalignment="top",
+                horizontalalignment="left",
+                bbox=dict(facecolor="white", alpha=0.2, edgecolor="white"),
+            )
+
         axs[idx].set_xlim(energy_points[0], energy_points[-1])
 
-        axs[idx].set_xticks([])
+        # axs[idx].set_xticks([])
 
         axs[idx].yaxis.set_tick_params(which="both", right=False)
 
@@ -226,9 +241,9 @@ model_names = [
     "universal_tl",
 ]
 
-fig = plt.figure(figsize=(8, 10))
+fig = plt.figure(figsize=(8, 12))
 plt.style.use(["default", "science"])
-gs = fig.add_gridspec(8, 1, hspace=0.0, wspace=0)
+gs = fig.add_gridspec(10, 1, hspace=0.0, wspace=0)
 axs = gs.subplots(sharex=True, sharey=False)
 FONTSIZE = 18
 compare_mse_per_energy(model_names, cfg.compounds, axs=axs, fontsize=FONTSIZE)
@@ -241,7 +256,7 @@ axs[0].legend(
     frameon=False,
 )
 axs[-1].set_xlabel(r"$\Delta E$ (0.25 eV)", fontsize=FONTSIZE)
-axs[-1].set_xticks(np.arange(0, 141, 20))
+
 
 # axs[4].set_ylabel(r"$\eta_{E}$", fontsize=FONTSIZE * 1.2)
 
@@ -255,6 +270,17 @@ fig.text(
     fontsize=FONTSIZE * 1.5,
     ha="center",
 )
+
+# ADD VASP AS ELL
+compare_mse_per_energy(
+    ["per_compound_tl", "ft_tl"],
+    ["Ti", "Cu"],
+    axs=axs[-2:],
+    simulation_type="VASP",
+)
+
+axs[-1].set_xlim(20, None)
+
 fig.tight_layout()
 fig.savefig("performance_across_energy.pdf", bbox_inches="tight", dpi=300)
 
@@ -265,6 +291,7 @@ plt.style.use(["default", "science"])
 gs = fig.add_gridspec(2, 1, hspace=0.0, wspace=0)
 axs = gs.subplots(sharex=True, sharey=False)
 FONTSIZE = 18
+
 compare_mse_per_energy(
     ["per_compound_tl", "ft_tl"],
     ["Cu", "Ti"],
@@ -297,5 +324,13 @@ fig.text(
 )
 fig.tight_layout()
 fig.savefig("performance_across_energy_vasp.pdf", bbox_inches="tight", dpi=300)
+
+# %%
+
+
+fig, ax = plt.subplots(1, 1, figsize=(8, 5))
+ax.plot(load_xas_ml_data(DataQuery("Cu", "VASP")).train.y.T)
+ax.set_xtick
+
 
 # %%
