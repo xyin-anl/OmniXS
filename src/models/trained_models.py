@@ -1,4 +1,6 @@
+import warnings
 import os
+import pickle
 from abc import ABC, abstractmethod
 from functools import cached_property
 from typing import List, Literal, Union
@@ -65,6 +67,36 @@ class TrainedModel(ABC):  #
             X = torch.Tensor(X)
         return self.model(X).detach().numpy()
 
+    @property
+    def _cache_dir(self):
+        path = cfg.paths.cache.ml_models.format(
+            compound=self.compound, simulation_type=self.simulation_type
+        )
+        path, ext = os.path.splitext(path)
+        path += f"_{self.name}{ext}"
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        return path
+
+    def cache_trained_model(self, path=None):
+        if path is None:
+            path = self._cache_dir
+            warnings.warn(f"Saving model to default path {path}")
+
+        assert not isinstance(
+            self.model, torch.nn.Module
+        ), "nn.Module save not supported. Use torch.save"
+        self.mse  # proxy to train
+        pickle.dump(self.model, open(path, "wb"))
+        return self
+
+    def load(self, path=None):
+        if path is None:
+            path = self._cache_dir
+            warnings.warn(f"Loading model from default path {path}")
+        self._clear_cached_properties()
+        self.model = pickle.load(open(path, "rb"))
+        return self
+
     @cached_property
     def mae(self):
         return mean_absolute_error(self.data.test.y, self.predictions)
@@ -117,8 +149,7 @@ class TrainedModel(ABC):  #
     def data(self):
         return self._data
 
-    @data.setter
-    def data(self, data):
+    def _clear_cached_properties(self):
         self.__dict__.pop("predictions", None)
         self.__dict__.pop("mae_per_spectra", None)
         self.__dict__.pop("mse_per_spectra", None)
@@ -131,6 +162,11 @@ class TrainedModel(ABC):  #
         self.__dict__.pop("peak_errors", None)
         self.__dict__.pop("r2", None)
         self.__dict__.pop("geometric_mean_of_mse_per_spectra", None)
+        self.__dict__.pop("gmean_ratio_to_mean_model", None)
+
+    @data.setter
+    def data(self, data):
+        self._clear_cached_properties()
         self._data = data
 
     @cached_property
@@ -358,5 +394,16 @@ class Trained_FCModel(TrainedModel):
 
 
 if __name__ == "__main__":
-    model = Trained_FCModel(DataQuery("ALL", "FEFF")).mse
-    model = PreTrainedFCXASModel(DataQuery("Cu", "FEFF"))
+    # model = Trained_FCModel(DataQuery("ALL", "FEFF")).mse
+    # model = PreTrainedFCXASModel(DataQuery("Cu", "FEFF"))
+
+    # TESTING SAVE AND LOAD
+    model = LinReg(DataQuery("Cu", "FEFF"))
+    print(model.mse)
+    model.cache_trained_model()
+    print("saved")
+    model = model.load()
+    print("loaded")
+    print(model.mse)
+    model2 = LinReg(DataQuery("Cu", "FEFF"))
+    model2.load()
