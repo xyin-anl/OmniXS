@@ -5,7 +5,7 @@
 
 from matplotlib import colors as mcolors
 import scienceplots
-from scripts.paper.universal_TL_mses import universal_model_mses
+from universal_TL_mses import compute_universal_model_metrics
 from src.models.trained_models import MeanModel
 from src.models.trained_models import Trained_FCModel
 from src.data.ml_data import DataQuery
@@ -24,7 +24,6 @@ def plot_universal_tl_vs_per_compound_tl(
     ax=None,
     add_weighted=False,
     FONTSIZE=18,
-    plot_based_on_rmse=False,
     # include_linreg=False,
 ):
     plt.style.use(["default", "science"])
@@ -82,20 +81,7 @@ def plot_universal_tl_vs_per_compound_tl(
     if include_vasp:
         sims += [("Ti", "VASP"), ("Cu", "VASP")]
 
-    univ_mses = universal_model_mses(relative_to_per_compound_mean_model)
-
-    if plot_based_on_rmse:
-        if relative_to_per_compound_mean_model:
-            univ_mses["global"] = np.sqrt(univ_mses["global"])
-            univ_mses["per_compound"] = {
-                c: np.sqrt(mse) for c, mse in univ_mses["per_compound"].items()
-            }
-        else:
-            univ_mses["global"] = np.sqrt(univ_mses["global"] / 1000**2)
-            univ_mses["per_compound"] = {
-                c: np.sqrt(mse / 1000**2)
-                for c, mse in univ_mses["per_compound"].items()
-            }
+    univ_mses = compute_universal_model_metrics(relative_to_per_compound_mean_model)
 
     _bar_loc_dict = {k: i for i, k in enumerate(model_names)}
 
@@ -193,14 +179,6 @@ def plot_universal_tl_vs_per_compound_tl(
         else:
             raise ValueError(f"model_name {model_name} not recognized")
 
-        if plot_based_on_rmse:
-            if relative_to_per_compound_mean_model:
-                fc_residues = [np.sqrt(mse) for mse in fc_residues]
-            else:
-                fc_residues = [
-                    np.sqrt(mse / 1000**2) for mse in fc_residues
-                ]  # coz data was scaled by 1000 previously
-
         bars = ax.bar(
             bar_positions,
             fc_residues,
@@ -246,16 +224,11 @@ def plot_universal_tl_vs_per_compound_tl(
                 label=f"{model_name}_weighted_MSE",
             )
 
-    if plot_based_on_rmse:
-        if relative_to_per_compound_mean_model:
-            y_label = "RMSE mean model / RMSE model"
-        else:
-            y_label = "RMSE"
+    if relative_to_per_compound_mean_model:
+        y_label = r"Performance over baseline ($\eta$)"
     else:
-        if relative_to_per_compound_mean_model:
-            y_label = r"Performance over baseline ($\eta$)"
-        else:
-            y_label = "MSE"
+        y_label = "MSE"
+
     ax.set_ylabel(y_label, fontsize=FONTSIZE * 1.2)
 
     file_name = (
@@ -414,7 +387,6 @@ plot_universal_tl_vs_per_compound_tl(
     ax=ax,
     add_weighted=False,
     FONTSIZE=FONTSIZE,
-    plot_based_on_rmse=False,
     # include_linreg=True,
 )
 

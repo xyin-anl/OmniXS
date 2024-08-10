@@ -82,6 +82,10 @@ class TrainedModel(ABC):  #
         return np.mean((self.data.test.y - self.predictions) ** 2, axis=1)
 
     @cached_property
+    def geometric_mean_of_mse_per_spectra(self):
+        return np.exp(np.mean(np.log(self.mse_per_spectra)))
+
+    @cached_property
     def mse_relative_to_mean_model(self):
         return MeanModel(query=self.query).mse / self.mse
 
@@ -125,6 +129,8 @@ class TrainedModel(ABC):  #
         self.__dict__.pop("top_predictions", None)
         self.__dict__.pop("mse_relative_to_mean_model", None)
         self.__dict__.pop("peak_errors", None)
+        self.__dict__.pop("r2", None)
+        self.__dict__.pop("geometric_mean_of_mse_per_spectra", None)
         self._data = data
 
     @cached_property

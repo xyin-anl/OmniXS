@@ -1,25 +1,27 @@
+# %%
+from typing import Literal
+
+import numpy as np
+
 from config.defaults import cfg
 from src.data.ml_data import DataQuery, DataSplit, MLSplits, load_all_data
 from src.models.trained_models import MeanModel, Trained_FCModel
 
 
-import numpy as np
-
-
-def universal_model_mses(
-    relative_to_per_compound_mean_model=False,
-):  # returns {"global": .., "per_compound": {"c": ...}}
+def compute_universal_model_metrics(
+    metric: Literal[
+        "mse",
+        "geometric_mean_of_mse_per_spectra",
+    ] = "mse",
+    compute_relative: bool = True,
+):
 
     data_all, compound_labels = load_all_data(return_compound_name=True)
     universal_model = Trained_FCModel(DataQuery("ALL", "FEFF"), name="universal_tl")
 
-    global_mse = (
-        universal_model.mse_relative_to_mean_model
-        if relative_to_per_compound_mean_model
-        else universal_model.mse
-    )
+    global_metric = getattr(universal_model, metric)
 
-    universal_mse_per_compound = {}
+    metric_per_compound = {}
     for c in cfg.compounds:
         splits = []
         for labels, split in zip(
@@ -33,10 +35,18 @@ def universal_model_mses(
         ml_splits = MLSplits(*splits)
         universal_model.data = ml_splits
 
-        universal_mse_per_compound[c] = (
-            universal_model.mse
-            if not relative_to_per_compound_mean_model
-            else MeanModel(DataQuery(c, "FEFF")).mse / universal_model.mse
-        )
+        metric_per_compound[c] = getattr(universal_model, metric)
+        if compute_relative:
+            metric_per_compound[c] = (
+                getattr(MeanModel(DataQuery(c, "FEFF")), metric)
+                / metric_per_compound[c]
+            )
 
-    return {"global": global_mse, "per_compound": universal_mse_per_compound}
+    return {"global": global_metric, "per_compound": metric_per_compound}
+
+
+# %%
+
+compute_universal_model_metrics()
+
+# %%
