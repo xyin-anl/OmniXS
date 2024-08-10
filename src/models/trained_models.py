@@ -118,6 +118,13 @@ class TrainedModel(ABC):  #
         return np.exp(np.mean(np.log(self.mse_per_spectra)))
 
     @cached_property
+    def gmean_ratio_to_mean_model(self):
+        return (
+            MeanModel(query=self.query).geometric_mean_of_mse_per_spectra
+            / self.geometric_mean_of_mse_per_spectra
+        )
+
+    @cached_property
     def mse_relative_to_mean_model(self):
         return MeanModel(query=self.query).mse / self.mse
 
