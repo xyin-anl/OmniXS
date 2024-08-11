@@ -182,7 +182,10 @@ plt.style.use(["default", "science", "tableau-colorblind10"])
 fig, ax = plt.subplots(1, 1, figsize=(WEIGHT, HEIGHT), dpi=DPI)
 
 generate_performance_comparison_plot(
-    ax=ax, metric="geometric_mean_of_mse_per_spectra", use_relative=True
+    ax=ax,
+    # metric="geometric_mean_of_mse_per_spectra",
+    metric="median_of_mse_per_spectra",
+    use_relative=True,
 )
 
 # %%
