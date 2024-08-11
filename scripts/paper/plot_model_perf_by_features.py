@@ -20,6 +20,7 @@ from src.models.trained_models import (
     RidgeReg,
     Trained_FCModel,
     XGBReg,
+    SVReg,
 )
 
 # %%
@@ -36,7 +37,7 @@ from src.models.trained_models import (
 # train_and_save_models(
 #     compounds=cfg.compounds,
 #     features=["ACSF", "SOAP", "FEFF"],
-#     models=[RidgeReg],
+#     models=[SVReg]
 #     # models=[LinReg, RidgeReg, ElastNet, RFReg, XGBReg],
 # )
 
@@ -67,7 +68,7 @@ perf = evaluate_cached_model_performance(
     compounds=cfg.compounds,
     features=["ACSF", "SOAP", "FEFF"],
     # models=[LinReg, RidgeReg, ElastNet, RFReg, XGBReg],
-    models=[LinReg, XGBReg, RFReg, ElastNet, RidgeReg],
+    models=[LinReg, XGBReg, RFReg, ElastNet, RidgeReg, SVReg],
 )
 # =============================================================================
 
@@ -81,7 +82,7 @@ for compound, features, mlp_model_name in product(
     ["per_compound_tl"],
 ):
     # if features == "FEFF":
-    #     model_name = "ft_tl"
+    #     mlp_model_name = "ft_tl"
     model = Trained_FCModel(query=DataQuery(compound, features), name=mlp_model_name)
     perf[(compound, features, "MLP")] = model.mse_per_spectra
 # ==============================================================================
@@ -104,7 +105,7 @@ df = pd.DataFrame(
 for compound, feature, mlp_model_name in product(
     cfg.compounds,
     ["ACSF", "SOAP", "FEFF"],
-    ["LinReg", "XGBReg", "RFReg", "MLP", "ElastNet", "RidgeReg"],
+    ["LinReg", "XGBReg", "RFReg", "MLP", "ElastNet", "RidgeReg", "SVReg"],
 ):
     # add column with geometric mean of mse for each compound
     mask = (
@@ -135,13 +136,14 @@ for compound, feature, mlp_model_name in product(
 
 # performance_gmean or performance_mean
 # PLOT_METRIC = "performance_mean"
-PLOT_METRIC = "performance_gmean"
+# PLOT_METRIC = "performance_gmean"
 # PLOT_METRIC = "performance_mse_of_mses"
-# PLOT_METRIC = "performance_median"
+PLOT_METRIC = "performance_median"
 
 
-PLOT_MODELS = ["LinReg", "MLP"]
-labels = ["Linear Regression", "MLP"]
+PLOT_MODELS = ["LinReg", "SVReg", "MLP"]
+labels = ["Linear Regression", "Support Vector Regression", "MLP"]
+
 WIDTH = 0.15
 FONTSIZE = 18
 
@@ -182,6 +184,7 @@ model_colors = {
 
 for i, feature in enumerate(["ACSF", "SOAP", "FEFF"], start=0):
     for j, mlp_model_name in enumerate(PLOT_MODELS, start=-1):
+
         mask = (df["feature"] == feature) & (df["model"] == mlp_model_name)
         data = df[mask][PLOT_METRIC]
 
@@ -200,8 +203,33 @@ for i, feature in enumerate(["ACSF", "SOAP", "FEFF"], start=0):
             showfliers=True,  # no outlier
         )
 
+        # ax.scatter(
+        #     [i + j * WIDTH] * len(data),
+        #     data,
+        #     color=model_colors[mlp_model_name],
+        #     marker=markers_dict[feature],
+        #     label=mlp_model_name,
+        # )
+
+        # # plot violin plot instead with all mse values (NOT PLOT_METRIC)
+        # for i, compound in enumerate(cfg.compounds):
+        #     mask = (
+        #         (df["feature"] == feature)
+        #         & (df["model"] == mlp_model_name)
+        #         & (df["compound"] == compound)
+        #     )
+        #     string_values = df[mask]["mse_per_spectra"].values
+        #     float_values = [ast.literal_eval(x) for x in string_values]
+        #     float_values = np.array(float_values)
+        #     float_values = float_values.T
+        #     ax.violinplot(
+        #         float_values,
+        #         positions=[i + j * WIDTH],
+        #         widths=WIDTH,
+        #     )
+
     ax.set_yscale("log")
-    ax.set_ylim(1, 21)
+    ax.set_ylim(1, 23)
     ax.yaxis.grid(True, which="major", linestyle="--", alpha=0.5)
     # ax.yaxis.grid(True, which="minor", linestyle="--", linewidth=0.5)
 
@@ -238,7 +266,6 @@ ax.set_xlabel("Features", fontsize=FONTSIZE, labelpad=10)
 plt.tight_layout()
 # plt.savefig("model_performance_by_feature_boxplot.png", bbox_inches="tight", dpi=300)
 plt.savefig("model_performance_by_feature_boxplot.pdf", bbox_inches="tight", dpi=300)
-
 
 # %%
 
@@ -319,3 +346,18 @@ with open("baseline_table.tex", "w") as f:
     f.write(latex_output)
 
 print(latex_output)
+
+# %%
+
+# # sample svg regression plot
+# compound = "Ti"
+# svgreg_model = SVReg(query=DataQuery(compound, "FEFF")).load()
+# # plt.plot(
+# #     svgreg_model.predictions.T,
+# # )
+# mlp_model = Trained_FCModel(query=DataQuery(compound, "FEFF"), name="per_compound_tl")
+# plt.hist(np.log(mlp_model.mse_per_spectra), bins=50, alpha=0.5, label="MLP")
+# plt.hist(np.log(svgreg_model.mse_per_spectra), bins=50, alpha=0.5, label="SVR")
+# plt.legend()
+
+#

@@ -15,6 +15,9 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.svm import SVR
 from xgboost import XGBRegressor
 
+# multioutput regressor
+from sklearn.multioutput import MultiOutputRegressor
+
 from config.defaults import cfg
 from src.data.ml_data import DataQuery, load_xas_ml_data
 from src.models.xas_fc import FC_XAS
@@ -236,6 +239,26 @@ class RidgeReg(TrainedModel):
     @cached_property
     def model(self):
         return Ridge().fit(self.data.train.X, self.data.train.y)
+
+    @cached_property
+    def predictions(self):
+        return self.model.predict(self.data.test.X)
+
+
+class SVReg(TrainedModel):
+    def __init__(self, query: DataQuery, name="SVReg"):
+        super().__init__(query)
+        self._name = name
+
+    @property
+    def name(self):
+        return self._name
+
+    @cached_property
+    def model(self):
+        return MultiOutputRegressor(estimator=SVR()).fit(
+            self.data.train.X, self.data.train.y
+        )
 
     @cached_property
     def predictions(self):
