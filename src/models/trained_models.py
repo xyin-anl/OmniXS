@@ -98,6 +98,10 @@ class TrainedModel(ABC):  #
         return self
 
     @cached_property
+    def median_of_mse_per_spectra(self):
+        return np.median(self.mse_per_spectra)
+
+    @cached_property
     def mae(self):
         return mean_absolute_error(self.data.test.y, self.predictions)
 
@@ -170,6 +174,7 @@ class TrainedModel(ABC):  #
         self.__dict__.pop("r2", None)
         self.__dict__.pop("geometric_mean_of_mse_per_spectra", None)
         self.__dict__.pop("gmean_ratio_to_mean_model", None)
+        self.__dict__.pop("median_of_mse_per_spectra", None)
 
     @data.setter
     def data(self, data):
