@@ -1,7 +1,9 @@
 # %%
+import ast
 from copy import deepcopy
 from itertools import product
 
+import matplotlib.colors as mcolors
 import numpy as np
 import pandas as pd
 import scienceplots
@@ -9,8 +11,7 @@ from matplotlib import pyplot as plt
 from p_tqdm import p_map
 
 from config.defaults import cfg
-from scripts.paper.plot_utils import Plot
-from src.data.ml_data import DataQuery, load_xas_ml_data
+from src.data.ml_data import DataQuery
 from src.models.trained_models import (
     ElastNet,
     LinReg,
@@ -22,58 +23,128 @@ from src.models.trained_models import (
 )
 
 # %%
-# =============================================================================
-# # COMPUTE PERFORMANCE
-# =============================================================================
-# def performance(compounds, features, models):
-#     out = p_map(
-#         lambda inp: inp[2](query=DataQuery(inp[0], inp[1])).mse_relative_to_mean_model,
+
+
+# def train_and_save_models(compounds, features, models):
+#     # lambda inp: inp[2](query=DataQuery(inp[0], inp[1])).cache_trained_model(),
+#     p_map(
+#         lambda inp: inp[2](query=DataQuery(inp[0], inp[1])).cache_trained_model(),
 #         product(compounds, features, models),
-#         desc="Calculating performance",
+#         desc="Training models",
+#         total=len(compounds) * len(features) * len(models),
 #     )
-#     model_names = [m.__name__ for m in models]
-#     out = dict(zip(product(compounds, features, model_names), out))
-#     return out
-# perf = performance(
+# train_and_save_models(
 #     compounds=cfg.compounds,
 #     features=["ACSF", "SOAP", "FEFF"],
-#     models=[LinReg, RidgeReg, ElastNet, RFReg, XGBReg],
+#     models=[RidgeReg],
+#     # models=[LinReg, RidgeReg, ElastNet, RFReg, XGBReg],
 # )
-# df = pd.DataFrame(perf, index=["MSE"]).T
-# df.to_csv("model_performance.csv")
+
+
+# %%
+
+
 # =============================================================================
+# COMPUTE PERFORMANCE FROM SAVED MODELS
+# =============================================================================
+def evaluate_cached_model_performance(
+    compounds, features, models, METRIC="mse_per_spectra"
+):
+
+    metrics = p_map(
+        lambda inp: getattr(inp[2](query=DataQuery(inp[0], inp[1])).load(), METRIC),
+        product(compounds, features, models),
+        desc="Calculating performance",
+        total=len(compounds) * len(features) * len(models),
+    )
+
+    model_names = [m.__name__ for m in models]
+    metrics = dict(zip(product(compounds, features, model_names), metrics))
+    return metrics
+
+
+perf = evaluate_cached_model_performance(
+    compounds=cfg.compounds,
+    features=["ACSF", "SOAP", "FEFF"],
+    # models=[LinReg, RidgeReg, ElastNet, RFReg, XGBReg],
+    models=[LinReg, XGBReg, RFReg, ElastNet, RidgeReg],
+)
+# =============================================================================
+
+# %%
+# =============================================================================
+# add for trainedFC model with names: per_compound_tl, universal_tl, ft_tl
+# =============================================================================
+for compound, features, mlp_model_name in product(
+    cfg.compounds,
+    ["ACSF", "SOAP", "FEFF"],
+    ["per_compound_tl"],
+):
+    # if features == "FEFF":
+    #     model_name = "ft_tl"
+    model = Trained_FCModel(query=DataQuery(compound, features), name=mlp_model_name)
+    perf[(compound, features, "MLP")] = model.mse_per_spectra
+# ==============================================================================
+
 # %%
 
-# # =============================================================================
-# # FOR TABLE in the paper
-# # =============================================================================
-# df = pd.read_csv("dataset/model_performance.csv", index_col=[0])
-# df.columns = ["compound", "feature", "model", "normalized_mse"]
-# df_subset = deepcopy(
-#     df[(df["model"] == "LinReg") | (df["model"] == "XGBReg") | (df["model"] == "MLP")]
-# )
-# pivot_df = df_subset.pivot(
-#     index="compound", columns=["feature", "model"], values="normalized_mse"
-# )
-# new_order = []
-# for feature in ["ACSF", "SOAP", "FEFF"]:
-#     for model in ["LinReg", "XGBReg", "MLP"]:
-#         new_order.append((feature, model))
-# pivot_df = pivot_df.reindex(columns=pd.MultiIndex.from_tuples(new_order))
-# pivot_df = pivot_df.reindex(cfg.compounds)
-# pivot_df = pivot_df.rename(columns={"FEFF": "M3GNet"}, level=0)
-# pivot_df.to_csv("model_performance_by_feature.csv")
-# latex_output = pivot_df.to_latex()
-# with open("performance_table.tex", "w") as f:
-#     f.write(latex_output)
-# # =============================================================================
 
+# =============================================================================
+# CREATE DATAFRAME FOR PLOTTING WITH MULTIPLE PERFORMANCE METRICS
+# =============================================================================
+df = pd.DataFrame(
+    [
+        list(key) + [str(value.tolist())]
+        for key, value in perf.items()
+        if isinstance(value, np.ndarray)
+    ],
+    columns=["compound", "feature", "model", "mse_per_spectra"],
+)
+
+for compound, feature, mlp_model_name in product(
+    cfg.compounds,
+    ["ACSF", "SOAP", "FEFF"],
+    ["LinReg", "XGBReg", "RFReg", "MLP", "ElastNet", "RidgeReg"],
+):
+    # add column with geometric mean of mse for each compound
+    mask = (
+        (df["compound"] == compound)
+        & (df["feature"] == feature)
+        & (df["model"] == mlp_model_name)
+    )
+    mse_per_spectra = ast.literal_eval(df[mask]["mse_per_spectra"].values[0])
+
+    baseline_model = MeanModel(query=DataQuery(compound, feature))
+
+    df.loc[mask, "gmean"] = np.exp(np.mean(np.log(mse_per_spectra)))
+    df.loc[mask, "baseline_gmean"] = baseline_model.geometric_mean_of_mse_per_spectra
+    df.loc[mask, "performance_gmean"] = df[mask]["baseline_gmean"] / df[mask]["gmean"]
+
+    df.loc[mask, "mean"] = np.mean(mse_per_spectra)
+    df.loc[mask, "baseline_mean"] = np.mean(baseline_model.mse_per_spectra)
+    df.loc[mask, "performance_mean"] = df[mask]["baseline_mean"] / df[mask]["mean"]
+
+    # median
+    df.loc[mask, "median"] = np.median(mse_per_spectra)
+    df.loc[mask, "baseline_median"] = np.median(baseline_model.mse_per_spectra)
+    df.loc[mask, "performance_median"] = (
+        df[mask]["baseline_median"] / df[mask]["median"]
+    )
 
 # %%
 
-# first row
-df = pd.read_csv("dataset/metrics/model_performance.csv", index_col=[0])
-df.columns = ["compound", "feature", "model", "normalized_mse"]
+# performance_gmean or performance_mean
+# PLOT_METRIC = "performance_mean"
+PLOT_METRIC = "performance_gmean"
+# PLOT_METRIC = "performance_mse_of_mses"
+# PLOT_METRIC = "performance_median"
+
+
+PLOT_MODELS = ["LinReg", "MLP"]
+labels = ["Linear Regression", "MLP"]
+WIDTH = 0.15
+FONTSIZE = 18
+
 
 # plot scatter plot of mse for each model
 fig, ax = plt.subplots(figsize=(8, 6))
@@ -94,9 +165,6 @@ colors_dict = {
 }
 
 
-import matplotlib.colors as mcolors
-
-
 def lighten_color(color, amount=0.5):
     try:
         c = mcolors.cnames[color]
@@ -107,51 +175,47 @@ def lighten_color(color, amount=0.5):
     return c
 
 
-FONTSIZE = 18
-
 model_colors = {
-    "LinReg": plt.get_cmap("tab10")(0),
-    "XGBReg": plt.get_cmap("tab10")(1),
-    "MLP": plt.get_cmap("tab10")(2),
+    k: v for k, v in zip(PLOT_MODELS, plt.get_cmap("tab10")(range(len(PLOT_MODELS))))
 }
 
-WIDTH = 0.15
+
 for i, feature in enumerate(["ACSF", "SOAP", "FEFF"], start=0):
-    for j, model in enumerate(["LinReg", "XGBReg", "MLP"], start=-1):
-        data = df[(df["model"] == model) & (df["feature"] == feature)]["normalized_mse"]
+    for j, mlp_model_name in enumerate(PLOT_MODELS, start=-1):
+        mask = (df["feature"] == feature) & (df["model"] == mlp_model_name)
+        data = df[mask][PLOT_METRIC]
+
         ax.boxplot(
             data,
             positions=[i + j * WIDTH],
             widths=WIDTH,
             patch_artist=True,
-            boxprops=dict(facecolor=lighten_color(model_colors[model], amount=0.5)),
-            # capprops=dict(color=model_colors[model]),
-            # whiskerprops=dict(color=model_colors[model]),
-            # flierprops=dict(markeredgecolor=model_colors[model]),
-            # medianprops=dict(color=model_colors[model]),
+            boxprops=dict(
+                facecolor=lighten_color(model_colors[mlp_model_name], amount=0.5)
+            ),
             capprops=dict(color="black"),
             whiskerprops=dict(color="gray"),
             flierprops=dict(markeredgecolor="gray"),
             medianprops=dict(color="black"),
+            showfliers=True,  # no outlier
         )
+
     ax.set_yscale("log")
-    ax.set_ylim(1, 9)
-    ax.yaxis.grid(True, which="major", linestyle="--", linewidth=0.5)
-    ax.yaxis.grid(True, which="minor", linestyle="--", linewidth=0.5)
+    ax.set_ylim(1, 21)
+    ax.yaxis.grid(True, which="major", linestyle="--", alpha=0.5)
+    # ax.yaxis.grid(True, which="minor", linestyle="--", linewidth=0.5)
 
-    ax.yaxis.set_minor_locator(plt.MultipleLocator(1))
-    ax.yaxis.set_major_locator(plt.MultipleLocator(2))
-    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x:.0f}"))
-    ax.yaxis.set_minor_formatter(plt.FuncFormatter(lambda x, _: f"{x:.0f}"))
-
-    ax.set_xticks(np.arange(0, 3, 1))
-    ax.set_xticklabels(["MLP-ACSF", "MLP-SOAP", "M3XAS"], fontsize=FONTSIZE * 0.8)
-
-    ax.set_yticks(np.arange(1, 10, 1))
+    ax.set_yticks(np.arange(1, ax.get_ylim()[1], 2))
     ax.set_yticklabels([f"{int(x)}" for x in ax.get_yticks()], fontsize=FONTSIZE * 0.8)
     ax.xaxis.set_ticks_position("none")
 
-    ax.set_xlim(-2 * WIDTH, 2 + 2 * WIDTH)
+    # ax.set_xticks(np.arange(0, 3, 1))
+    ax.set_xticks([0, 0.95, 1.9])
+    ax.set_xticklabels(["ACSF", "SOAP", "Transfer-feature"], fontsize=FONTSIZE * 0.8)
+
+    ax.set_xlim(-2 * WIDTH, 2 + (len(PLOT_MODELS) - 1) * WIDTH)
+
+    # ax.set_title(PLOT_METRIC, fontsize=FONTSIZE)
 
 # handles by color for model
 handles = [
@@ -162,16 +226,96 @@ handles = [
         fc=lighten_color(model_colors[model], amount=0.5),
         edgecolor="black",
     )
-    for model in ["LinReg", "XGBReg", "MLP"]
+    for model in PLOT_MODELS
 ]
-labels = ["Linear Regression", "XGBoost Regression", "MLP"]
-ax.legend(handles, labels, fontsize=FONTSIZE * 0.8)
 
 
-ax.set_ylabel(r"Performance over Baseline ($\eta$)", fontsize=FONTSIZE, labelpad=10)
-ax.set_xlabel("Models", fontsize=FONTSIZE, labelpad=10)
+ax.legend(handles, labels, fontsize=FONTSIZE * 0.8, loc="upper left")
+
+
+ax.set_ylabel(r"Performance ($\eta$)", fontsize=FONTSIZE, labelpad=3)
+ax.set_xlabel("Features", fontsize=FONTSIZE, labelpad=10)
 plt.tight_layout()
-plt.savefig("model_performance_by_feature_boxplot.png", bbox_inches="tight", dpi=300)
+# plt.savefig("model_performance_by_feature_boxplot.png", bbox_inches="tight", dpi=300)
 plt.savefig("model_performance_by_feature_boxplot.pdf", bbox_inches="tight", dpi=300)
 
+
 # %%
+
+# # =============================================================================
+# # FOR TABLE in the paper
+# # =============================================================================
+
+
+# df_subset = deepcopy(
+#     df[(df["model"] == "LinReg") | (df["model"] == "XGBReg") | (df["model"] == "MLP")]
+# )
+
+# mask based on PLOT_MODELS
+df_subset = deepcopy(df[df["model"].isin(PLOT_MODELS)])
+
+pivot_df = df_subset.pivot(
+    index="compound", columns=["feature", "model"], values="performance_gmean"
+)
+new_order = []
+for feature in ["ACSF", "SOAP", "FEFF"]:
+    for model in PLOT_MODELS:
+        # for model in labels:
+        new_order.append((feature, model))
+pivot_df = pivot_df.reindex(columns=pd.MultiIndex.from_tuples(new_order))
+pivot_df = pivot_df.reindex(cfg.compounds)
+pivot_df = pivot_df.rename(columns={"FEFF": "M3GNet"}, level=0)
+
+
+# round to 3 decimal places with no zero padding in end upto 3 decimal places only
+def format_float(x):
+    if pd.isna(x):
+        return ""
+    return f"{x:.3f}"  # Always show 3 decimal places
+
+
+# Apply the custom formatting to the DataFrame
+pivot_df = pivot_df.map(format_float)
+
+
+latex_output = pivot_df.to_latex()
+with open("performance_table.tex", "w") as f:
+    f.write(latex_output)
+
+print(latex_output)
+
+# # =============================================================================
+
+
+# %%
+# round to 3 decimal places with no zero padding in end upto 3 decimal places only
+def format_float(x):
+    if pd.isna(x):
+        return ""
+    return f"{x:.4f}"  # Always show 3 decimal places
+
+
+# table of baseline gmean
+dict = {}
+for compound in cfg.compounds:
+    dict[compound] = MeanModel(
+        query=DataQuery(compound, "FEFF")
+    ).geometric_mean_of_mse_per_spectra
+for compound in ["Ti", "Cu"]:
+    dict[compound + "(VASP)"] = MeanModel(
+        query=DataQuery(compound, "VASP")
+    ).geometric_mean_of_mse_per_spectra
+dict
+
+
+# now save as latex
+df = pd.DataFrame.from_dict(dict, orient="index", columns=["Baseline"])
+
+# round as before
+df = df.map(format_float)
+
+latex_output = df.to_latex()
+with open("baseline_table.tex", "w") as f:
+    f.write(latex_output)
+
+print(latex_output)
