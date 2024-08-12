@@ -30,7 +30,7 @@ for c in cfg.compounds:
 expert_mses = {
     c: Trained_FCModel(
         DataQuery(c, "FEFF"), name="per_compound_tl"
-    ).mse_relative_to_mean_model
+    ).median_relative_to_mean_model
     for c in cfg.compounds
 }
 
@@ -54,19 +54,23 @@ ax.scatter(
     edgecolors="black",
 )
 ax.set_xlabel("Data size", fontsize=FONTSIZE)
-ax.set_ylabel(r"Performance over baseline ($\eta$)", fontsize=FONTSIZE)
+ax.set_ylabel(r"Performance ($\eta$)", fontsize=FONTSIZE)
 
 ax.set_xticklabels(ax.get_xticks(), fontsize=0.8 * FONTSIZE)
 ax.get_xaxis().set_major_formatter(
     plt.FuncFormatter(lambda x, loc: "{:,}".format(int(x)))
 )
-# ax.set_yticks(np.arange(1, 12, 1))
+
+ax.set_ylim(0, 25)
+ax.set_yticks([0, 5, 10, 15, 20, 25])
+# integer
+ax.get_yaxis().set_major_formatter(plt.FuncFormatter(lambda x, loc: "{:.0f}".format(x)))
 ax.set_yticklabels(ax.get_yticks(), fontsize=0.8 * FONTSIZE)
+
 # no minor ticks
 ax.minorticks_off()
 # horizing gird only for y axis with very small alpha
 ax.grid(axis="y", alpha=0.4, linestyle="--")
-ax.set_ylim(1, 11.5)
 
 # ax.set_ylim(1, None)
 
@@ -82,7 +86,8 @@ for c, (sz, mse) in zip(cfg.compounds, zip(data_sizes.values(), expert_mses.valu
         color="black",
         # bbox=dict(facecolor="white", alpha=0.5, edgecolor="white"),
     )
-ax.set_ylim(3, None)
+
+# ax.set_ylim(3, None)
 
 
 # # Data: sizes and corresponding expert model MSEs
