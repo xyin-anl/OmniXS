@@ -6,6 +6,7 @@ from typing import Literal
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import scienceplots
 from matplotlib import colors as mcolors
 
@@ -53,6 +54,9 @@ def generate_performance_comparison_plot(
         compute_relative=use_relative,
     )
 
+    models_metrics = {}
+    models_metrics["UniversalXAS"] = universal_model_metrics["per_compound"]
+
     ax.bar(
         np.arange(len(cfg.compounds)) * BAR_CENTER_FACTOR
         + _bar_loc_dict["universal_feff"] * bar_width,
@@ -74,24 +78,26 @@ def generate_performance_comparison_plot(
         bar_positions[-2:] = bar_positions[-2:] + bar_width
 
         if not use_relative:
-            metric_list = [
-                getattr(
+            metrics = {
+                (c, sim_type): getattr(
                     Trained_FCModel(DataQuery(c, sim_type), name=model_name), metric
                 )
                 for c, sim_type in sims
-            ]
+            }
         else:
-            metric_list = [
-                getattr(MeanModel(DataQuery(c, sim_type)), metric)
+            metrics = {
+                (c, sim_type): getattr(MeanModel(DataQuery(c, sim_type)), metric)
                 / getattr(
                     Trained_FCModel(DataQuery(c, sim_type), name=model_name), metric
                 )
                 for c, sim_type in sims
-            ]
+            }
+
+        models_metrics[model_name] = metrics
 
         ax.bar(
             bar_positions,
-            metric_list,
+            metrics.values(),
             bar_width,
             color=compound_colors,
             label=model_name,
@@ -171,7 +177,8 @@ def generate_performance_comparison_plot(
 
     file_name = f"model_perf_{metric}.pdf"
     plt.savefig(file_name, bbox_inches="tight", dpi=300)
-    return ax
+    # return ax
+    return models_metrics
 
 
 ASPECT_RATIO = 4 / 3
@@ -181,11 +188,63 @@ DPI = 300
 plt.style.use(["default", "science", "tableau-colorblind10"])
 fig, ax = plt.subplots(1, 1, figsize=(WEIGHT, HEIGHT), dpi=DPI)
 
-generate_performance_comparison_plot(
+models_metrics = generate_performance_comparison_plot(
     ax=ax,
     # metric="geometric_mean_of_mse_per_spectra",
     metric="median_of_mse_per_spectra",
     use_relative=True,
 )
 
+print(models_metrics)
+
+
 # %%
+
+# =============================================================================
+# GENERATE LATEx TABLE
+# =============================================================================
+# for model_name in ["per_compound_tl", "ft_tl"]:
+#     dict_feff = {
+#         k[0]: v for k, v in models_metrics[model_name].items() if k[1] == "FEFF"
+#     }
+#     dict_vasp = {
+#         str(k[0]) + "_VASP": v
+#         for k, v in models_metrics[model_name].items()
+#         if k[1] == "VASP"
+#     }
+#     model_labels = {
+#         "per_compound_tl": "ExpertXAS",
+#         "ft_tl": "Tuned-UniversalXAS",
+#         "universal": "UniversalXAS",
+#     }
+#     models_metrics[model_labels[model_name]] = {**dict_feff, **dict_vasp}
+# models_metrics.pop("per_compound_tl")
+# models_metrics.pop("ft_tl")
+# df = pd.DataFrame(models_metrics)
+# df = df.fillna("N/A")
+# df.index = df.index.str.replace("_", " ")
+# df = df.reset_index().rename(columns={"index": "Element"})
+# df = df[["Element", "ExpertXAS", "UniversalXAS", "Tuned-UniversalXAS"]]
+# df = df.set_index("Element")
+# # Function to format numbers
+# def format_number(x):
+#     if isinstance(x, (int, float)):
+#         return f"{x:.3f}"
+#     return x
+# df = df.applymap(format_number)
+# # Generate LaTeX table
+# latex_table = df.to_latex(
+#     index=True,
+#     column_format="|l|c|c|c|",
+#     bold_rows=False,
+#     caption="Model Metrics Comparison",
+#     label="tab:model-metrics",
+# )
+# # Add additional LaTeX formatting
+# latex_table = latex_table.replace("\\begin{table}", "\\begin{table}[h!]\n\\centering")
+# latex_table = latex_table.replace(
+#     "\\begin{tabular}", "\\begin{tabular}{|l|c|c|c|}\n\\hline"
+# )
+# latex_table = latex_table.replace("\\end{tabular}", "\\hline\n\\end{tabular}")
+# print(latex_table)
+# ==============================================================================
