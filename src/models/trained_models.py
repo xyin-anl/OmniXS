@@ -105,6 +105,13 @@ class TrainedModel(ABC):  #
         return np.median(self.mse_per_spectra)
 
     @cached_property
+    def median_relative_to_mean_model(self):
+        return (
+            MeanModel(query=self.query).median_of_mse_per_spectra
+            / self.median_of_mse_per_spectra
+        )
+
+    @cached_property
     def mae(self):
         return mean_absolute_error(self.data.test.y, self.predictions)
 
@@ -136,7 +143,7 @@ class TrainedModel(ABC):  #
         return MeanModel(query=self.query).mse / self.mse
 
     def sorted_predictions(self, sort_array=None):
-        sort_array = sort_array or self.mae_per_spectra  # default sort by mae
+        sort_array = sort_array or self.mse_per_spectra
         pair = np.column_stack((self.data.test.y, self.predictions))
         pair = pair.reshape(-1, 2, self.data.test.y.shape[1])
         pair = pair[sort_array.argsort()]
@@ -178,6 +185,7 @@ class TrainedModel(ABC):  #
         self.__dict__.pop("geometric_mean_of_mse_per_spectra", None)
         self.__dict__.pop("gmean_ratio_to_mean_model", None)
         self.__dict__.pop("median_of_mse_per_spectra", None)
+        self.__dict__.pop("median_relative_to_mean_model", None)
 
     @data.setter
     def data(self, data):

@@ -16,17 +16,13 @@ from src.models.trained_models import ElastNet, MeanModel, Trained_FCModel, XGBR
 
 
 def plot_deciles_of_top_predictions(
-    models: Dict[str, Callable] = None,  # default is fc_tl for all compounds
+    models: Dict[str, Callable],
     simulation_type="FEFF",
     splits=10,
     axs=None,
+    performances: Dict[str, float] = None,  # adhoc for universal model
 ):
 
-    if models is None:
-        models = {
-            c: Trained_FCModel(DataQuery(c, simulation_type), name=f"{c}_tl")
-            for c in cfg.compounds
-        }
     compounds = models.keys()
 
     model_name = set([model.name for model in models.values()])
@@ -45,11 +41,14 @@ def plot_deciles_of_top_predictions(
     colors = {c: plt.get_cmap(cmap)(i) for i, c in enumerate(compounds)}
 
     for c, axs in zip(compounds, axs.T):
-        Plot().set_title(f"{c}", fontsize=FONTSIZE * 0.6).plot_top_predictions(
+        Plot().set_title(
+            f"{c}",
+            fontsize=FONTSIZE * 0.6,
+        ).plot_top_predictions(
             models[c].top_predictions(splits=splits),
             splits=splits,
             axs=axs,
-            compound=c,
+            compound=c if "VASP" not in c else c.split("_")[0],
             color_background=False,
             color=colors[c],
         )
@@ -68,8 +67,24 @@ def plot_deciles_of_top_predictions(
         # axs[0].set_title(f"{c}")
         # add tax on the top with bbox with same background color
 
+        if performances is None:
+            performance = models[c].median_relative_to_mean_model
+        else:
+            performance = performances[c]
+
+        title = (
+            f"{c} \n("
+            + r"$\bf{\eta=}$"
+            # + f"{models[c].median_relative_to_mean_model:.1f})"
+            + f"{performance:.1f})"
+        )
+
         axs[0].set_title(
-            f"{c} (" + r"$\bf{\eta=}$" + f"{models[c].mse_relative_to_mean_model:.1f})",
+            # # f"{c} (" + r"$\bf{\eta=}$" + f"{models[c].mse_relative_to_mean_model:.1f})",
+            # f"{c} \n("
+            # + r"$\bf{\eta=}$"
+            # + f"{models[c].median_relative_to_mean_model:.1f})",
+            title,
             loc="center",
             fontsize=16,
             # bold
@@ -126,11 +141,11 @@ for i, ax in enumerate(axs[:, 0], start=1):
         # f"D{i}",
         r"$\bf{D}_{" + f"{i}" + r"}$",
         rotation=0,
-        fontsize=FONTSIZE * 0.4,
+        fontsize=FONTSIZE * 0.6,
         labelpad=-6,
         loc="center",
-        alpha=1,
-        color="gray",
+        alpha=0.5,
+        color="black",
     )
 
 # for ax in axs.flat:
@@ -160,73 +175,51 @@ fig.savefig(
 # %%
 
 
-model_name = "ft_tl"  # "per_compound_tl"
+# =============================================================================
+# PLOT ALL COMPONDS
+# =============================================================================
+# model_name = "ft_tl"  # "per_compound_tl"
+model_name = "per_compound_tl"  # "per_compound_tl"
 plt.style.use(["default", "science"])
+models = {
+    c: Trained_FCModel(DataQuery(c, "FEFF"), name=model_name) for c in cfg.compounds
+}
+models["Ti_VASP"] = Trained_FCModel(DataQuery("Ti", "VASP"), name=model_name)
+models["Cu_VASP"] = Trained_FCModel(DataQuery("Cu", "VASP"), name=model_name)
 plot_deciles_of_top_predictions(
-    models={
-        c: Trained_FCModel(DataQuery(c, "FEFF"), name=model_name) for c in cfg.compounds
-    },
+    models,
     simulation_type="FEFF",
 )
-
-# %%
-
-# %%
-
-mses = {
-    c: Trained_FCModel(DataQuery(c, "FEFF"), name="ft_tl").mse_relative_to_mean_model
-    for c in cfg.compounds
-}
-# find compound corresponding to min, max, median
-min_c, max_c, median_c = (
-    sorted(mses, key=mses.get)[0],
-    sorted(mses, key=mses.get)[-1],
-    sorted(mses, key=mses.get)[len(mses) // 2],
+fig = plt.gcf()
+fig.savefig(
+    f"top_predictions_{model_name}_{len(models)}_compounds.pdf",
+    dpi=300,
+    bbox_inches="tight",
 )
-min_c, max_c, median_c  # ("Cu", "Mn", "Fe")
-
-
-# %%
-
-# # FOR UNIVERSAL model the data has to be changed for each model
-# univ_model = Trained_FCModel(DataQuery("ALL", "FEFF"), name="universal_tl")
-# models = {}
-# for c in cfg.compounds:
-#     univ_model.data = load_xas_ml_data(DataQuery(c, "FEFF"))
-#     models[c] = deepcopy(univ_model)
-# axs = plot_deciles_of_top_predictions(models=models, simulation_type="FEFF")
+# =============================================================================
 
 # %%
 
-# plot all specialized models
-simulation_type = "ACSF"
-p_map(
-    lambda model_class: plot_deciles_of_top_predictions(
-        models={c: model_class(DataQuery(c, simulation_type)) for c in cfg.compounds},
-        simulation_type=simulation_type,
-    ),
-    [
-        # MeanModel,
-        ElastNet,
-        # XGBReg,
-        # lambda q: Trained_FCModel(q, name="ft_tl"),
-        # lambda q: Trained_FCModel(q, name="per_compound_tl"),
-    ],
+# =============================================================================
+# FOR UNIVERSAL model the data has to be changed for each model
+# =============================================================================
+univ_model = Trained_FCModel(DataQuery("ALL", "FEFF"), name="universal_tl")
+models = {}
+performances = {}
+for c in cfg.compounds:
+    univ_model.data = load_xas_ml_data(DataQuery(c, "FEFF"))
+    models[c] = deepcopy(univ_model)
+    baseline_median = MeanModel(DataQuery(c, "FEFF")).median_of_mse_per_spectra
+    performances[c] = baseline_median / models[c].median_of_mse_per_spectra
+axs = plot_deciles_of_top_predictions(
+    models=models, simulation_type="FEFF", performances=performances
 )
-
-simulation_type = "SOAP"
-p_map(
-    lambda model_class: plot_deciles_of_top_predictions(
-        models={c: model_class(DataQuery(c, simulation_type)) for c in cfg.compounds},
-        simulation_type=simulation_type,
-    ),
-    [
-        # MeanModel,
-        ElastNet,
-        # XGBReg,
-        # lambda q: Trained_FCModel(q, name="ft_tl"),
-        # lambda q: Trained_FCModel(q, name="per_compound_tl"),
-    ],
+fig = plt.gcf()
+fig.savefig(
+    f"top_predictions_universal_tl_{len(models)}_compounds.pdf",
+    dpi=300,
+    bbox_inches="tight",
 )
+# =============================================================================
 
 # %%
