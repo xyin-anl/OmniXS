@@ -73,7 +73,8 @@ class PredError:
 
     @property
     def mse_per_energy(self):
-        return np.mean((self.pair.pred - self.pair.true) ** 2, axis=0)
+        # return np.mean((self.pair.pred - self.pair.true) ** 2, axis=0)
+        return np.median((self.pair.pred - self.pair.true) ** 2, axis=0)
 
     @cached_property
     def e0(self):
@@ -130,9 +131,6 @@ class PredError:
         return np.std((self.pair.pred - self.pair.true) ** 2, axis=0)
 
 
-# %%
-
-
 def compare_mse_per_energy(
     model_names, compounds, simulation_type="FEFF", axs=None, fontsize=18
 ):
@@ -154,11 +152,23 @@ def compare_mse_per_energy(
 
         mse_of_model = {
             # model_name: mse_per_energy(model_name) for model_name in model_names
-            model_name: mse_per_energy("MeanModel") / mse_per_energy(model_name)
+            # model_name: mse_per_energy("MeanModel") / mse_per_energy(model_name)
+            model_name: mse_per_energy(model_name)
             for model_name in model_names
         }
 
         energy_points = np.arange(len(mse_of_model[model_names[0]]))
+
+        # baseline_median = np.median(
+        #     load_xas_ml_data(DataQuery(compound, simulation_type)).test.y, axis=0
+        # )
+        # # a curve with median of baseline model
+        # # min max scaler with same range as the data
+        # from sklearn.preprocessing import MinMaxScaler
+        # ax2 = axs[idx].twinx()
+        # ax2.plot(baseline_median)
+        # # verticle line at highest median
+        # ax2.axvline(np.argmax(baseline_median), color="red", linestyle="--")
 
         LINEWIDTH = 0.4
         axs[idx].plot(
@@ -184,9 +194,9 @@ def compare_mse_per_energy(
             mse_of_model["ft_tl"],
             mse_of_model["per_compound_tl"],
             color="green",
-            where=mse_of_model["ft_tl"] >= mse_of_model["per_compound_tl"],
+            where=mse_of_model["ft_tl"] < mse_of_model["per_compound_tl"],
             alpha=0.5,
-            label="Tuned-universal is better",
+            label="Tuned-universalXAS is better",
         )
 
         axs[idx].fill_between(
@@ -194,14 +204,16 @@ def compare_mse_per_energy(
             mse_of_model["ft_tl"],
             mse_of_model["per_compound_tl"],
             color="red",
-            where=mse_of_model["ft_tl"] < mse_of_model["per_compound_tl"],
+            where=mse_of_model["ft_tl"] >= mse_of_model["per_compound_tl"],
             alpha=0.5,
-            label="Expert is better",
+            label="ExpertXAS is better",
         )
 
         axs[idx].text(
-            0.94,
-            0.9,
+            # 0.94,
+            # 0.9,
+            1 - 0.96,
+            0.85,
             compound,
             fontsize=fontsize,
             transform=axs[idx].transAxes,
@@ -215,8 +227,8 @@ def compare_mse_per_energy(
         if simulation_type == "VASP":
             # add text bleow the compound name saying VASP with size 12
             axs[idx].text(
-                0.9325,
-                0.58,
+                1 - 0.97,
+                0.45,
                 "VASP",
                 fontsize=10,
                 color="#101010",
@@ -226,13 +238,15 @@ def compare_mse_per_energy(
                 bbox=dict(facecolor="white", alpha=0.2, edgecolor="white"),
             )
 
-        axs[idx].set_xlim(energy_points[0], energy_points[-1])
+        axs[idx].set_xlim(0, 141)
+        axs[idx].set_ylim(0, None)
+        axs[idx].set_yticklabels(axs[idx].get_yticks(), fontsize=fontsize * 0.6)
 
-        # axs[idx].set_xticks([])
-
-        axs[idx].yaxis.set_tick_params(which="both", right=False)
-
-        axs[idx].yaxis.set_tick_params(which="minor", right=False)
+        if idx != len(compounds) - 1:
+            axs[idx].tick_params(
+                axis="x", which="both", bottom=False, top=False, labelbottom=False
+            )
+        axs[idx].tick_params(axis="y", which="both", left=True, right=False)
 
 
 model_names = [
@@ -241,33 +255,37 @@ model_names = [
     "universal_tl",
 ]
 
-fig = plt.figure(figsize=(8, 12))
+fig = plt.figure(figsize=(6, 12))
 plt.style.use(["default", "science"])
-gs = fig.add_gridspec(10, 1, hspace=0.0, wspace=0)
+gs = fig.add_gridspec(10, 1, hspace=0.2, wspace=0)
 axs = gs.subplots(sharex=True, sharey=False)
 FONTSIZE = 18
 compare_mse_per_energy(model_names, cfg.compounds, axs=axs, fontsize=FONTSIZE)
 
+
 axs[0].legend(
-    fontsize=FONTSIZE * 0.8,
+    fontsize=FONTSIZE * 0.7,
     loc="upper center",
-    bbox_to_anchor=(0.5, 1.7),
+    bbox_to_anchor=(0.5, 1.8),
     ncol=2,
     frameon=False,
 )
-axs[-1].set_xlabel(r"$\Delta E$ (0.25 eV)", fontsize=FONTSIZE)
+axs[-1].set_xlabel(r"$\Delta E$ (0.25 eV)", fontsize=FONTSIZE * 0.9)
 
+axs[-1].tick_params(axis="x", which="both", bottom=True, top=False, labelbottom=True)
+
+# axs[-1].tick_params(axis="x", which="major", length=5)
 
 # axs[4].set_ylabel(r"$\eta_{E}$", fontsize=FONTSIZE * 1.2)
 
 # add label on center of figure
 fig.text(
-    0,
+    0.04,
     0.5,
-    r"$\eta_{E}$",
+    r"Median of MSE",
     va="center",
     rotation="vertical",
-    fontsize=FONTSIZE * 1.5,
+    fontsize=FONTSIZE * 1,
     ha="center",
 )
 
@@ -279,58 +297,50 @@ compare_mse_per_energy(
     simulation_type="VASP",
 )
 
-axs[-1].set_xlim(20, None)
+# axs[-1].set_xlim(20, None)
 
 fig.tight_layout()
 fig.savefig("performance_across_energy.pdf", bbox_inches="tight", dpi=300)
 
 # %%
 
-fig = plt.figure(figsize=(8, 5))
-plt.style.use(["default", "science"])
-gs = fig.add_gridspec(2, 1, hspace=0.0, wspace=0)
-axs = gs.subplots(sharex=True, sharey=False)
-FONTSIZE = 18
+# fig = plt.figure(figsize=(8, 5))
+# plt.style.use(["default", "science"])
+# gs = fig.add_gridspec(2, 1, hspace=0.0, wspace=0)
+# axs = gs.subplots(sharex=True, sharey=False)
+# FONTSIZE = 18
 
-compare_mse_per_energy(
-    ["per_compound_tl", "ft_tl"],
-    ["Cu", "Ti"],
-    axs=axs,
-    fontsize=FONTSIZE,
-    simulation_type="VASP",
-)
+# compare_mse_per_energy(
+#     ["per_compound_tl", "ft_tl"],
+#     ["Cu", "Ti"],
+#     axs=axs,
+#     fontsize=FONTSIZE,
+#     simulation_type="VASP",
+# )
 
-axs[0].legend(
-    fontsize=FONTSIZE * 0.8,
-    loc="upper center",
-    bbox_to_anchor=(0.5, 1.7),
-    ncol=2,
-    frameon=False,
-)
-axs[-1].set_xlabel(r"$\Delta E$ (0.25 eV)", fontsize=FONTSIZE)
-axs[-1].set_xticks(np.arange(0, 141, 20))
+# axs[0].legend(
+#     fontsize=FONTSIZE * 0.8,
+#     loc="upper center",
+#     bbox_to_anchor=(0.5, 1.7),
+#     ncol=2,
+#     frameon=False,
+# )
+# axs[-1].set_xlabel(r"$\Delta E$ (0.25 eV)", fontsize=FONTSIZE)
+# axs[-1].set_xticks(np.arange(0, 141, 20))
 
-# axs[4].set_ylabel(r"$\eta_{E}$", fontsize=FONTSIZE * 1.2)
+# # axs[4].set_ylabel(r"$\eta_{E}$", fontsize=FONTSIZE * 1.2)
 
-# add label on center of figure
-fig.text(
-    0,
-    0.5,
-    r"$\eta_{E}$",
-    va="center",
-    rotation="vertical",
-    fontsize=FONTSIZE * 1.5,
-    ha="center",
-)
-fig.tight_layout()
-fig.savefig("performance_across_energy_vasp.pdf", bbox_inches="tight", dpi=300)
+# # add label on center of figure
+# fig.text(
+#     0,
+#     0.5,
+#     r"$\eta_{E}$",
+#     va="center",
+#     rotation="vertical",
+#     fontsize=FONTSIZE * 1.5,
+#     ha="center",
+# )
+# fig.tight_layout()
+# fig.savefig("performance_across_energy_vasp.pdf", bbox_inches="tight", dpi=300)
 
-# %%
-
-
-fig, ax = plt.subplots(1, 1, figsize=(8, 5))
-ax.plot(load_xas_ml_data(DataQuery("Cu", "VASP")).train.y.T)
-ax.set_xtick
-
-
-# %%
+# # %%
