@@ -40,7 +40,7 @@ plt.style.use(["default", "science", "tableau-colorblind10"])
 # mpl.rcParams["savefig.format"] = "pdf"
 # mpl.rcParams["savefig.bbox"] = "tight"
 
-model_name = "ft_tl"
+model_name = "per_compound_tl"
 simulation_types = ["FEFF"] * len(cfg.compounds) + ["VASP", "VASP"]
 compounds = cfg.compounds + ["Ti", "Cu"]
 
@@ -71,13 +71,15 @@ for i, ax, (compound, simulation_type) in zip(
 
     model = Trained_FCModel(
         DataQuery(compound, simulation_type),
-        name="universal_tl" if compound == "ALL" else model_name,
+        # name="universal_tl" if compound == "ALL" else model_name,
+        name=model_name,
     )
 
     # ax.patch.set_facecolor(compound_colors[i])
     ax.patch.set_alpha(0.2)
     bin_width = 0.01
     bin_count = 30
+
     ax.hist(
         # np.sqrt(model.mse_per_spectra),
         np.log10(model.mse_per_spectra),
@@ -86,27 +88,71 @@ for i, ax, (compound, simulation_type) in zip(
         color=compound_colors[i],
         edgecolor="black",
         zorder=1,
-        alpha=0.5,
+        alpha=0.6,
+        # cumulative=True,
     )
 
-    # # kde = gaussian_kde(np.sqrt(model.mse_per_spectra))
-    # kde = gaussian_kde(model.mse_per_spectra)
-    # ax.plot(
-    #     np.linspace(0, max(model.mse_per_spectra), 100),
-    #     kde(np.linspace(0, max(model.mse_per_spectra), 100)),
-    #     # np.linspace(0, max(np.sqrt(model.mse_per_spectra)), 100),
-    #     # kde(np.linspace(0, max(np.sqrt(model.mse_per_spectra)), 100)),
-    #     color="black",
-    #     # color=tableau_colorblind10[i],
-    #     linestyle="--",
-    #     zorder=3,
+    # model_tuned = Trained_FCModel(
+    #     DataQuery(compound, simulation_type),
+    #     name="ft_tl",
     # )
+    # ax.hist(
+    #     # np.sqrt(model_tuned.mse_per_spectra),
+    #     np.log10(model_tuned.mse_per_spectra),
+    #     density=True,
+    #     bins=np.linspace(-4, 0, bin_count),
+    #     color=compound_colors[i],
+    #     edgecolor="black",
+    #     zorder=2,
+    #     alpha=0.5,
+    #     cumulative=True,
+    # )
+
+    # log normal fitting
+    from scipy.stats import lognorm, kstest
+
+    shape, loc, scale = lognorm.fit(np.log10(model.mse_per_spectra))
+    ks_statistic, p_value = kstest(
+        np.log10(model.mse_per_spectra), "lognorm", args=(shape, loc, scale)
+    )
+
+    x = np.linspace(-4, 0, 100)
+    pdf = lognorm.pdf(x, shape, loc, scale)
+    ax.plot(
+        x,
+        pdf,
+        color=compound_colors[i],
+        linestyle="-.",
+        linewidth=1.8,
+        label="Log-normal fit",
+    )
+
+    # put fit p value in the legend
+    # p_value = lognorm.sf(0, shape, loc, scale)
+
+    # put p_value in top left corner
+    ax.text(
+        0.04,
+        0.9,
+        # f"p={p_value:.2f}" if p_value > 0.01 else r"$p<0.01$",
+        r"p=" + f"{p_value:.2f}" if p_value > 0.01 else r"$p<0.01$",
+        horizontalalignment="left",
+        verticalalignment="top",
+        transform=ax.transAxes,
+        fontsize=FONTSIZE * 0.8,
+        # color="black",
+        # color=compound_colors[i],
+        # darkver versiob
+        color = compound_colors[i] * [0.5, 0.5, 0.5, 1],
+    )
+
+    # ax.plot(x, pdf, color="black", linestyle="--", label="Log-normal fit")
 
     # x_max = max(x_max, np.quantile(np.sqrt(model.mse_per_spectra), 0.98))
     # x_max = max(x_max, np.quantile(model.mse_per_spectra, 0.98))
     ax.text(
-        0.9,
-        0.9,
+        0.95,
+        0.92,
         (
             f"{compound}"
             # if simulation_type == "FEFF"
@@ -115,12 +161,12 @@ for i, ax, (compound, simulation_type) in zip(
         horizontalalignment="right",
         verticalalignment="top",
         transform=ax.transAxes,
-        fontsize=FONTSIZE,
+        fontsize=FONTSIZE * 0.8,
         color="black",
         fontweight="bold",
         bbox=dict(
             facecolor=compound_colors[i],
-            alpha=0.5,
+            alpha=0.2,
             edgecolor=compound_colors[i],
         ),
     )
@@ -130,7 +176,9 @@ for i, ax, (compound, simulation_type) in zip(
     ax.set_xticklabels(
         [r"$10^{" + f"{x}" + "}$" for x in xticks[:-1]], fontsize=FONTSIZE * 0.8
     )
+
     ax.set_xlim(xticks[0], xticks[-1])
+    # ax.set_xlim(xticks[0], 1)
 
     # yticks = np.arange(0.2, 1.5, 0.3)
     # yticks = [0.4, 0.8, 1.2]
@@ -142,8 +190,8 @@ for i, ax, (compound, simulation_type) in zip(
     # add text right below vasp legend
     if simulation_type == "VASP":
         ax.text(
-            0.86,
-            0.7,
+            0.92,
+            0.72,
             "VASP",
             horizontalalignment="center",
             verticalalignment="center",
@@ -159,7 +207,8 @@ for i, ax, (compound, simulation_type) in zip(
         color="black",
         linestyle=":",
         alpha=0.5,
-        label=r"$\text{MSE}_{\text{baseline}}$",
+        # label=r"$\text{MSE}_{\text{baseline}}$",
+        label="baseline",
         # put it behind histogram
         zorder=0,
     )
@@ -173,12 +222,12 @@ for ax in axs[-1, :]:
     ax.set_xlabel("MSE", fontsize=FONTSIZE)
 
 # add legend about mean model mse in first subplot
-axs[0, 0].legend(fontsize=FONTSIZE * 0.8)
+axs[-1, 0].legend(fontsize=FONTSIZE * 0.7, loc="center left")
 
 
 # axs[0, 0].legend(["KDE"], fontsize=FONTSIZE, loc="upper left")
 plt.tight_layout()
 plt.savefig("mse_hist.pdf", bbox_inches="tight", dpi=DPI)
-plt.savefig("mse_hist.png", bbox_inches="tight", dpi=DPI)
+# plt.savefig("mse_hist.png", bbox_inches="tight", dpi=DPI)
 
 # %%
