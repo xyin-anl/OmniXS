@@ -205,6 +205,18 @@ class TrainedModel(ABC):  #
         return r2_score(self.data.test.y, self.predictions)
 
 
+class MedianModel(TrainedModel):
+    name = "MedianModel"
+
+    @property
+    def model(self):
+        return lambda *args, **kwargs: torch.Tensor(self.predictions)
+
+    @cached_property
+    def predictions(self):
+        return np.median(self.data.train.y, axis=0) * np.ones_like(self.data.test.y)
+
+
 class MeanModel(TrainedModel):
     name = "MeanModel"
 
