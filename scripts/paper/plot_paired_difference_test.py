@@ -77,7 +77,7 @@ ax.bar(p_values.keys(), p_values.values(), color=plt.get_cmap("tab10").colors)
 ax.set_yscale("log")
 ax.axhline(0.05, color="gray", linestyle="--", label=r"$\alpha = 0.05$")
 # put pair t_test label in y axis
-ax.set_ylabel(r"Wilcoxon $p$-value (greater)", fontsize=FONTSIZE)
+ax.set_ylabel(r"Wilcoxon $p$-value", fontsize=FONTSIZE)
 ax.set_xlabel("Element", fontsize=FONTSIZE)
 x_tick_labels = [label.replace("_", "\n") for label in p_values.keys()]
 ax.set_xticklabels(x_tick_labels, rotation=0, fontsize=FONTSIZE * 0.7)
