@@ -157,7 +157,9 @@ def compare_mse_per_energy(
             for model_name in model_names
         }
 
-        energy_points = np.arange(len(mse_of_model[model_names[0]]))
+
+        # energy_points = np.arange(len(mse_of_model[model_names[0]]))
+        energy_points = 0.25 * np.arange(len(mse_of_model[model_names[0]]))
 
         # baseline_median = np.median(
         #     load_xas_ml_data(DataQuery(compound, simulation_type)).test.y, axis=0
@@ -171,43 +173,101 @@ def compare_mse_per_energy(
         # ax2.axvline(np.argmax(baseline_median), color="red", linestyle="--")
 
         LINEWIDTH = 0.4
-        axs[idx].plot(
+
+        # green bar for positive and red for negative in opposite direction
+        differences = mse_of_model["per_compound_tl"] - mse_of_model["ft_tl"]
+        improvements = np.clip(differences, a_min=0, a_max=None)
+        regressions = np.clip(differences, a_min=None, a_max=0)
+
+        # axs[idx].fill_between(
+        #     energy_points,
+        #     differences,
+        #     0,
+        #     color="green",
+        #     alpha=0.5,
+        #     where=differences > 0,
+        # )
+        # axs[idx].fill_between(
+        #     energy_points,
+        #     differences,
+        #     0,
+        #     color="red",
+        #     alpha=0.5,
+        #     where=differences < 0,
+        # )
+
+        bar_params = {
+            "width": 0.8,
+            # "align": "center",
+            # "edgecolor": "black",
+            # "linewidth": 0.0,
+            # "alpha": 1,
+            # "capsize": 5,
+            # "error_kw": {"ecolor": "0.01"},  # , "capthick": 1.5},
+            # "zorder": 2,
+        }
+
+        # vlines from improvements to 0
+        axs[idx].vlines(
             energy_points,
-            mse_of_model["ft_tl"],
+            0,
+            improvements,
             color="green",
-            linewidth=LINEWIDTH,
-            # label=r"$\eta_{E}^{Tuned-Universal}$",
-            label="Tuned-Universal",
+            # alpha=0.5,
         )
-
-        axs[idx].plot(
+        axs[idx].vlines(
             energy_points,
-            mse_of_model["per_compound_tl"],
+            0,
+            regressions,
             color="red",
-            linewidth=LINEWIDTH,
-            # label=r"$\eta_{E}^{Expert}$",
-            label="Expert",
+            # alpha=0.5,
         )
 
-        axs[idx].fill_between(
-            energy_points,
-            mse_of_model["ft_tl"],
-            mse_of_model["per_compound_tl"],
-            color="green",
-            where=mse_of_model["ft_tl"] < mse_of_model["per_compound_tl"],
-            alpha=0.5,
-            label="Tuned-universalXAS is better",
-        )
+        # axs[idx].bar(
+        #     energy_points,
+        #     improvements,
+        #     # color=compound_colors[compound],
+        #     # **bar_params,
+        # )
 
-        axs[idx].fill_between(
-            energy_points,
-            mse_of_model["ft_tl"],
-            mse_of_model["per_compound_tl"],
-            color="red",
-            where=mse_of_model["ft_tl"] >= mse_of_model["per_compound_tl"],
-            alpha=0.5,
-            label="ExpertXAS is better",
-        )
+        # axs[idx].bar(
+        #     energy_points,
+        #     regressions,
+        #     color="red",
+        #     label="Expert",
+        #     **bar_params,
+        # )
+
+        # break
+
+        # axs[idx].plot(
+        #     energy_points,
+        #     mse_of_model["per_compound_tl"],
+        #     color="red",
+        #     linewidth=LINEWIDTH,
+        #     # label=r"$\eta_{E}^{Expert}$",
+        #     label="Expert",
+        # )
+
+        # axs[idx].fill_between(
+        #     energy_points,
+        #     mse_of_model["ft_tl"],
+        #     mse_of_model["per_compound_tl"],
+        #     color="green",
+        #     where=mse_of_model["ft_tl"] < mse_of_model["per_compound_tl"],
+        #     alpha=0.5,
+        #     label="Tuned-universalXAS is better",
+        # )
+
+        # axs[idx].fill_between(
+        #     energy_points,
+        #     mse_of_model["ft_tl"],
+        #     mse_of_model["per_compound_tl"],
+        #     color="red",
+        #     where=mse_of_model["ft_tl"] >= mse_of_model["per_compound_tl"],
+        #     alpha=0.5,
+        #     label="ExpertXAS is better",
+        # )
 
         axs[idx].text(
             # 0.94,
@@ -215,7 +275,7 @@ def compare_mse_per_energy(
             1 - 0.96,
             0.85,
             compound,
-            fontsize=fontsize,
+            fontsize=fontsize * 0.8,
             transform=axs[idx].transAxes,
             verticalalignment="top",
             horizontalalignment="left",
@@ -238,14 +298,28 @@ def compare_mse_per_energy(
                 bbox=dict(facecolor="white", alpha=0.2, edgecolor="white"),
             )
 
-        axs[idx].set_xlim(0, 141)
-        axs[idx].set_ylim(0, None)
-        axs[idx].set_yticklabels(axs[idx].get_yticks(), fontsize=fontsize * 0.6)
+        axs[idx].set_xlim(0, max(energy_points))
 
-        if idx != len(compounds) - 1:
-            axs[idx].tick_params(
-                axis="x", which="both", bottom=False, top=False, labelbottom=False
-            )
+        # axs[idx].set_ylim(0, None)
+
+        # axs[idx].set_yticklabels(axs[idx].get_yticks(), fontsize=fontsize * 0.6)
+        axs[idx].ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+
+        # # show x grid
+        # axs[idx].grid(axis="y", linestyle="--", alpha=0.5)
+        
+        # hline at 0
+        axs[idx].axhline(0, color="black", linestyle="-", linewidth=0.5)
+            
+
+        # if idx != len(compounds) - 1:
+        #     # tick should be 0.25 times the index
+        #     # xticks = 0.25 * np.linspace(0, len(energy_points), 6)
+        #     # axs[idx].set_xticks(xticks)
+        #     axs[idx].tick_params(
+        #         axis="x", which="both", bottom=False, top=False, labelbottom=False
+        #     )
+
         axs[idx].tick_params(axis="y", which="both", left=True, right=False)
 
 
@@ -270,9 +344,9 @@ axs[0].legend(
     ncol=2,
     frameon=False,
 )
-axs[-1].set_xlabel(r"$\Delta E$ (0.25 eV)", fontsize=FONTSIZE * 0.9)
+axs[-1].set_xlabel(r"$\Delta E$ (eV)", fontsize=FONTSIZE * 0.9)
 
-axs[-1].tick_params(axis="x", which="both", bottom=True, top=False, labelbottom=True)
+# axs[-1].tick_params(axis="x", which="both", bottom=True, top=False, labelbottom=True)
 
 # axs[-1].tick_params(axis="x", which="major", length=5)
 
@@ -280,7 +354,7 @@ axs[-1].tick_params(axis="x", which="both", bottom=True, top=False, labelbottom=
 
 # add label on center of figure
 fig.text(
-    0.04,
+    0.06,
     0.5,
     r"Median of MSE",
     va="center",
