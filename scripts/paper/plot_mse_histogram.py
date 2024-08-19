@@ -21,6 +21,7 @@ cmap = "tab10"
 compound_colors = plt.get_cmap(cmap)(np.linspace(0, 1, len(cfg.compounds) + 2))
 
 
+MNAME = "ft_tl"
 ASPECT_RATIO = 4 / 3
 HEIGHT = 10
 WEIGHT = HEIGHT / ASPECT_RATIO
@@ -40,7 +41,6 @@ plt.style.use(["default", "science", "tableau-colorblind10"])
 # mpl.rcParams["savefig.format"] = "pdf"
 # mpl.rcParams["savefig.bbox"] = "tight"
 
-model_name = "per_compound_tl"
 simulation_types = ["FEFF"] * len(cfg.compounds) + ["VASP", "VASP"]
 compounds = cfg.compounds + ["Ti", "Cu"]
 
@@ -72,7 +72,7 @@ for i, ax, (compound, simulation_type) in zip(
     model = Trained_FCModel(
         DataQuery(compound, simulation_type),
         # name="universal_tl" if compound == "ALL" else model_name,
-        name=model_name,
+        name=MNAME,
     )
 
     # ax.patch.set_facecolor(compound_colors[i])
@@ -92,64 +92,41 @@ for i, ax, (compound, simulation_type) in zip(
         # cumulative=True,
     )
 
-    # model_tuned = Trained_FCModel(
-    #     DataQuery(compound, simulation_type),
-    #     name="ft_tl",
+    # =============================================================================
+    # # log normal fitting
+    # =============================================================================
+    # from scipy.stats import lognorm, kstest
+    # shape, loc, scale = lognorm.fit(np.log10(model.mse_per_spectra))
+    # ks_statistic, p_value = kstest(
+    #     np.log10(model.mse_per_spectra), "lognorm", args=(shape, loc, scale)
     # )
-    # ax.hist(
-    #     # np.sqrt(model_tuned.mse_per_spectra),
-    #     np.log10(model_tuned.mse_per_spectra),
-    #     density=True,
-    #     bins=np.linspace(-4, 0, bin_count),
+    # x = np.linspace(-4, 0, 100)
+    # pdf = lognorm.pdf(x, shape, loc, scale)
+    # ax.plot(
+    #     x,
+    #     pdf,
     #     color=compound_colors[i],
-    #     edgecolor="black",
-    #     zorder=2,
-    #     alpha=0.5,
-    #     cumulative=True,
+    #     linestyle="-.",
+    #     linewidth=1.8,
+    #     label="Log-normal fit",
     # )
+    # # put p_value in top left corner
+    # ax.text(
+    #     0.04,
+    #     0.9,
+    #     # f"p={p_value:.2f}" if p_value > 0.01 else r"$p<0.01$",
+    #     r"p=" + f"{p_value:.2f}" if p_value > 0.01 else r"$p<0.01$",
+    #     horizontalalignment="left",
+    #     verticalalignment="top",
+    #     transform=ax.transAxes,
+    #     fontsize=FONTSIZE * 0.8,
+    #     # color="black",
+    #     # color=compound_colors[i],
+    #     # darkver versiob
+    #     color=compound_colors[i] * [0.5, 0.5, 0.5, 1],
+    # )
+    # =============================================================================
 
-    # log normal fitting
-    from scipy.stats import lognorm, kstest
-
-    shape, loc, scale = lognorm.fit(np.log10(model.mse_per_spectra))
-    ks_statistic, p_value = kstest(
-        np.log10(model.mse_per_spectra), "lognorm", args=(shape, loc, scale)
-    )
-
-    x = np.linspace(-4, 0, 100)
-    pdf = lognorm.pdf(x, shape, loc, scale)
-    ax.plot(
-        x,
-        pdf,
-        color=compound_colors[i],
-        linestyle="-.",
-        linewidth=1.8,
-        label="Log-normal fit",
-    )
-
-    # put fit p value in the legend
-    # p_value = lognorm.sf(0, shape, loc, scale)
-
-    # put p_value in top left corner
-    ax.text(
-        0.04,
-        0.9,
-        # f"p={p_value:.2f}" if p_value > 0.01 else r"$p<0.01$",
-        r"p=" + f"{p_value:.2f}" if p_value > 0.01 else r"$p<0.01$",
-        horizontalalignment="left",
-        verticalalignment="top",
-        transform=ax.transAxes,
-        fontsize=FONTSIZE * 0.8,
-        # color="black",
-        # color=compound_colors[i],
-        # darkver versiob
-        color = compound_colors[i] * [0.5, 0.5, 0.5, 1],
-    )
-
-    # ax.plot(x, pdf, color="black", linestyle="--", label="Log-normal fit")
-
-    # x_max = max(x_max, np.quantile(np.sqrt(model.mse_per_spectra), 0.98))
-    # x_max = max(x_max, np.quantile(model.mse_per_spectra, 0.98))
     ax.text(
         0.95,
         0.92,
@@ -227,7 +204,8 @@ axs[-1, 0].legend(fontsize=FONTSIZE * 0.7, loc="center left")
 
 # axs[0, 0].legend(["KDE"], fontsize=FONTSIZE, loc="upper left")
 plt.tight_layout()
-plt.savefig("mse_hist.pdf", bbox_inches="tight", dpi=DPI)
+# plt.savefig("mse_hist.pdf", bbox_inches="tight", dpi=DPI)
+plt.savefig(f"mse_hist_{MNAME}.pdf", bbox_inches="tight", dpi=DPI)
 # plt.savefig("mse_hist.png", bbox_inches="tight", dpi=DPI)
 
 # %%
