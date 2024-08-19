@@ -139,6 +139,8 @@ def compare_mse_per_energy(
             len(compounds), 1, figsize=(12, 4 * len(compounds)), sharex=True
         )
     axs = axs.flatten()
+
+    LINEWIDTH = 0.4
     compound_colors = {c: plt.cm.tab10.colors[i] for i, c in enumerate(compounds)}
     for idx, compound in enumerate(compounds):
 
@@ -157,55 +159,18 @@ def compare_mse_per_energy(
             for model_name in model_names
         }
 
-
         # energy_points = np.arange(len(mse_of_model[model_names[0]]))
         energy_points = 0.25 * np.arange(len(mse_of_model[model_names[0]]))
-
-        # baseline_median = np.median(
-        #     load_xas_ml_data(DataQuery(compound, simulation_type)).test.y, axis=0
-        # )
-        # # a curve with median of baseline model
-        # # min max scaler with same range as the data
-        # from sklearn.preprocessing import MinMaxScaler
-        # ax2 = axs[idx].twinx()
-        # ax2.plot(baseline_median)
-        # # verticle line at highest median
-        # ax2.axvline(np.argmax(baseline_median), color="red", linestyle="--")
-
-        LINEWIDTH = 0.4
 
         # green bar for positive and red for negative in opposite direction
         differences = mse_of_model["per_compound_tl"] - mse_of_model["ft_tl"]
         improvements = np.clip(differences, a_min=0, a_max=None)
         regressions = np.clip(differences, a_min=None, a_max=0)
 
-        # axs[idx].fill_between(
-        #     energy_points,
-        #     differences,
-        #     0,
-        #     color="green",
-        #     alpha=0.5,
-        #     where=differences > 0,
-        # )
-        # axs[idx].fill_between(
-        #     energy_points,
-        #     differences,
-        #     0,
-        #     color="red",
-        #     alpha=0.5,
-        #     where=differences < 0,
-        # )
+        baseline = MeanModel(DataQuery(compound, simulation_type)).mse
 
-        bar_params = {
-            "width": 0.8,
-            # "align": "center",
-            # "edgecolor": "black",
-            # "linewidth": 0.0,
-            # "alpha": 1,
-            # "capsize": 5,
-            # "error_kw": {"ecolor": "0.01"},  # , "capthick": 1.5},
-            # "zorder": 2,
-        }
+        improvements = improvements / baseline * 100
+        regressions = regressions / baseline * 100
 
         # vlines from improvements to 0
         axs[idx].vlines(
@@ -223,55 +188,7 @@ def compare_mse_per_energy(
             # alpha=0.5,
         )
 
-        # axs[idx].bar(
-        #     energy_points,
-        #     improvements,
-        #     # color=compound_colors[compound],
-        #     # **bar_params,
-        # )
-
-        # axs[idx].bar(
-        #     energy_points,
-        #     regressions,
-        #     color="red",
-        #     label="Expert",
-        #     **bar_params,
-        # )
-
-        # break
-
-        # axs[idx].plot(
-        #     energy_points,
-        #     mse_of_model["per_compound_tl"],
-        #     color="red",
-        #     linewidth=LINEWIDTH,
-        #     # label=r"$\eta_{E}^{Expert}$",
-        #     label="Expert",
-        # )
-
-        # axs[idx].fill_between(
-        #     energy_points,
-        #     mse_of_model["ft_tl"],
-        #     mse_of_model["per_compound_tl"],
-        #     color="green",
-        #     where=mse_of_model["ft_tl"] < mse_of_model["per_compound_tl"],
-        #     alpha=0.5,
-        #     label="Tuned-universalXAS is better",
-        # )
-
-        # axs[idx].fill_between(
-        #     energy_points,
-        #     mse_of_model["ft_tl"],
-        #     mse_of_model["per_compound_tl"],
-        #     color="red",
-        #     where=mse_of_model["ft_tl"] >= mse_of_model["per_compound_tl"],
-        #     alpha=0.5,
-        #     label="ExpertXAS is better",
-        # )
-
         axs[idx].text(
-            # 0.94,
-            # 0.9,
             1 - 0.96,
             0.85,
             compound,
@@ -298,29 +215,54 @@ def compare_mse_per_energy(
                 bbox=dict(facecolor="white", alpha=0.2, edgecolor="white"),
             )
 
+        axs_mean_spectra = axs[idx].twinx()
+        mean_spectra = np.mean(
+            load_xas_ml_data(DataQuery(compound, simulation_type)).test.y, axis=0
+        )
+        mean_spectra = mean_spectra / 1000  # TODO: remove hardcoding
+        axs_mean_spectra.plot(
+            energy_points,
+            mean_spectra,
+            color="#101010",
+            linewidth=LINEWIDTH * 2,
+            linestyle=":",
+            label="Mean spectra",
+            zorder=0,
+        )
+        axs_mean_spectra.spines["right"].set_color("gray")
+        axs_mean_spectra.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+        axs_mean_spectra.tick_params(axis="y", which="minor", length=0)
+
+        axs[idx].axhline(0, color="black", linestyle="-", linewidth=0.5)
+        axs[idx].tick_params(axis="y", which="both", left=True, right=False)
+        axs[idx].tick_params(axis="y", which="minor", length=0)
         axs[idx].set_xlim(0, max(energy_points))
 
-        # axs[idx].set_ylim(0, None)
-
-        # axs[idx].set_yticklabels(axs[idx].get_yticks(), fontsize=fontsize * 0.6)
-        axs[idx].ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
-
-        # # show x grid
-        # axs[idx].grid(axis="y", linestyle="--", alpha=0.5)
-        
-        # hline at 0
-        axs[idx].axhline(0, color="black", linestyle="-", linewidth=0.5)
-            
-
-        # if idx != len(compounds) - 1:
-        #     # tick should be 0.25 times the index
-        #     # xticks = 0.25 * np.linspace(0, len(energy_points), 6)
-        #     # axs[idx].set_xticks(xticks)
-        #     axs[idx].tick_params(
-        #         axis="x", which="both", bottom=False, top=False, labelbottom=False
+        # if compound == "Ti" and simulation_type == "FEFF":
+        #     axs_mean_spectra.legend(
+        #         fontsize=fontsize * 0.7,
+        #         loc="upper center",
+        #         frameon=False,
+        #         # outside of ax on top
+        #         bbox_to_anchor=(0.5, 1.5),
         #     )
 
-        axs[idx].tick_params(axis="y", which="both", left=True, right=False)
+        def align_yaxis_zero(ax1, ax2):
+            """Align y=0 of two axes."""
+            y1_min, y1_max = ax1.get_ylim()
+            y2_min, y2_max = ax2.get_ylim()
+
+            prop1 = abs(y1_min) / (abs(y1_min) + abs(y1_max))
+            prop2 = abs(y2_min) / (abs(y2_min) + abs(y2_max))
+
+            ax2.set_ylim([-(y2_max - y2_min) * prop1 / (1 - prop1), y2_max])
+
+            prop1 = abs(y1_min) / (abs(y1_min) + abs(y1_max))
+            prop2 = abs(y2_min) / (abs(y2_min) + abs(y2_max))
+
+            ax2.set_ylim([-(y2_max - y2_min) * prop1 / (1 - prop1), y2_max])
+
+        align_yaxis_zero(axs[idx], axs_mean_spectra)
 
 
 model_names = [
@@ -329,11 +271,12 @@ model_names = [
     "universal_tl",
 ]
 
-fig = plt.figure(figsize=(6, 12))
+fig = plt.figure(figsize=(5, 15))
 plt.style.use(["default", "science"])
-gs = fig.add_gridspec(10, 1, hspace=0.2, wspace=0)
+gs = fig.add_gridspec(10, 1)  # , hspace=0.2, wspace=0)
 axs = gs.subplots(sharex=True, sharey=False)
 FONTSIZE = 18
+
 compare_mse_per_energy(model_names, cfg.compounds, axs=axs, fontsize=FONTSIZE)
 
 
@@ -354,12 +297,23 @@ axs[-1].set_xlabel(r"$\Delta E$ (eV)", fontsize=FONTSIZE * 0.9)
 
 # add label on center of figure
 fig.text(
-    0.06,
+    0,
     0.5,
-    r"Median of MSE",
+    r"$\Delta \eta_{E}" + r" \left(\%\right)$",
     va="center",
     rotation="vertical",
-    fontsize=FONTSIZE * 1,
+    fontsize=FONTSIZE * 1.1,
+    ha="center",
+)
+
+# commont y label at right side of figure for all twin axses that says r"<\mu>"
+fig.text(
+    1,
+    0.5,
+    r"$\left<\mu\right>_E$",
+    va="center",
+    rotation=-90,
+    fontsize=FONTSIZE * 1.1,
     ha="center",
 )
 
@@ -370,8 +324,6 @@ compare_mse_per_energy(
     axs=axs[-2:],
     simulation_type="VASP",
 )
-
-# axs[-1].set_xlim(20, None)
 
 fig.tight_layout()
 fig.savefig("performance_across_energy.pdf", bbox_inches="tight", dpi=300)
