@@ -290,7 +290,7 @@ axs[-1].set_xlabel(r"$\Delta E$ (eV)", fontsize=FONTSIZE * 0.9)
 fig.text(
     0,
     0.5,
-    r"$\Delta \eta_{E}" + r" \left(\%\right)$",
+    r"$\Delta \xi(E)$",
     va="center",
     rotation="vertical",
     fontsize=FONTSIZE * 1.1,
