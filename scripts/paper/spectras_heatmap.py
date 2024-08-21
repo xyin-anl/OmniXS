@@ -19,9 +19,11 @@ all_data = {
     c: load_xas_ml_data(DataQuery(c, "FEFF"), filter_spectra_anomalies=True)
     for c in cfg.compounds
 }
+
 all_data["Ti_vasp"] = load_xas_ml_data(
     DataQuery("Ti", "VASP"), filter_spectra_anomalies=True
 )
+
 all_data["Cu_vasp"] = load_xas_ml_data(
     DataQuery("Cu", "VASP"), filter_spectra_anomalies=True
 )
@@ -127,19 +129,23 @@ axs = [fig.add_subplot(grid[i, j]) for i in range(len(all_data) // 2) for j in r
 
 # for c, ax, data in zip(cfg.compounds, axs, all_data):
 print(all_data.keys())
+i = 0
 for ax, (c, data) in zip(axs, all_data.items()):
+
     print(f"Plotting {c}...")
-    # if c != "Mn":
+    # if c not in ["Ti_vasp"]:
     #     continue
     spectras = np.concatenate([data.train.y, data.val.y, data.test.y])
+
     heatmap_of_lines(
         spectras,
         ax=ax,
         aspect="auto",
         smooth=True,
-        # smooth=False, # for dbugging
+        # smooth=False,  # for dbugging
         cmap="jet",
     )
+
     ax.patch.set_facecolor(compound_colors[c])
     ax.patch.set_alpha(0.2)
     ax.set_yticks([])
@@ -156,20 +162,36 @@ for ax, (c, data) in zip(axs, all_data.items()):
     # break
 
 plt.tick_params(axis="x", which="both", bottom=False, top=False)
+
 for i in [8, 9]:
-    axs[i].set_xlabel("Index", fontsize=14)
+    axs[i].set_xlabel(r"$\Delta E$ (eV)", fontsize=14)
+    xticks = np.array([20, 40, 60, 80, 100, 120]).astype(int)
+    xtick_labels = [int(x * 0.25) for x in xticks]
 
-for i in [0, 2, 4, 6, 8]:
-    axs[i].set_ylabel("Target", fontsize=14)
+    # ====== Scaling ======
+    xticks = ((xticks / 141) * 1000).astype(int)  # when scaling is done
+    axs[i].set_xlim(0, 1000)  # when scaling is done
+    # ============
 
-fig.savefig(
-    "feff_spetra_heatmap.pdf",
-    bbox_inches="tight",
-    dpi=300,
+    axs[i].set_xticks(xticks)
+    axs[i].set_xticklabels(xtick_labels)
+
+
+# for i in [0, 2, 4, 6, 8]:
+#     axs[i].set_ylabel("Target", fontsize=14)
+
+# single y label on left side that says $\mu(E) (a.u.)$
+fig.text(
+    0.08,
+    0.5,
+    r"$\mu(E)$ (a.u.)",
+    va="center",
+    rotation="vertical",
+    fontsize=FONTSIZE * 1.2,
 )
 
 fig.savefig(
-    "feff_spetra_heatmap.png",
+    "feff_spetra_heatmap.pdf",
     bbox_inches="tight",
     dpi=300,
 )

@@ -108,7 +108,7 @@ def generate_performance_comparison_plot(
         )
 
     ax.set_ylabel(y_label, fontsize=FONTSIZE * 1.2)
-    ax.set_xlabel("Compound", fontsize=FONTSIZE * 1.2, labelpad=-10)
+    ax.set_xlabel("Element", fontsize=FONTSIZE * 1.2, labelpad=-10)
     xticks = np.arange(len(sims)) * BAR_CENTER_FACTOR + bar_width
     if include_vasp:
         # add vertical line before vap
@@ -159,14 +159,14 @@ def generate_performance_comparison_plot(
         for model_name, fill in bar_fill_dict.items()
     ]
     handle_names_dict = {
-        "universal_feff": "Universal",
-        "per_compound_tl": "Expert",
-        "ft_tl": "Tuned-Universal",
+        "universal_feff": "UniversalXAS",
+        "per_compound_tl": "ExpertXAS",
+        "ft_tl": "Tuned-UniversalXAS",
     }
     legend = ax.legend(
         handles,
         [handle_names_dict[model_name] for model_name in model_names],
-        fontsize=FONTSIZE,
+        fontsize=FONTSIZE * 0.925,
         handlelength=2,
         handleheight=1,
     )

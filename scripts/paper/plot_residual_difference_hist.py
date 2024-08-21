@@ -19,6 +19,7 @@ iterator = list(zip(cfg.compounds, ["FEFF"] * len(cfg.compounds)))
 iterator.append(("Ti", "VASP"))
 iterator.append(("Cu", "VASP"))
 FONTSIZE = 18
+win_rate_dict = {}
 for ax, (compound, simulation_type) in zip(axs.flatten(), iterator):
     model_expert = Trained_FCModel(
         # DataQuery(compound=compound, simulation_type="FEFF"),
@@ -107,16 +108,40 @@ for ax, (compound, simulation_type) in zip(axs.flatten(), iterator):
         # ),
     )
 
+    # a text that show the wincount of the tuned model
+
+    win_rate = np.sum(model_expert.mse_per_spectra > model_tuned.mse_per_spectra)
+    win_rate = win_rate / len(model_expert.mse_per_spectra) * 100
+    win_rate = np.round(win_rate, 2)
+    win_rate_dict[f"{compound}_{simulation_type}"] = win_rate
+
+    # top left win rate
+    ax.text(
+        0.03,
+        0.9,
+        r"$\text{Win}: " + f"{win_rate:.2f}\%$",
+        horizontalalignment="left",
+        verticalalignment="top",
+        transform=ax.transAxes,
+        fontsize=FONTSIZE * 0.8,
+        color=plt.get_cmap("tab10")(i),
+        fontweight="bold",
+    )
+
     ax.minorticks_off()
 
     # ax.set_xlim(-5, 0)
     i += 1
 
+axs[0, 0].legend(
+    fontsize=FONTSIZE * 0.83,
+    loc="center left",
+)
+
 # xlabel = r"$|\Delta\varepsilon|$"
 xlabel = r"$|\varepsilon_{\text{tuned}} - \varepsilon_{\text{expert}}|$"
 axs[-1, 0].set_xlabel(xlabel, fontsize=FONTSIZE)
 axs[-1, 1].set_xlabel(xlabel, fontsize=FONTSIZE)
-axs[-1, 0].legend(fontsize=FONTSIZE * 1)
 
 
 fig.text(
@@ -133,3 +158,5 @@ plt.savefig("residual_difference_histograms.pdf", bbox_inches="tight", dpi=300)
 
 
 # %%
+
+win_rate_dict
