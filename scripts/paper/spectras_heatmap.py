@@ -15,45 +15,21 @@ from src.data.ml_data import DataQuery, load_xas_ml_data
 # %%
 
 
-all_data = {
-    c: load_xas_ml_data(DataQuery(c, "FEFF"), filter_spectra_anomalies=True)
-    for c in cfg.compounds
-}
+all_data = {}
 
-all_data["Ti_vasp"] = load_xas_ml_data(
+all_data["Ti_VASP"] = load_xas_ml_data(
     DataQuery("Ti", "VASP"), filter_spectra_anomalies=True
 )
-
-all_data["Cu_vasp"] = load_xas_ml_data(
+all_data["Cu_VASP"] = load_xas_ml_data(
     DataQuery("Cu", "VASP"), filter_spectra_anomalies=True
 )
 
 
+for c in cfg.compounds:
+    all_data[c] = load_xas_ml_data(DataQuery(c, "FEFF"), filter_spectra_anomalies=True)
+
+
 # %%
-
-
-cmap = "tab10"
-compound_colors = plt.get_cmap(cmap)(np.linspace(0, 1, len(cfg.compounds) + 2))
-compound_colors = {
-    c: compound_colors[i] for i, c in enumerate(cfg.compounds + ["Ti_vasp", "Cu_vasp"])
-}
-
-
-import matplotlib as mpl
-
-FONTSIZE = 14
-DPI = 300
-
-plt.style.use(["default", "science", "tableau-colorblind10"])
-mpl.rcParams["font.size"] = FONTSIZE
-mpl.rcParams["axes.labelsize"] = FONTSIZE
-mpl.rcParams["xtick.labelsize"] = FONTSIZE
-mpl.rcParams["ytick.labelsize"] = FONTSIZE
-mpl.rcParams["legend.fontsize"] = FONTSIZE
-mpl.rcParams["figure.dpi"] = DPI
-mpl.rcParams["savefig.dpi"] = DPI
-mpl.rcParams["savefig.format"] = "pdf"
-mpl.rcParams["savefig.bbox"] = "tight"
 
 
 def heatmap_of_lines(
@@ -68,7 +44,7 @@ def heatmap_of_lines(
     aspect=0.618,  # golden ratio
     x_ticks=None,
     y_ticks=None,
-    smooth=False,
+    interpolate: Union[None, int] = None,
 ):
     """
     Generate a heatmap from multiple lines of data.
@@ -77,12 +53,12 @@ def heatmap_of_lines(
     if ax is None:
         ax = plt.gca()
 
-    if smooth:
+    if interpolate is not None:
 
         from scipy.interpolate import interp1d
 
         x = np.arange(data.shape[1])
-        x_new = np.linspace(0, data.shape[1] - 1, 1000)
+        x_new = np.linspace(0, data.shape[1] - 1, interpolate)
         f_x = interp1d(x, data)
         data = f_x(x_new)
 
@@ -119,83 +95,114 @@ def heatmap_of_lines(
     return colorbar
 
 
+FONTSIZE = 20
+DPI = 300
+INTERPOLATE = 1000  # or NONE or int (1000)
+
+cmap = "tab10"
+compound_colors = plt.get_cmap(cmap)(np.linspace(0, 1, len(cfg.compounds) + 2))
+compound_colors = {
+    c: compound_colors[i] for i, c in enumerate(cfg.compounds + ["Ti_VASP", "Cu_VASP"])
+}
+
 plt.style.use(["default", "science"])
 
-fig = plt.figure(figsize=(2 * 4, 2 * len(all_data) // 2))
-# grid = plt.GridSpec(len(cfg.compounds) // 2, 2, hspace=0.0, wspace=0.0)
-grid = plt.GridSpec(len(all_data) // 2, 2, hspace=0.0, wspace=0.0)
-axs = [fig.add_subplot(grid[i, j]) for i in range(len(all_data) // 2) for j in range(2)]
+# fig = plt.figure(figsize=(2 * 4, 2 * len(all_data) // 2))
+# # grid = plt.GridSpec(len(cfg.compounds) // 2, 2, hspace=0.0, wspace=0.0)
+# grid = plt.GridSpec(len(all_data) // 2, 2, hspace=0.0, wspace=0.0)
+# axs = [fig.add_subplot(grid[i, j]) for i in range(len(all_data) // 2) for j in range(2)]
 
+COLS = 4
+ROWS = 3
+fig = plt.figure(figsize=(COLS * 4, ROWS * 3.5))
+grid = plt.GridSpec(ROWS, COLS, hspace=0.015, wspace=0.02, figure=fig)
+axs = [fig.add_subplot(grid[i, j]) for i in range(ROWS) for j in range(COLS)]
+# axs = [fig.add_subplot(grid[i, j]) for i in range(len(all_data) // 2) for j in range(2)]
 
-# for c, ax, data in zip(cfg.compounds, axs, all_data):
-print(all_data.keys())
-i = 0
+# remove_idx = [2, 3]
+remove_idx = [0, 3]
+for i in remove_idx:
+    fig.delaxes(axs[i])
+axs = [ax for i, ax in enumerate(axs) if i not in remove_idx]
+
 for ax, (c, data) in zip(axs, all_data.items()):
-
     print(f"Plotting {c}...")
-    # if c not in ["Ti_vasp"]:
-    #     continue
     spectras = np.concatenate([data.train.y, data.val.y, data.test.y])
 
     heatmap_of_lines(
         spectras,
         ax=ax,
         aspect="auto",
-        smooth=True,
-        # smooth=False,  # for dbugging
+        interpolate=INTERPOLATE,
         cmap="jet",
     )
 
-    ax.patch.set_facecolor(compound_colors[c])
-    ax.patch.set_alpha(0.2)
-    ax.set_yticks([])
-    ax.set_xticks([])
+    # ax.patch.set_facecolor(compound_colors[c]) # set background color
+    # ax.patch.set_alpha(0.2)
+
     ax.text(
         0.05,
         0.95,
-        c,
+        c.split("_")[0],
         transform=ax.transAxes,
-        fontsize=18,
+        fontsize=FONTSIZE,
         verticalalignment="top",
         horizontalalignment="left",
+        bbox=dict(facecolor=compound_colors[c], alpha=0.5, edgecolor="white"),
     )
-    # break
+    if "VASP" in c:
+        ax.text(
+            0.02,
+            0.75,
+            "VASP",
+            transform=ax.transAxes,
+            fontsize=FONTSIZE * 0.8,
+            verticalalignment="bottom",
+            horizontalalignment="left",
+            # bbox=dict(facecolor="white", alpha=0.5, edgecolor="white"),
+        )
 
-plt.tick_params(axis="x", which="both", bottom=False, top=False)
+    ax.set_xticklabels([])
+    ax.tick_params(axis="x", which="both", bottom=True, top=False)
 
-for i in [8, 9]:
-    axs[i].set_xlabel(r"$\Delta E$ (eV)", fontsize=14)
+    ax.set_yticks([])
+
+
+# for i in range(4, len(axs)):
+for i in range(len(axs)):
+    axs[i].set_xlabel(r"$\Delta E$ (eV)", fontsize=FONTSIZE)
     xticks = np.array([20, 40, 60, 80, 100, 120]).astype(int)
+    # xticks = np.array([10, 30, 50, 70, 90, 110, 130]).astype(int)
     xtick_labels = [int(x * 0.25) for x in xticks]
 
     # ====== Scaling ======
-    xticks = ((xticks / 141) * 1000).astype(int)  # when scaling is done
-    axs[i].set_xlim(0, 1000)  # when scaling is done
+    if INTERPOLATE:
+        xticks = ((xticks / 141) * 1000).astype(int)  # when scaling is done
+        axs[i].set_xlim(0, 1000)  # when scaling is done
     # ============
 
     axs[i].set_xticks(xticks)
-    axs[i].set_xticklabels(xtick_labels)
+    axs[i].set_xticklabels(xtick_labels, fontsize=FONTSIZE * 0.8)
 
 
-# for i in [0, 2, 4, 6, 8]:
-#     axs[i].set_ylabel("Target", fontsize=14)
+for i in [0, 2, 6]:
+    axs[i].set_ylabel(r"$\mu(E)$ (a.u.)", fontsize=FONTSIZE)
 
-# single y label on left side that says $\mu(E) (a.u.)$
-fig.text(
-    0.08,
-    0.5,
-    r"$\mu(E)$ (a.u.)",
-    va="center",
-    rotation="vertical",
-    fontsize=FONTSIZE * 1.2,
-)
+
+# # single y label on left side that says $\mu(E) (a.u.)$
+# fig.text(
+#     0.098,
+#     0.5,
+#     r"$\mu(E)$ (a.u.)",
+#     va="center",
+#     rotation="vertical",
+#     fontsize=FONTSIZE * 1.2,
+# )
 
 fig.savefig(
-    "feff_spetra_heatmap.pdf",
+    "spectra_heatmap.pdf",
     bbox_inches="tight",
     dpi=300,
 )
-
-# fig.show()
 
 # %%
