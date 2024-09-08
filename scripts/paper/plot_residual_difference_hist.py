@@ -120,6 +120,10 @@ for ax, (compound, simulation_type) in zip(axs.flatten(), iterator):
             # color=plt.get_cmap("tab10")(i),
             # fontweight="bold",
         )
+        
+    # no ticks top top and make ticks come outside 
+    ax.tick_params(axis="x", which="both", top=False, direction="out")
+    ax.tick_params(axis="y", which="both", right=False, direction="in")
 
     # # a text that show the wincount of the tuned model
     # win_rate = np.sum(model_expert.mse_per_spectra > model_tuned.mse_per_spectra)
