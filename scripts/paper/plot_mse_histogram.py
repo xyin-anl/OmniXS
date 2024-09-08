@@ -21,25 +21,14 @@ cmap = "tab10"
 compound_colors = plt.get_cmap(cmap)(np.linspace(0, 1, len(cfg.compounds) + 2))
 
 
-MNAME = "ft_tl"
+MNAME = "per_compound_tl"
 ASPECT_RATIO = 4 / 3
-HEIGHT = 10
+HEIGHT = 12
 WEIGHT = HEIGHT / ASPECT_RATIO
 DPI = 300
-FONTSIZE = 18
+FONTSIZE = 22
 COLOR = compound_colors[0]
 plt.style.use(["default", "science", "tableau-colorblind10"])
-
-# mpl.rcParams["font.size"] = FONTSIZE
-# mpl.rcParams["axes.labelsize"] = FONTSIZE
-# mpl.rcParams["xtick.labelsize"] = FONTSIZE
-# mpl.rcParams["ytick.labelsize"] = FONTSIZE
-# mpl.rcParams["legend.fontsize"] = FONTSIZE
-# mpl.rcParams["figure.dpi"] = DPI
-# mpl.rcParams["figure.figsize"] = (WEIGHT, HEIGHT)
-# mpl.rcParams["savefig.dpi"] = DPI
-# mpl.rcParams["savefig.format"] = "pdf"
-# mpl.rcParams["savefig.bbox"] = "tight"
 
 simulation_types = ["FEFF"] * len(cfg.compounds) + ["VASP", "VASP"]
 compounds = cfg.compounds + ["Ti", "Cu"]
@@ -58,7 +47,7 @@ fig, axs = plt.subplots(
     dpi=DPI,
     sharex=True,
     sharey=True,
-    gridspec_kw={"hspace": 0, "wspace": 0},
+    gridspec_kw={"hspace": 0.05, "wspace": 0.025},
 )
 
 
@@ -149,31 +138,27 @@ for i, ax, (compound, simulation_type) in zip(
     )
 
     xticks = np.arange(-4, 1, 1)
-    ax.set_xticks(xticks[:-1])
-    ax.set_xticklabels(
-        [r"$10^{" + f"{x}" + "}$" for x in xticks[:-1]], fontsize=FONTSIZE * 0.8
-    )
+    ax.set_xticks(xticks)
+    ax.set_xticklabels([f"{x}" for x in xticks], fontsize=FONTSIZE * 0.7)
+    ax.set_xlim(None, -0.45)
 
-    ax.set_xlim(xticks[0], xticks[-1])
-    # ax.set_xlim(xticks[0], 1)
+    ax.tick_params(axis="both", which="both", direction="in", top=False, right=False)
 
-    # yticks = np.arange(0.2, 1.5, 0.3)
-    # yticks = [0.4, 0.8, 1.2]
-    yticks = [0.4, 0.8, 1.2]
+    yticks = [0.3, 0.6, 0.9, 1.2]
     ax.set_yticks(yticks)
-    ax.set_yticklabels([f"{y:.1f}" for y in yticks], fontsize=FONTSIZE * 0.8)
-    ax.minorticks_off()
+    ax.set_yticklabels(yticks, fontsize=FONTSIZE * 0.7)
+    ax.set_ylim(None, 1.3)
 
     # add text right below vasp legend
     if simulation_type == "VASP":
         ax.text(
-            0.92,
-            0.72,
+            0.91,
+            0.66,
             "VASP",
             horizontalalignment="center",
             verticalalignment="center",
             transform=ax.transAxes,
-            fontsize=FONTSIZE * 0.5,
+            fontsize=FONTSIZE * 0.45,
             color="black",
         )
 
@@ -196,10 +181,10 @@ for i, ax, (compound, simulation_type) in zip(
 axs[2, 0].set_ylabel("Density", fontsize=FONTSIZE)
 
 for ax in axs[-1, :]:
-    ax.set_xlabel("MSE", fontsize=FONTSIZE)
+    ax.set_xlabel(r"$\log_{10}(\text{MSE})$", fontsize=FONTSIZE)
 
 # add legend about mean model mse in first subplot
-axs[-1, 0].legend(fontsize=FONTSIZE * 0.7, loc="center left")
+axs[-1, 0].legend(fontsize=FONTSIZE * 0.8, loc="center left")
 
 
 # axs[0, 0].legend(["KDE"], fontsize=FONTSIZE, loc="upper left")
