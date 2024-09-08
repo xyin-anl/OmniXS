@@ -21,6 +21,7 @@ def plot_deciles_of_top_predictions(
     splits=10,
     axs=None,
     performances: Dict[str, float] = None,  # adhoc for universal model
+    add_decile_labels=True,
 ):
 
     compounds = models.keys()
@@ -41,9 +42,10 @@ def plot_deciles_of_top_predictions(
     colors = {c: plt.get_cmap(cmap)(i) for i, c in enumerate(compounds)}
 
     for c, axs in zip(compounds, axs.T):
+        # for i, (c, ax) in enumerate(zip(compounds, axs.T), start=1):
         Plot().set_title(
             f"{c}",
-            fontsize=FONTSIZE * 0.6,
+            fontsize=FONTSIZE,
         ).plot_top_predictions(
             models[c].top_predictions(splits=splits),
             splits=splits,
@@ -94,27 +96,6 @@ def plot_deciles_of_top_predictions(
             x=0.5,
         )
 
-        # axs[0].title.set_bbox(
-        #     dict(
-        #         # facecolor with alpha values added to the original color
-        #         # facecolor=colors[c] + (0.5,), # ERROR:  RGBA sequence should have length 3 or 4
-        #         facecolor="white",
-        #         edgecolor=colors[c],
-        #     ),
-        # )
-
-    # plt.savefig(
-    #     f"top_predictions_{model_name}_{simulation_type}.pdf",
-    #     dpi=300,
-    #     bbox_inches="tight",
-    # )
-
-    # plt.savefig(
-    #     f"top_predictions_{model_name}_{simulation_type}.png",
-    #     dpi=300,
-    #     bbox_inches="tight",
-    # )
-
     for c in compounds:
         with open(f"{model_name}_{c}_{simulation_type}.pkl", "wb") as f:
             pickle.dump(models[c], f)
@@ -135,13 +116,14 @@ fig, axs = plt.subplots(
 
 # for ax in axs.flat:  # hspace is -ve for space saving
 #     ax.patch.set_alpha(0.0)
-FONTSIZE = 18
+FONTSIZE = 20
+
 for i, ax in enumerate(axs[:, 0], start=1):
     ax.set_ylabel(
         # f"D{i}",
-        r"$\bf{D}_{" + f"{i}" + r"}$",
+        r"$\bf{D}_{" + f"{i}0" + r"}$",
         rotation=0,
-        fontsize=FONTSIZE * 0.6,
+        fontsize=FONTSIZE * 0.8,
         labelpad=-6,
         loc="center",
         alpha=0.5,
@@ -191,6 +173,20 @@ plot_deciles_of_top_predictions(
     simulation_type="FEFF",
 )
 fig = plt.gcf()
+import numpy as np
+
+for i, ax in enumerate(np.array(fig.get_axes()).reshape(-1, 10)[:, 0], start=1):
+    # add text with decile labels
+    ax.set_ylabel(
+        r"$\bf{D}_{" + f"{i}0" + r"}$",
+        rotation=0,
+        fontsize=FONTSIZE * 0.9,
+        labelpad=-6,
+        loc="center",
+        alpha=0.5,
+        color="black",
+    )
+
 fig.savefig(
     f"top_predictions_{model_name}_{len(models)}_compounds.pdf",
     dpi=300,
@@ -214,7 +210,21 @@ for c in cfg.compounds:
 axs = plot_deciles_of_top_predictions(
     models=models, simulation_type="FEFF", performances=performances
 )
+
 fig = plt.gcf()
+
+for i, ax in enumerate(np.array(fig.get_axes()).reshape(-1, 8)[:, 0], start=1):
+    # add text with decile labels
+    ax.set_ylabel(
+        r"$\bf{D}_{" + f"{i}0" + r"}$",
+        rotation=0,
+        fontsize=FONTSIZE * 0.9,
+        labelpad=-6,
+        loc="center",
+        alpha=0.5,
+        color="black",
+    )
+
 fig.savefig(
     f"top_predictions_universal_tl_{len(models)}_compounds.pdf",
     dpi=300,
