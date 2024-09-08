@@ -105,7 +105,7 @@ df = pd.DataFrame(
 for compound, feature, mlp_model_name in product(
     cfg.compounds,
     ["ACSF", "SOAP", "FEFF"],
-    ["LinReg", "XGBReg", "RFReg", "MLP", "ElastNet", "RidgeReg", "SVReg"],
+    ["LinReg", "SVReg", "MLP"],
 ):
     # add column with geometric mean of mse for each compound
     mask = (
@@ -141,11 +141,12 @@ for compound, feature, mlp_model_name in product(
 PLOT_METRIC = "performance_median"
 
 
+# PLOT_MODELS = ["LinReg", "SVReg", "MLP"]
 PLOT_MODELS = ["LinReg", "SVReg", "MLP"]
 labels = ["Linear Regression", "Support Vector Regression", "MLP"]
 
 WIDTH = 0.15
-FONTSIZE = 18
+FONTSIZE = 24
 
 
 # plot scatter plot of mse for each model
@@ -203,37 +204,14 @@ for i, feature in enumerate(["ACSF", "SOAP", "FEFF"], start=0):
             showfliers=True,  # no outlier
         )
 
-        # ax.scatter(
-        #     [i + j * WIDTH] * len(data),
-        #     data,
-        #     color=model_colors[mlp_model_name],
-        #     marker=markers_dict[feature],
-        #     label=mlp_model_name,
-        # )
-
-        # # plot violin plot instead with all mse values (NOT PLOT_METRIC)
-        # for i, compound in enumerate(cfg.compounds):
-        #     mask = (
-        #         (df["feature"] == feature)
-        #         & (df["model"] == mlp_model_name)
-        #         & (df["compound"] == compound)
-        #     )
-        #     string_values = df[mask]["mse_per_spectra"].values
-        #     float_values = [ast.literal_eval(x) for x in string_values]
-        #     float_values = np.array(float_values)
-        #     float_values = float_values.T
-        #     ax.violinplot(
-        #         float_values,
-        #         positions=[i + j * WIDTH],
-        #         widths=WIDTH,
-        #     )
-
     ax.set_yscale("log")
     ax.set_ylim(1, 23)
     ax.yaxis.grid(True, which="major", linestyle="--", alpha=0.5)
     # ax.yaxis.grid(True, which="minor", linestyle="--", linewidth=0.5)
 
-    ax.set_yticks(np.arange(1, ax.get_ylim()[1], 2))
+    yticks = np.arange(1, ax.get_ylim()[1], 2)
+    ax.set_yticks(yticks)
+    assert np.all([x % 1 == 0 for x in yticks]), "Yticks is assumed integer"
     ax.set_yticklabels([f"{int(x)}" for x in ax.get_yticks()], fontsize=FONTSIZE * 0.8)
     ax.xaxis.set_ticks_position("none")
 
@@ -242,8 +220,6 @@ for i, feature in enumerate(["ACSF", "SOAP", "FEFF"], start=0):
     ax.set_xticklabels(["ACSF", "SOAP", "Transfer-feature"], fontsize=FONTSIZE * 0.8)
 
     ax.set_xlim(-2 * WIDTH, 2 + (len(PLOT_MODELS) - 1) * WIDTH)
-
-    # ax.set_title(PLOT_METRIC, fontsize=FONTSIZE)
 
 # handles by color for model
 handles = [
@@ -274,15 +250,11 @@ plt.savefig("model_performance_by_feature_boxplot.pdf", bbox_inches="tight", dpi
 # # =============================================================================
 
 
-# df_subset = deepcopy(
-#     df[(df["model"] == "LinReg") | (df["model"] == "XGBReg") | (df["model"] == "MLP")]
-# )
-
 # mask based on PLOT_MODELS
 df_subset = deepcopy(df[df["model"].isin(PLOT_MODELS)])
 
 pivot_df = df_subset.pivot(
-    index="compound", columns=["feature", "model"], values="performance_gmean"
+    index="compound", columns=["feature", "model"], values=PLOT_METRIC
 )
 new_order = []
 for feature in ["ACSF", "SOAP", "FEFF"]:
@@ -311,53 +283,4 @@ with open("performance_table.tex", "w") as f:
 
 print(latex_output)
 
-# # =============================================================================
-
-
 # %%
-# round to 3 decimal places with no zero padding in end upto 3 decimal places only
-def format_float(x):
-    if pd.isna(x):
-        return ""
-    return f"{x:.4f}"  # Always show 3 decimal places
-
-
-# table of baseline gmean
-dict = {}
-for compound in cfg.compounds:
-    dict[compound] = MeanModel(
-        query=DataQuery(compound, "FEFF")
-    ).geometric_mean_of_mse_per_spectra
-for compound in ["Ti", "Cu"]:
-    dict[compound + "(VASP)"] = MeanModel(
-        query=DataQuery(compound, "VASP")
-    ).geometric_mean_of_mse_per_spectra
-dict
-
-
-# now save as latex
-df = pd.DataFrame.from_dict(dict, orient="index", columns=["Baseline"])
-
-# round as before
-df = df.map(format_float)
-
-latex_output = df.to_latex()
-with open("baseline_table.tex", "w") as f:
-    f.write(latex_output)
-
-print(latex_output)
-
-# %%
-
-# # sample svg regression plot
-# compound = "Ti"
-# svgreg_model = SVReg(query=DataQuery(compound, "FEFF")).load()
-# # plt.plot(
-# #     svgreg_model.predictions.T,
-# # )
-# mlp_model = Trained_FCModel(query=DataQuery(compound, "FEFF"), name="per_compound_tl")
-# plt.hist(np.log(mlp_model.mse_per_spectra), bins=50, alpha=0.5, label="MLP")
-# plt.hist(np.log(svgreg_model.mse_per_spectra), bins=50, alpha=0.5, label="SVR")
-# plt.legend()
-
-#
