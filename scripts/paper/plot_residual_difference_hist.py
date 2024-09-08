@@ -10,15 +10,15 @@ from config.defaults import cfg
 # %%
 
 
-fig = plt.figure(figsize=(8, 10))
+fig = plt.figure(figsize=(9, 12))
 plt.style.use(["default", "science"])
-gs = fig.add_gridspec(5, 2, hspace=0, wspace=0)
+gs = fig.add_gridspec(5, 2, hspace=0.05, wspace=0.02)
 axs = gs.subplots(sharex=True, sharey=True)
 i = 0
 iterator = list(zip(cfg.compounds, ["FEFF"] * len(cfg.compounds)))
 iterator.append(("Ti", "VASP"))
 iterator.append(("Cu", "VASP"))
-FONTSIZE = 18
+FONTSIZE = 22
 win_rate_dict = {}
 for ax, (compound, simulation_type) in zip(axs.flatten(), iterator):
     model_expert = Trained_FCModel(
@@ -59,7 +59,7 @@ for ax, (compound, simulation_type) in zip(axs.flatten(), iterator):
         bars,
         width=np.diff(bins),
         color=plt.get_cmap("tab10")(i),
-        label=r"$\varepsilon_{\text{tuned}} < \varepsilon_{\text{expert}}$",
+        label=r"$\varepsilon^{\text{tuned}}_{i,j} < \varepsilon^{\text{expert}}_{i,j}$",
         edgecolor="black",
         linewidth=0.5,
     )
@@ -71,7 +71,7 @@ for ax, (compound, simulation_type) in zip(axs.flatten(), iterator):
         bars,
         width=np.diff(bins),
         alpha=0.7,
-        label=r"$\varepsilon_{\text{tuned}} > \varepsilon_{\text{expert}}$",
+        label=r"$\varepsilon^{\text{tuned}}_{i,j} > \varepsilon^{\text{expert}}_{i,j}$",
         edgecolor="black",
         linewidth=0.5,
         color="white",
@@ -79,8 +79,8 @@ for ax, (compound, simulation_type) in zip(axs.flatten(), iterator):
 
     ax.set_xticks(np.arange(-4, 0, 1))
     ax.set_xticklabels(
-        [r"$10^{" + f"{x}" + "}$" for x in ax.get_xticks()],
-        fontsize=FONTSIZE * 0.7,
+        ax.get_xticks(),
+        fontsize=FONTSIZE * 0.8,
     )
 
     ax.set_yticks([])
@@ -88,64 +88,112 @@ for ax, (compound, simulation_type) in zip(axs.flatten(), iterator):
     ax.set_yticks(np.arange(1, 7, 2))
     ax.set_yticklabels(
         [f"{y:.0f}%" for y in ax.get_yticks()],
-        fontsize=FONTSIZE * 0.7,
+        fontsize=FONTSIZE * 0.8,
     )
 
     ax.text(
-        0.97,
+        0.95,
         0.9,
         compound,
         horizontalalignment="right",
         verticalalignment="top",
         transform=ax.transAxes,
-        fontsize=FONTSIZE * 1.5,
-        color=plt.get_cmap("tab10")(i),
+        fontsize=FONTSIZE,
+        # color=plt.get_cmap("tab10")(i),
         fontweight="bold",
-        # bbox=dict(
-        #     facecolor=plt.get_cmap("tab10")(i),
-        #     alpha=0.5,
-        #     edgecolor=plt.get_cmap("tab10")(i),
-        # ),
+        bbox=dict(
+            facecolor=plt.get_cmap("tab10")(i),
+            alpha=0.5,
+            edgecolor=plt.get_cmap("tab10")(i),
+        ),
     )
 
-    # a text that show the wincount of the tuned model
+    if simulation_type == "VASP":
+        ax.text(
+            0.97,
+            0.65,
+            "VASP",
+            horizontalalignment="right",
+            verticalalignment="top",
+            transform=ax.transAxes,
+            fontsize=FONTSIZE * 0.6,
+            # color=plt.get_cmap("tab10")(i),
+            # fontweight="bold",
+        )
 
-    win_rate = np.sum(model_expert.mse_per_spectra > model_tuned.mse_per_spectra)
-    win_rate = win_rate / len(model_expert.mse_per_spectra) * 100
-    win_rate = np.round(win_rate, 2)
-    win_rate_dict[f"{compound}_{simulation_type}"] = win_rate
-
-    # top left win rate
-    ax.text(
-        0.03,
-        0.9,
-        r"$\text{Win}: " + f"{win_rate:.2f}\%$",
-        horizontalalignment="left",
-        verticalalignment="top",
-        transform=ax.transAxes,
-        fontsize=FONTSIZE * 0.8,
-        color=plt.get_cmap("tab10")(i),
-        fontweight="bold",
-    )
+    # # a text that show the wincount of the tuned model
+    # win_rate = np.sum(model_expert.mse_per_spectra > model_tuned.mse_per_spectra)
+    # win_rate = win_rate / len(model_expert.mse_per_spectra) * 100
+    # win_rate = np.round(win_rate, 2)
+    # win_rate_dict[f"{compound}_{simulation_type}"] = win_rate
+    # # top left win rate
+    # ax.text(
+    #     0.05,
+    #     0.9,
+    #     r"$\text{Win}: " + f"{win_rate:.2f}\%$",
+    #     horizontalalignment="left",
+    #     verticalalignment="top",
+    #     transform=ax.transAxes,
+    #     fontsize=FONTSIZE * 0.8,
+    #     color=plt.get_cmap("tab10")(i),
+    #     fontweight="bold",
+    #     bbox=dict(
+    #         facecolor="white",
+    #         alpha=0.5,
+    #         edgecolor=plt.get_cmap("tab10")(i),
+    #     ),
+    # )
 
     ax.minorticks_off()
 
     # ax.set_xlim(-5, 0)
     i += 1
+    
+# # add legend at bottom left axes
+# axs[0, 0].legend(
+#     fontsize=FONTSIZE * 0.8,
+#     # loc="upper left",
+#     bbox_to_anchor=(0.05, 0.9),
+#     # bbox_transform=fig.transFigure,
+# )
+    
 
-axs[0, 0].legend(
-    fontsize=FONTSIZE * 0.83,
-    loc="center left",
+    
+
+# add legend above all axes
+handles, labels = axs[0, 0].get_legend_handles_labels()
+from matplotlib.patches import Patch
+handles = [
+    Patch(
+        facecolor="black",
+        edgecolor="black",
+        label=r"$\varepsilon^{\text{tuned}}_{i,j} < \varepsilon^{\text{expert}}_{i,j}$",
+    ),
+    Patch(
+        facecolor="lightgray",
+        edgecolor="black",
+        alpha=0.7,
+        label=r"$\varepsilon^{\text{tuned}}_{i,j} > \varepsilon^{\text{expert}}_{i,j}$",
+    ),
+]
+fig.legend(
+    handles=handles,
+    labels=labels,
+    loc="upper center",
+    fontsize=FONTSIZE,
+    ncol=2,
+    bbox_to_anchor=(0.5, 0.95),
+    bbox_transform=fig.transFigure,
 )
 
-# xlabel = r"$|\Delta\varepsilon|$"
-xlabel = r"$|\varepsilon_{\text{tuned}} - \varepsilon_{\text{expert}}|$"
+# add log10
+xlabel = r"$\log_{10}(|\varepsilon^{\text{tuned}}_{i,j} - \varepsilon^{\text{expert}}_{i,j}|)$"
 axs[-1, 0].set_xlabel(xlabel, fontsize=FONTSIZE)
 axs[-1, 1].set_xlabel(xlabel, fontsize=FONTSIZE)
 
 
 fig.text(
-    -0.03,
+    0.06,
     0.5,
     r"Number of Spectra Points (\%)",
     va="center",
@@ -158,5 +206,3 @@ plt.savefig("residual_difference_histograms.pdf", bbox_inches="tight", dpi=300)
 
 
 # %%
-
-win_rate_dict
