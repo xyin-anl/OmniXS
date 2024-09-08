@@ -94,8 +94,23 @@ plot_df["umap_s1"] = umap_proj_spectra[:, 1]
 # %%
 
 # PARAMETERS
-DATA = "spectra"
-DESC = "compound"  # ["compound_idx", "OS", "CN", "OCN", "NNRS", "MOOD]
+DATA = "spectra"  # ["feature", "spectra"]
+DESC = "OCN"  # ["compound", "OS", "CN", "OCN", "NNRS", "MOOD]
+ADD_LEGEND = True  # manually add legend
+ADD_LABEL = False  # use lib function for labels
+FONT_SIZE = 42 if DESC != "OCN" else 25
+ADD_TITLE = False
+ADD_YLABEL = False
+DARK_MODE = True
+ADD_GLOW = True  # slow
+POINT_SIZE = 0.75
+ADD_BACKClR = False
+BACKGROUND_COLOR = "#1F1F1F"
+Glow_KEYWORD = {
+    "kernel": "gaussian",  # gaussian, tophat, epanechnikov, exponential, linear, cosine
+    "kernel_bandwidth": 0.5 if DESC == "OCN" else 0.75,  # default: 0.25,
+    "approx_patch_size": 16,  # default: 64
+}
 
 
 # DEFAULT PARAMETERS
@@ -114,40 +129,43 @@ datamapplot_kwargs = {
     "verbose": True,
     "darkmode": False,  # label color (and prolly others) also gets affects
     # "alpha": 1,
-    "add_glow": False,  # SET TO FALSE FOR TESTING, glow makes diffused colors
+    "add_glow": ADD_GLOW,  # SET TO FALSE FOR TESTING, glow makes diffused colors
     # "marker_color_array": [compound_colors[compound] for compound in labels],
     "dpi": 300,
     "noise_label": "nan",
     "use_medoids": True,  # better but slower
-    "point_size": 3,
+    "point_size": POINT_SIZE,
     "arrowprops": {
         "arrowstyle": "wedge,tail_width=0.1,shrink_factor=0.5",
         "connectionstyle": "arc3,rad=0.05",
         "linewidth": 0,
     },
-    "label_font_size": 50,
+    "label_font_size": FONT_SIZE,
     "label_base_radius": 10,
+    # "title" = DESC,
 }
-datamapplot_kwargs["darkmode"] = True
+# CUSTOMIZATIONS
+datamapplot_kwargs["darkmode"] = DARK_MODE
+datamapplot_kwargs["glow_keywords"] = Glow_KEYWORD
+if ADD_LABEL is False:
+    datamapplot_kwargs["label_font_size"] = 0  # remove labels
 
-# # # FAST/OK
-# # datamapplot_kwargs["add_glow"] = False
-# # datamapplot_kwargs["use_medoids"] = False
 
-# SLOW/BETTER
-datamapplot_kwargs["add_glow"] = True
-datamapplot_kwargs["use_medoids"] = True
+# # SLOW/BETTER
+# datamapplot_kwargs["add_glow"] = True
+# datamapplot_kwargs["use_medoids"] = True
 
 datamapplot_kwargs["alpha"] = 1
-if DESC == "OCN":
-    datamapplot_kwargs["label_over_points"] = False
-    if DATA == "feature":
-        datamapplot_kwargs["label_direction_bias"] = 2
-        datamapplot_kwargs["label_base_radius"] = 20
-        datamapplot_kwargs["label_over_points"] = False
-    elif DATA == "spectra":
-        datamapplot_kwargs["label_direction_bias"] = 4  # makes label more vertical
-        datamapplot_kwargs["label_base_radius"] = 19
+
+# if DESC == "OCN":
+#     datamapplot_kwargs["label_over_points"] = False
+#     if DATA == "feature":
+#         datamapplot_kwargs["label_direction_bias"] = 2
+#         datamapplot_kwargs["label_base_radius"] = 20
+#         datamapplot_kwargs["label_over_points"] = False
+#     elif DATA == "spectra":
+#         datamapplot_kwargs["label_direction_bias"] = 4  # makes label more vertical
+#         datamapplot_kwargs["label_base_radius"] = 19
 
 
 # less thatn 5% of maximum count
@@ -174,19 +192,20 @@ if DESC == "OCN":
 
 
 if DESC in ["OS", "CN", "OCN"]:
-    glasbey_palette = glasbey.create_palette(
+
+    pallete = glasbey.create_palette(
         palette_size=len(labels.unique()),
-        # lightness_bounds=(50, 100),
-        # chroma_bounds=(40, 80),
+        lightness_bounds=(50, 80),  # smaller is darker
+        chroma_bounds=(60, 100),  # smaller is less colorful
         # colorblind_safe=True,
     )
-    # datamapplot_kwargs["title"] = desc
+
     color_dict = {}
     for i, label in enumerate(labels.unique()):
         if label == "nan":
             color_dict[label] = "#999999"  # default grey in datamapplot
         else:
-            color_dict[label] = glasbey_palette[i - 1]
+            color_dict[label] = pallete[i - 1]
 
 if DESC == "compound":
     color_dict = {
@@ -197,6 +216,7 @@ if DESC == "compound":
 X = f"umap_{DATA[0].lower()}0"
 Y = f"umap_{DATA[0].lower()}1"
 points = np.array([plot_df[X].values, plot_df[Y].values]).T
+
 fig, ax = datamapplot.create_plot(
     points,
     labels,
@@ -208,8 +228,9 @@ fig, ax = datamapplot.create_plot(
     **datamapplot_kwargs,
 )
 
-ax.set_facecolor("#1F1F1F")
-fig.patch.set_facecolor("#696969")
+if ADD_BACKClR:
+    ax.set_facecolor(BACKGROUND_COLOR)
+    fig.patch.set_facecolor("#696969")
 
 
 y_label = DESC if DESC != "compound" else "Element"
@@ -222,14 +243,73 @@ ax.set_title(
     color="white",
 )
 
+if ADD_TITLE:
+    ax.text(
+        0.5,
+        0.95,
+        f"{DESC}" if DESC != "compound" else "Element",
+        fontsize=44,
+        color="#AAAAAA",
+        transform=ax.transAxes,
+        ha="center",
+        va="center",
+        fontweight="bold",
+        fontname="DejaVu Sans",
+    )
+
+if ADD_YLABEL:
+    ax.text(
+        0.05,
+        0.5,
+        DATA.capitalize(),
+        fontsize=44,
+        color="#AAAAAA",
+        transform=ax.transAxes,
+        ha="center",
+        va="center",
+        fontweight="bold",
+        fontname="DejaVu Sans",
+        rotation=90,
+    )
+
+
+if ADD_LEGEND:
+
+    i = 0
+    color_dict = dict(sorted(color_dict.items(), key=lambda item: item[0]))
+    count = len(color_dict) - 1  # remove nan
+    dx = 0.75 / count if DESC != "OCN" else 0.9 / count
+    dy = 0.2 / FONT_SIZE 
+    max_row = 9
+    x0 = 0.5 - dx * count / 2 + dx / 2
+    y0 = 0.075
+    for label, color in color_dict.items():
+        if label == "nan":
+            continue
+        i += 1
+        row = (i - 1) // max_row
+        col = (i - 1) % max_row
+        x = x0 + col * dx
+        y = y0 - row * dy
+        ax.text(
+            x,
+            y,
+            f"{label}",
+            fontsize=FONT_SIZE,
+            color=color,
+            transform=ax.transAxes,
+            ha="center",
+            va="center",
+            fontweight="bold",
+            # font should be math font
+            fontname="DejaVu Sans",
+        )
+
+
 fig.tight_layout()
-fig.savefig(f"umap_{DESC}_{DATA}.png", bbox_inches="tight", dpi=300)
+# fig.savefig(f"umap_{DESC}_{DATA}.png", bbox_inches="tight", dpi=300)
 fig.savefig(f"umap_{DESC}_{DATA}.pdf", bbox_inches="tight", dpi=300)
 
-
-# %%
-
-plot_df.keys()
 
 # %%
 
