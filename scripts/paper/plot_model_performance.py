@@ -25,7 +25,7 @@ def generate_performance_comparison_plot(
     use_relative: bool = True,
     include_vasp: bool = True,
     ax=None,
-    FONTSIZE=14,
+    FONTSIZE=20,
     y_label=r"Performance ($\eta$)",
 ):
 
@@ -134,12 +134,15 @@ def generate_performance_comparison_plot(
         xticks[-2:] = xticks[-2:] + bar_width * 1.5
     ax.set_xticks(xticks)
     ax.set_xlim(-bar_width * 1.5, ax.get_xlim()[1] - 1.5 * bar_width)
+    yticks = ax.get_yticks()
+    assert np.all([x % 1 == 0 for x in yticks]), "Y ticks assumed to be integers"
+    ax.set_yticklabels([f"{int(y)}" for y in yticks], fontsize=FONTSIZE)
     ax.set_xticklabels(
         cfg.compounds
         + (
             [
-                "Ti\n" + r"{\large VASP}",
-                "Cu\n" + r"{\large VASP}",
+                "Ti\n" + r"{\Large VASP}",
+                "Cu\n" + r"{\Large VASP}",
             ]
             if include_vasp
             else []
@@ -166,9 +169,11 @@ def generate_performance_comparison_plot(
     legend = ax.legend(
         handles,
         [handle_names_dict[model_name] for model_name in model_names],
-        fontsize=FONTSIZE * 0.925,
+        fontsize=FONTSIZE * 0.8,
         handlelength=2,
         handleheight=1,
+        # x and y
+        loc=(0.41, 0.75),
     )
     for text in legend.get_texts():
         text.set_rotation(0)  # Ensure the text is horizontal
@@ -190,61 +195,61 @@ fig, ax = plt.subplots(1, 1, figsize=(WEIGHT, HEIGHT), dpi=DPI)
 
 models_metrics = generate_performance_comparison_plot(
     ax=ax,
-    # metric="geometric_mean_of_mse_per_spectra",
     metric="median_of_mse_per_spectra",
     use_relative=True,
 )
-
-print(models_metrics)
-
 
 # %%
 
 # =============================================================================
 # GENERATE LATEx TABLE
 # =============================================================================
-# for model_name in ["per_compound_tl", "ft_tl"]:
-#     dict_feff = {
-#         k[0]: v for k, v in models_metrics[model_name].items() if k[1] == "FEFF"
-#     }
-#     dict_vasp = {
-#         str(k[0]) + "_VASP": v
-#         for k, v in models_metrics[model_name].items()
-#         if k[1] == "VASP"
-#     }
-#     model_labels = {
-#         "per_compound_tl": "ExpertXAS",
-#         "ft_tl": "Tuned-UniversalXAS",
-#         "universal": "UniversalXAS",
-#     }
-#     models_metrics[model_labels[model_name]] = {**dict_feff, **dict_vasp}
-# models_metrics.pop("per_compound_tl")
-# models_metrics.pop("ft_tl")
-# df = pd.DataFrame(models_metrics)
-# df = df.fillna("N/A")
-# df.index = df.index.str.replace("_", " ")
-# df = df.reset_index().rename(columns={"index": "Element"})
-# df = df[["Element", "ExpertXAS", "UniversalXAS", "Tuned-UniversalXAS"]]
-# df = df.set_index("Element")
-# # Function to format numbers
-# def format_number(x):
-#     if isinstance(x, (int, float)):
-#         return f"{x:.3f}"
-#     return x
-# df = df.applymap(format_number)
-# # Generate LaTeX table
-# latex_table = df.to_latex(
-#     index=True,
-#     column_format="|l|c|c|c|",
-#     bold_rows=False,
-#     caption="Model Metrics Comparison",
-#     label="tab:model-metrics",
-# )
-# # Add additional LaTeX formatting
-# latex_table = latex_table.replace("\\begin{table}", "\\begin{table}[h!]\n\\centering")
-# latex_table = latex_table.replace(
-#     "\\begin{tabular}", "\\begin{tabular}{|l|c|c|c|}\n\\hline"
-# )
-# latex_table = latex_table.replace("\\end{tabular}", "\\hline\n\\end{tabular}")
-# print(latex_table)
+for model_name in ["per_compound_tl", "ft_tl"]:
+    dict_feff = {
+        k[0]: v for k, v in models_metrics[model_name].items() if k[1] == "FEFF"
+    }
+    dict_vasp = {
+        str(k[0]) + "_VASP": v
+        for k, v in models_metrics[model_name].items()
+        if k[1] == "VASP"
+    }
+    model_labels = {
+        "per_compound_tl": "ExpertXAS",
+        "ft_tl": "Tuned-UniversalXAS",
+        "universal": "UniversalXAS",
+    }
+    models_metrics[model_labels[model_name]] = {**dict_feff, **dict_vasp}
+models_metrics.pop("per_compound_tl")
+models_metrics.pop("ft_tl")
+df = pd.DataFrame(models_metrics)
+df = df.fillna("N/A")
+df.index = df.index.str.replace("_", " ")
+df = df.reset_index().rename(columns={"index": "Element"})
+df = df[["Element", "ExpertXAS", "UniversalXAS", "Tuned-UniversalXAS"]]
+df = df.set_index("Element")
+
+
+# Function to format numbers
+def format_number(x):
+    if isinstance(x, (int, float)):
+        return f"{x:.3f}"
+    return x
+
+
+df = df.applymap(format_number)
+# Generate LaTeX table
+latex_table = df.to_latex(
+    index=True,
+    column_format="|l|c|c|c|",
+    bold_rows=False,
+    caption="Model Metrics Comparison",
+    label="tab:model-metrics",
+)
+# Add additional LaTeX formatting
+latex_table = latex_table.replace("\\begin{table}", "\\begin{table}[h!]\n\\centering")
+latex_table = latex_table.replace(
+    "\\begin{tabular}", "\\begin{tabular}{|l|c|c|c|}\n\\hline"
+)
+latex_table = latex_table.replace("\\end{tabular}", "\\hline\n\\end{tabular}")
+print(latex_table)
 # ==============================================================================
