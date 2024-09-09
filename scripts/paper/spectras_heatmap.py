@@ -25,8 +25,9 @@ all_data["Cu_VASP"] = load_xas_ml_data(
 )
 
 
-for c in cfg.compounds:
-    all_data[c] = load_xas_ml_data(DataQuery(c, "FEFF"), filter_spectra_anomalies=True)
+## FOR FEFF
+# for c in cfg.compounds:
+#     all_data[c] = load_xas_ml_data(DataQuery(c, "FEFF"), filter_spectra_anomalies=True)
 
 
 # %%
@@ -107,23 +108,18 @@ compound_colors = {
 
 plt.style.use(["default", "science"])
 
-# fig = plt.figure(figsize=(2 * 4, 2 * len(all_data) // 2))
-# # grid = plt.GridSpec(len(cfg.compounds) // 2, 2, hspace=0.0, wspace=0.0)
-# grid = plt.GridSpec(len(all_data) // 2, 2, hspace=0.0, wspace=0.0)
-# axs = [fig.add_subplot(grid[i, j]) for i in range(len(all_data) // 2) for j in range(2)]
-
-COLS = 4
-ROWS = 3
+COLS = 2
+ROWS = 1
 fig = plt.figure(figsize=(COLS * 4, ROWS * 3.5))
 grid = plt.GridSpec(ROWS, COLS, hspace=0.015, wspace=0.02, figure=fig)
 axs = [fig.add_subplot(grid[i, j]) for i in range(ROWS) for j in range(COLS)]
 # axs = [fig.add_subplot(grid[i, j]) for i in range(len(all_data) // 2) for j in range(2)]
 
-# remove_idx = [2, 3]
-remove_idx = [0, 3]
-for i in remove_idx:
-    fig.delaxes(axs[i])
-axs = [ax for i, ax in enumerate(axs) if i not in remove_idx]
+# # remove_idx = [2, 3]
+# remove_idx = [0, 3]
+# for i in remove_idx:
+#     fig.delaxes(axs[i])
+# axs = [ax for i, ax in enumerate(axs) if i not in remove_idx]
 
 for ax, (c, data) in zip(axs, all_data.items()):
     print(f"Plotting {c}...")
@@ -150,6 +146,7 @@ for ax, (c, data) in zip(axs, all_data.items()):
         horizontalalignment="left",
         bbox=dict(facecolor=compound_colors[c], alpha=0.5, edgecolor="white"),
     )
+
     if "VASP" in c:
         ax.text(
             0.02,
@@ -168,8 +165,8 @@ for ax, (c, data) in zip(axs, all_data.items()):
     ax.set_yticks([])
 
 
-# for i in range(4, len(axs)):
-for i in range(len(axs)):
+# for i in range(4, len(axs)):  # FEFF
+for i in range(len(axs)):  # VASP
     axs[i].set_xlabel(r"$\Delta E$ (eV)", fontsize=FONTSIZE)
     xticks = np.array([20, 40, 60, 80, 100, 120]).astype(int)
     # xticks = np.array([10, 30, 50, 70, 90, 110, 130]).astype(int)
@@ -185,24 +182,64 @@ for i in range(len(axs)):
     axs[i].set_xticklabels(xtick_labels, fontsize=FONTSIZE * 0.8)
 
 
-for i in [0, 2, 6]:
-    axs[i].set_ylabel(r"$\mu(E)$ (a.u.)", fontsize=FONTSIZE)
-
-
-# # single y label on left side that says $\mu(E) (a.u.)$
-# fig.text(
-#     0.098,
-#     0.5,
-#     r"$\mu(E)$ (a.u.)",
-#     va="center",
-#     rotation="vertical",
-#     fontsize=FONTSIZE * 1.2,
-# )
+# single y label on left side that says $\mu(E) (a.u.)$
+fig.text(
+    # 0.098,  # FEFF
+    0.078,  # VASP
+    0.5,
+    r"$\mu(E)$ (a.u.)",
+    va="center",
+    rotation="vertical",
+    fontsize=FONTSIZE * 1.2,
+)
 
 fig.savefig(
-    "spectra_heatmap.pdf",
+    "spectra_heatmap_vasp.pdf",
     bbox_inches="tight",
     dpi=300,
+)
+
+# %%
+
+
+# Ti      & 4,946         \\
+# V       & 8,294         \\
+# Cr      & 2,363         \\
+# Mn      & 14,834        \\
+# Fe      & 9,857         \\
+# Co      & 8,376         \\
+# Ni      & 3,559         \\
+# Cu      & 3,503         \\
+
+# sum
+
+sizes = [
+    4946,
+    8294,
+    2363,
+    14834,
+    9857,
+    8376,
+    3559,
+    3503,
+]
+sum(sizes)
+
+
+# %%
+
+
+def data_size(compound, simulation_type):
+    data = load_xas_ml_data(
+        DataQuery(compound, simulation_type),
+        filter_spectra_anomalies=True,
+        use_cache=True,
+    )
+    return len(data.train.y) + len(data.val.y) + len(data.test.y)
+
+
+np.sum([data_size(c, "FEFF") for c in cfg.compounds]) + np.sum(
+    [data_size(c, "VASP") for c in ["Ti", "Cu"]]
 )
 
 # %%
