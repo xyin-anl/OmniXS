@@ -136,13 +136,41 @@ def compare_mse_per_energy(
 ):
     if axs is None:
         fig, axs = plt.subplots(
-            len(compounds), 1, figsize=(12, 4 * len(compounds)), sharex=True
+            len(compounds),
+            1,
+            # figsize=(12, 4 * len(compounds)),
+            figsize=(9, 12),
+            sharex=True,
         )
     axs = axs.flatten()
 
     LINEWIDTH = 0.4
     compound_colors = {c: plt.cm.tab10.colors[i] for i, c in enumerate(compounds)}
     for idx, compound in enumerate(compounds):
+
+        from src.models.trained_models import Trained_FCModel
+
+        def winrate(compound, simulation_type):
+            diff = (
+                Trained_FCModel(
+                    DataQuery(compound, simulation_type), name="per_compound_tl"
+                ).mse_per_spectra
+                - Trained_FCModel(
+                    DataQuery(compound, simulation_type), name="ft_tl"
+                ).mse_per_spectra
+            )
+            return np.sum(diff > 0) / len(diff) * 100
+        axs[idx].text(
+            0.025 - (0.01 if compound == "V" else 0),
+            0.9 if not (compound in ["Cu","Mn"] and simulation_type == "FEFF") else 0.45,
+            f"Win Rate.: {winrate(compound, simulation_type):.1f}\%",
+            fontsize=16,
+            transform=axs[idx].transAxes,
+            verticalalignment="top",
+            horizontalalignment="left",
+            color=plt.cm.tab10.colors[idx],
+            fontweight="bold",
+        )
 
         def mse_per_energy(model_name):
             return PredError(
@@ -189,26 +217,29 @@ def compare_mse_per_energy(
         )
 
         axs[idx].text(
-            1 - 0.96,
-            0.85,
+            0.04,
+            0.7 if not (compound in ["Cu","Mn"] and simulation_type == "FEFF") else 0.25,
             compound,
-            fontsize=fontsize * 0.8,
+            fontsize=18,
             transform=axs[idx].transAxes,
             verticalalignment="top",
             horizontalalignment="left",
             bbox=dict(
-                facecolor=compound_colors[compound], alpha=0.2, edgecolor="white"
+                facecolor=compound_colors[compound],
+                alpha=0.4,
+                edgecolor="white",
             ),
         )
 
         if simulation_type == "VASP":
             # add text bleow the compound name saying VASP with size 12
             axs[idx].text(
-                1 - 0.97,
+                0.03,
                 0.45,
                 "VASP",
-                fontsize=10,
-                color="#101010",
+                fontsize=12,
+                # color="#101010",
+                color=plt.cm.tab10.colors[idx],
                 transform=axs[idx].transAxes,
                 verticalalignment="top",
                 horizontalalignment="left",
@@ -219,24 +250,37 @@ def compare_mse_per_energy(
         mean_spectra = np.mean(
             load_xas_ml_data(DataQuery(compound, simulation_type)).test.y, axis=0
         )
-        mean_spectra = mean_spectra / 1000  # TODO: remove hardcoding
+        mean_spectra = mean_spectra  # TODO: remove hardcoding
         axs_mean_spectra.plot(
             energy_points,
             mean_spectra,
             color="#101010",
-            linewidth=LINEWIDTH * 2,
-            linestyle=":",
+            # color="black",
+            # color=plt.cm.tab10.colors[idx],
+            linewidth=LINEWIDTH * 1.5,
+            linestyle="--",
             label="Mean spectra",
             zorder=0,
         )
         axs_mean_spectra.spines["right"].set_color("gray")
-        axs_mean_spectra.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
-        axs_mean_spectra.tick_params(axis="y", which="minor", length=0)
+
+        axs_mean_spectra.yaxis.set_major_formatter(
+            plt.FuncFormatter(lambda x, _: f"{x:.1f}")
+        )
+        axs_mean_spectra.yaxis.set_tick_params(labelsize=fontsize * 0.8)
+        axs_mean_spectra.xaxis.set_tick_params(labelsize=fontsize * 0.8)
+
+        axs[idx].yaxis.set_tick_params(labelsize=20, right=False)
+        axs[idx].xaxis.set_tick_params(labelsize=20)
 
         axs[idx].axhline(0, color="black", linestyle="-", linewidth=0.5)
-        axs[idx].tick_params(axis="y", which="both", left=True, right=False)
-        axs[idx].tick_params(axis="y", which="minor", length=0)
+
+        # axs[idx].tick_params(axis="y", which="both", left=True, right=False)
+        axs[idx].tick_params(axis="both", which="minor", right=False)
         axs[idx].set_xlim(0, max(energy_points))
+
+        # not ticks on top of axs
+        axs[idx].tick_params(axis="x", which="both", top=False)
 
         def align_yaxis_zero(ax1, ax2):
             """Align y=0 of two axes."""
@@ -262,14 +306,13 @@ model_names = [
     "universal_tl",
 ]
 
-fig = plt.figure(figsize=(6, 15))
+fig = plt.figure(figsize=(8, 18))
 plt.style.use(["default", "science"])
-gs = fig.add_gridspec(10, 1)  # , hspace=0.2, wspace=0)
+gs = fig.add_gridspec(10, 1, hspace=0.035, wspace=0)
 axs = gs.subplots(sharex=True, sharey=False)
-FONTSIZE = 18
+FONTSIZE = 26
 
 compare_mse_per_energy(model_names, cfg.compounds, axs=axs, fontsize=FONTSIZE)
-
 
 axs[0].legend(
     fontsize=FONTSIZE * 0.7,
@@ -278,19 +321,12 @@ axs[0].legend(
     ncol=2,
     frameon=False,
 )
-axs[-1].set_xlabel(r"$\Delta E$ (eV)", fontsize=FONTSIZE * 0.9)
+axs[-1].set_xlabel(r"$\Delta E$ (eV)", fontsize=FONTSIZE)
 
-# axs[-1].tick_params(axis="x", which="both", bottom=True, top=False, labelbottom=True)
-
-# axs[-1].tick_params(axis="x", which="major", length=5)
-
-# axs[4].set_ylabel(r"$\eta_{E}$", fontsize=FONTSIZE * 1.2)
-
-# add label on center of figure
 fig.text(
-    0,
+    0.025,
     0.5,
-    r"$\Delta \xi(E)$",
+    r"$\Delta\tilde{\xi}(E)$",
     va="center",
     rotation="vertical",
     fontsize=FONTSIZE * 1.1,
@@ -299,9 +335,9 @@ fig.text(
 
 # commont y label at right side of figure for all twin axses that says r"<\mu>"
 fig.text(
-    1,
+    1.01,
     0.5,
-    r"$\left<\mu\right>_E$",
+    r"$\left<\mu\right>_E \times 10^3$",  # TODO: remove hardcoding
     va="center",
     rotation=-90,
     fontsize=FONTSIZE * 1.1,
