@@ -22,10 +22,12 @@ transformations:
 
   emperical_offset:
     VASP:
+      # this is with experiment and alightment with FEFF
       Ti: 5114.08973
-      # Ti: 5108.58973
-      # Cu: 9492.797 # This is based on the comparision with experiment
       Cu: 9499.797
+      # This is based on the comparision with experiment
+      # Ti: 5108.58973
+      # Cu: 9492.797 
 
   gamma:
     Ti: 0.89 # put same value in trucation offset
