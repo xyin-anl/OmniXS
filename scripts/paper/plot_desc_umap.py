@@ -94,15 +94,15 @@ plot_df["umap_s1"] = umap_proj_spectra[:, 1]
 # %%
 
 # PARAMETERS
-DATA = "spectra"  # ["feature", "spectra"]
+DATA = "feature"  # ["feature", "spectra"]
 DESC = "OCN"  # ["compound", "OS", "CN", "OCN", "NNRS", "MOOD]
-ADD_LEGEND = True  # manually add legend
+ADD_LEGEND = False  # manually add legend
 ADD_LABEL = False  # use lib function for labels
 FONT_SIZE = 42 if DESC != "OCN" else 25
-ADD_TITLE = False
+ADD_TITLE = True
 ADD_YLABEL = False
 DARK_MODE = True
-ADD_GLOW = True  # slow
+ADD_GLOW = True # True
 POINT_SIZE = 0.75
 ADD_BACKClR = False
 BACKGROUND_COLOR = "#1F1F1F"
@@ -111,7 +111,6 @@ Glow_KEYWORD = {
     "kernel_bandwidth": 0.5 if DESC == "OCN" else 0.75,  # default: 0.25,
     "approx_patch_size": 16,  # default: 64
 }
-
 
 # DEFAULT PARAMETERS
 datamapplot_kwargs = {
@@ -193,19 +192,34 @@ if DESC == "OCN":
 
 if DESC in ["OS", "CN", "OCN"]:
 
-    pallete = glasbey.create_palette(
-        palette_size=len(labels.unique()),
-        lightness_bounds=(50, 80),  # smaller is darker
-        chroma_bounds=(60, 100),  # smaller is less colorful
-        # colorblind_safe=True,
-    )
+    if DESC == "OCN":
+        # sort by labels and then use jet
+        pallete = plt.get_cmap("Spectral")(np.linspace(0, 1, len(labels.unique())))
+        pallete = glasbey.extend_palette(pallete, len(labels.unique()))
+        color_dict = {}
+        for i, label in enumerate(sorted(labels.unique())):
+            if label == "nan":
+                color_dict[label] = "#999999"  # default grey in datamapplot
+            else:
+                color_dict[label] = pallete[i - 1]
 
-    color_dict = {}
-    for i, label in enumerate(labels.unique()):
-        if label == "nan":
-            color_dict[label] = "#999999"  # default grey in datamapplot
-        else:
-            color_dict[label] = pallete[i - 1]
+        # datamapplot_kwargs["add_glow"] = False  # Gives error otherwise for some reason
+
+    else:
+        pallete = glasbey.create_palette(
+            palette_size=len(labels.unique()),
+            lightness_bounds=(50, 80),  # smaller is darker
+            chroma_bounds=(60, 100),  # smaller is less colorful
+            # colorblind_safe=True,
+        )
+        color_dict = {}
+        for i, label in enumerate(labels.unique()):
+            if label == "nan":
+                color_dict[label] = "#999999"  # default grey in datamapplot
+            else:
+                color_dict[label] = pallete[i - 1]
+
+    # for i, label in enumerate(labels.unique()):
 
 if DESC == "compound":
     color_dict = {
@@ -279,7 +293,7 @@ if ADD_LEGEND:
     color_dict = dict(sorted(color_dict.items(), key=lambda item: item[0]))
     count = len(color_dict) - 1  # remove nan
     dx = 0.75 / count if DESC != "OCN" else 0.9 / count
-    dy = 0.2 / FONT_SIZE 
+    dy = 0.2 / FONT_SIZE
     max_row = 9
     x0 = 0.5 - dx * count / 2 + dx / 2
     y0 = 0.075

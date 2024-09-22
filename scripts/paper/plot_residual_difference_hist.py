@@ -59,7 +59,8 @@ for ax, (compound, simulation_type) in zip(axs.flatten(), iterator):
         bars,
         width=np.diff(bins),
         color=plt.get_cmap("tab10")(i),
-        label=r"$\varepsilon^{\text{tuned}}_{i,j} < \varepsilon^{\text{expert}}_{i,j}$",
+        # label=r"$\varepsilon^{\text{tuned}}_{i,j} < \varepsilon^{\text{expert}}_{i,j}$",
+        label=r"$\Delta > 0$",
         edgecolor="black",
         linewidth=0.5,
     )
@@ -71,7 +72,8 @@ for ax, (compound, simulation_type) in zip(axs.flatten(), iterator):
         bars,
         width=np.diff(bins),
         alpha=0.7,
-        label=r"$\varepsilon^{\text{tuned}}_{i,j} > \varepsilon^{\text{expert}}_{i,j}$",
+        # label=r"$\varepsilon^{\text{tuned}}_{i,j} > \varepsilon^{\text{expert}}_{i,j}$",
+        label=r"$\Delta < 0$",
         edgecolor="black",
         linewidth=0.5,
         color="white",
@@ -120,8 +122,8 @@ for ax, (compound, simulation_type) in zip(axs.flatten(), iterator):
             # color=plt.get_cmap("tab10")(i),
             # fontweight="bold",
         )
-        
-    # no ticks top top and make ticks come outside 
+
+    # no ticks top top and make ticks come outside
     ax.tick_params(axis="x", which="both", top=False, direction="out")
     ax.tick_params(axis="y", which="both", right=False, direction="in")
 
@@ -152,7 +154,7 @@ for ax, (compound, simulation_type) in zip(axs.flatten(), iterator):
 
     # ax.set_xlim(-5, 0)
     i += 1
-    
+
 # # add legend at bottom left axes
 # axs[0, 0].legend(
 #     fontsize=FONTSIZE * 0.8,
@@ -160,24 +162,25 @@ for ax, (compound, simulation_type) in zip(axs.flatten(), iterator):
 #     bbox_to_anchor=(0.05, 0.9),
 #     # bbox_transform=fig.transFigure,
 # )
-    
 
-    
 
 # add legend above all axes
 handles, labels = axs[0, 0].get_legend_handles_labels()
 from matplotlib.patches import Patch
+
 handles = [
     Patch(
         facecolor="black",
         edgecolor="black",
-        label=r"$\varepsilon^{\text{tuned}}_{i,j} < \varepsilon^{\text{expert}}_{i,j}$",
+        # label=r"$\varepsilon^{\text{tuned}}_{i,j} < \varepsilon^{\text{expert}}_{i,j}$",
+        label=r"$\Delta>0$",
     ),
     Patch(
         facecolor="lightgray",
         edgecolor="black",
         alpha=0.7,
-        label=r"$\varepsilon^{\text{tuned}}_{i,j} > \varepsilon^{\text{expert}}_{i,j}$",
+        # label=r"$\varepsilon^{\text{tuned}}_{i,j} > \varepsilon^{\text{expert}}_{i,j}$",
+        label=r"$\Delta<0$",
     ),
 ]
 fig.legend(
@@ -191,7 +194,8 @@ fig.legend(
 )
 
 # add log10
-xlabel = r"$\log_{10}(|\varepsilon^{\text{tuned}}_{i,j} - \varepsilon^{\text{expert}}_{i,j}|)$"
+# xlabel = r"$\log_{10}(|\varepsilon^{\text{tuned}}_{i,j} - \varepsilon^{\text{expert}}_{i,j}|)$"
+xlabel = r"$\log_{10}( |\Delta| )$"
 axs[-1, 0].set_xlabel(xlabel, fontsize=FONTSIZE)
 axs[-1, 1].set_xlabel(xlabel, fontsize=FONTSIZE)
 
