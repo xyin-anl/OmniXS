@@ -28,4 +28,7 @@ paths:
     scaler: ${paths.cache.dir}/scaler/{compound}_{simulation_type}.pkl
     splits: dataset/ML-data/splits/{compound}_{simulation_type}.npz
     ml_models: ${paths.cache.dir}/ml_models/{compound}_{simulation_type}.pkl
+    removed_spectra: ${paths.cache.dir}/for_publication/anomalies/{compound}_{simulation_type}_anomalies.txt
+    ml_dir: ${paths.cache.dir}/ml_data
+
     # exafs: ${paths.cache.dir}/exafs/exafs_{compound}_{simulation_type}_{model_name}.npz

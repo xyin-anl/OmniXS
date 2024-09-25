@@ -121,6 +121,7 @@ class FeatureProcessor:
 def filter_anamolous_spectras(
     ml_splits: MLSplits,
     std_cutoff: float,
+    id_site: List[tuple],
 ) -> MLSplits:
 
     spectras = np.concatenate([ml_splits.train.y, ml_splits.val.y, ml_splits.test.y])
@@ -130,6 +131,18 @@ def filter_anamolous_spectras(
     lower_bound = mean - std_cutoff * std
     select_filters_count = 0
 
+    # use removed spectra in dict format
+    removed_spectra = np.array(
+        [
+            {
+                "id": id_site[i][0],
+                "site": id_site[i][1],
+                "spectrum": s,
+            }
+            for i, s in enumerate(spectras)
+            if not np.all((s <= upper_bound) & (s >= lower_bound))
+        ]
+    )
     for data in [ml_splits.train, ml_splits.val, ml_splits.test]:
         bound_condition = (data.y <= upper_bound) & (data.y >= lower_bound)
         filter = np.all(bound_condition, axis=1)
@@ -144,10 +157,13 @@ def filter_anamolous_spectras(
     msg += f"with std_cutoff = {std_cutoff}"
     warnings.warn(msg)
 
-    return MLSplits(
-        train=ml_splits.train,
-        val=ml_splits.val,
-        test=ml_splits.test,
+    return (
+        MLSplits(
+            train=ml_splits.train,
+            val=ml_splits.val,
+            test=ml_splits.test,
+        ),
+        removed_spectra,  # for data publication
     )
 
 
@@ -160,6 +176,8 @@ def load_xas_ml_data(
     filter_spectra_anomalies: bool = True,
     anomaly_std_cutoff: float = None,  # default loaded from config if None
     use_cache: bool = True,  # TODO: flip to False
+    save_anomalous_spectras: bool = False,  # for data publication
+    save_loaded_data: bool = False,  # for data publication
 ) -> MLSplits:
     """Loads data and does material splitting."""
 
@@ -224,10 +242,71 @@ def load_xas_ml_data(
             if anomaly_std_cutoff is None
             else anomaly_std_cutoff
         )
-        out = filter_anamolous_spectras(
+        out, removed_spectra = filter_anamolous_spectras(
             out,
             std_cutoff=anamoly_std_cutoff,
+            id_site=idSite,
         )
+
+        if save_anomalous_spectras:
+            removed_spectra_file = cfg.paths.cache.removed_spectra.format(
+                **query.__dict__
+            )
+            os.makedirs(os.path.dirname(removed_spectra_file), exist_ok=True)
+            for i in range(len(removed_spectra)):
+                removed_spectra[i]["spectrum"] = [
+                    float(x) / 1000 for x in removed_spectra[i]["spectrum"]
+                ]
+            if os.path.exists(removed_spectra_file):
+                raise ValueError(f"File exists: {removed_spectra_file}")
+            with open(removed_spectra_file, "w") as f:
+                for s in removed_spectra:
+                    f.write(f"{s['id']} {s['site']}\n")
+
+    if save_loaded_data:
+
+        directory = cfg.paths.cache.ml_dir
+        os.makedirs(directory, exist_ok=True)
+        # save train,val, text ids and X and y in text file
+        for split in ["train", "val", "test"]:
+            split_data = getattr(out, split)
+            file_X = os.path.join(
+                directory, f"{query.compound}_{query.simulation_type}_{split}_X.txt"
+            )
+            file_y = os.path.join(
+                directory, f"{query.compound}_{query.simulation_type}_{split}_y.txt"
+            )
+            np.savetxt(file_X, split_data.X / 1000)  # TODO: remove hardcoding
+            np.savetxt(file_y, split_data.y / 1000)  # TODO: remove hardcoding
+            # save id sites
+            id_site_dir = os.path.join(directory, "id_site")
+            os.makedirs(id_site_dir, exist_ok=True)
+            for split, idSite in zip(
+                ["train", "val", "test"],
+                [train_idSites, val_idSites, test_idSites],
+            ):
+                split_data = getattr(out, split)
+                file_name = os.path.join(
+                    id_site_dir,
+                    f"{query.compound}_{query.simulation_type}_{split}.txt",
+                )
+                with open(file_name, "w") as f:
+                    for i in range(len(idSite)):
+                        f.write(f"{idSite[i][0]} {idSite[i][1]}\n")
+
+        # save with id site and spectra
+
+        # save material id, site, and spectra without scaling
+        # di
+        # os.makedirs(os.path.dirname(filtered_data_file), exist_ok=True)
+        # if os.path.exists(filtered_data_file):
+        #     raise ValueError(f"File exists: {filtered_data_file}")
+        # with open(filtered_data_file, "w") as f:
+        #     # use index as
+        #     header = "id site"
+        #     header += " ".join([f"grid_{i}" for i in range(out.train.X.shape[1])])
+
+        # f.write(header + "\n")
 
     if use_cache:
         cache_file = cfg.paths.cache.splits.format(**query.__dict__)
