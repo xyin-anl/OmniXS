@@ -39,7 +39,18 @@ def winrates(
     return out
 
 
-winrates("Ti", "VASP")
+from config.defaults import cfg
+
+wins = {(c, "FEFF"): winrates(c, "FEFF") for c in cfg.compounds}
+wins["Cu", "VASP"] = winrates("Cu", "VASP")
+wins["Ti", "VASP"] = winrates("Ti", "VASP")
+
+# round to two decimal
+for k, v in wins.items():
+    for kk, vv in v.items():
+        wins[k][kk] = round(vv, 2)
+
+
 
 # %%
 
