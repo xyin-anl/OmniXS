@@ -253,7 +253,7 @@ axs[-1].set_xlabel(r"$\Delta E$ (eV)", fontsize=FONTSIZE)
 fig.text(
     0.035,
     0.5,
-    r"$\tilde{I}(\Delta E)$",
+    r"$|\tilde{I}(\Delta E)|$",
     va="center",
     rotation="vertical",
     fontsize=FONTSIZE * 1.1,
@@ -270,6 +270,22 @@ fig.text(
     rotation=-90,
     fontsize=FONTSIZE * 1.1,
     ha="center",
+)
+
+# add legend on top of figure with 2 cols for red/green bars
+handles = [
+    plt.Rectangle((0, 0), 1, 1, color="red", alpha=0.5),
+    plt.Rectangle((0, 0), 1, 1, color="green", alpha=0.5),
+]
+labels = [r"$\tilde{I}(\Delta E) < 0$", r"$\tilde{I}(\Delta E) > 0$"]
+fig.legend(
+    handles,
+    labels,
+    loc="upper center",
+    bbox_to_anchor=(0.5, 0.9225),
+    ncol=2,
+    frameon=False,
+    fontsize=FONTSIZE * 0.7,
 )
 
 fig.tight_layout()

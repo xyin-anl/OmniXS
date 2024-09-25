@@ -203,7 +203,7 @@ axs[-1, 1].set_xlabel(xlabel, fontsize=FONTSIZE)
 fig.text(
     0.06,
     0.5,
-    r"Number of Spectra Points (\%)",
+    r"Frequency Distribution (\%)",
     va="center",
     rotation="vertical",
     fontsize=FONTSIZE,
