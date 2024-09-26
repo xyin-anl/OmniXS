@@ -74,9 +74,9 @@ def compare_mse_per_energy(compounds, simulation_type="FEFF", axs=None, fontsize
         axs[idx].text(
             0.13,
             0.85,
-            r"$\text{w}_{\text{e}}=$"
+            r"$w_{\text{e}}=$"
             + f" {winrates(compound, simulation_type)['energy']:.0f}\%",
-            fontsize=16,
+            fontsize=18,
             transform=axs[idx].transAxes,
             verticalalignment="top",
             horizontalalignment="left",
