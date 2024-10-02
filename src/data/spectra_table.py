@@ -5,7 +5,7 @@ import pickle
 from functools import cached_property
 from typing import List
 
-import appdirs
+# import appdirs
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import pyplot as plt
