@@ -1,1 +1,4 @@
-Codes used for the paper: [A Universal Deep Learning Framework for Materials X-ray Absorption Spectra](https://www.arxiv.org/abs/2409.19552)
+#  [OmniXAS Paper](https://www.arxiv.org/abs/2409.19552)
+
+## 🚧 Under Construction 🚧
+This project is currently under construction. Stay tuned for updates!

@@ -15,3 +15,4 @@
 - [ ] XASModels: Merged M3GNet and XAS-block
   - [ ] Training and Inferencing using XASModels
 - [ ] Docker image
+- [ ] documentation
