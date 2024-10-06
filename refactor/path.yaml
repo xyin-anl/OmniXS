@@ -1,0 +1,11 @@
+ElementSpectra:
+  directory: .
+  filename: "{element}_{type}.json"
+  serialization: json
+  exclude:
+    - "materials"
+
+Material:
+  directory: .
+  filename: "{id}_site_{site.index}.json"
+  serialization: json

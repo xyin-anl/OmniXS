@@ -108,26 +108,12 @@ class Material(BaseModel):
 class ElementSpectra(BaseModel, validate_assignment=True):
     element: Element = Field(..., description="Element of the material")
     type: SpectraType = Field(..., description="Type of Spectra")
+    spectra: Optional[List[Spectrum]] = Field(
+        None, description="Collection of spectra for the element"
+    )
     materials: Optional[List[Material]] = Field(
         None, description="Collection of materials"
     )
-
-    @computed_field
-    @property
-    def spectra(self) -> List[Dict[str, Any]]:
-        if self.materials is None:
-            raise ValueError("Materials not loaded to access spectra")
-        if self.type is None:
-            raise ValueError("Spectra type not specified")
-        spectra = self._extract_spectra(self.materials, self.type)
-        return spectra
-
-    @computed_field
-    @property
-    def material_ids(self) -> List[Any]:
-        if self.materials is None:
-            raise ValueError("Materials not loaded to access material ids")
-        return [material.id for material in self.materials]
 
     @field_validator("materials")
     @classmethod
@@ -137,6 +123,8 @@ class ElementSpectra(BaseModel, validate_assignment=True):
         element = cls._get_common_element(materials)
         if element != values.data["element"]:
             raise ValueError("Element does not match the materials")
+        # update spectra
+        values.data["spectra"] = cls._extract_spectra(materials, values.data["type"])
         return materials
 
     @staticmethod
@@ -148,26 +136,28 @@ class ElementSpectra(BaseModel, validate_assignment=True):
             raise ValueError("All materials must have the same element")
         return next(iter(elements))
 
+    @classmethod
     def _extract_spectra(
-        self, materials: List[Material], spectra_type: SpectraType
-    ) -> List[Dict[str, Any]]:
+        cls, materials: List[Material], spectra_type: SpectraType
+    ) -> List[Spectrum]:
         spectra = []
         for material in materials:
-            spectrum = self._get_spectrum_for_material(material)
-            spectrum_dict = spectrum.dict()
-            del spectrum_dict["type"]  # Exclude the type property
-            spectra.append(spectrum_dict)
+            spectrum = cls._get_spectrum_for_material(material, spectra_type)
+            # spectrum_dict = spectrum.dict()
+            # del spectrum_dict["type"]  # Exclude the type property
+            spectra.append(spectrum)
         return spectra
 
-    def _get_spectrum_for_material(self, material: Material):
+    @classmethod
+    def _get_spectrum_for_material(cls, material: Material, spectra_type: SpectraType):
         if material.site is None or material.site.spectra is None:
-            raise ValueError(f"{self.type} spectra not found for material")
+            raise ValueError(f"{cls.type} spectra not found for material")
 
         spectrum = next(
-            (s for s in material.site.spectra.values() if s.type == self.type), None
+            (s for s in material.site.spectra.values() if s.type == spectra_type), None
         )
         if spectrum is None:
-            raise ValueError(f"{self.type} spectra not found for material")
+            raise ValueError(f"{cls.type} spectra not found for material")
 
         return spectrum
 
