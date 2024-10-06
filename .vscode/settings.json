@@ -24,11 +24,7 @@
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter",
     },
-    // "python.envFile": "${workspaceFolder}/.vscode/.env",
+    "python.envFile": "${workspaceFolder}/.vscode/.env",
     "tensorBoard.logDirectory": "${workspaceFolder}/outputs/logs",
-    "markdownlint.ignore": [
-        "MD013",
-        "MD033",
-        "MD041"
-    ],
+    "jupyter.notebookFileRoot": "${workspaceFolder}",
 }
