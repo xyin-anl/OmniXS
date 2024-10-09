@@ -1,6 +1,7 @@
 from matgl.ext.pymatgen import Structure
 
 from refactor.spectra_data import Material, Site, Spectrum
+from refactor.spectra_enums import Element, SpectraType
 
 
 def create_dummy_structure():
@@ -9,17 +10,17 @@ def create_dummy_structure():
     )
 
 
+def create_dummy_spectrum():
+    return Spectrum(type=SpectraType.FEFF, energies=[1, 2, 3], intensities=[4, 5, 6])
+
+
 def create_dummy_site():
     return Site(
         index=0,
-        element="H",
-        spectra={"FEFF": create_dummy_spectrum()},
+        element=Element.Fe,
+        spectra={SpectraType.FEFF: create_dummy_spectrum()},
     )
 
 
-def create_dummy_spectrum():
-    return Spectrum(type="FEFF", energies=[1, 2, 3], intensities=[4, 5, 6])
-
-
 def create_dummy_material(id="mp-1234"):
-    return Material(id=id, structure=create_dummy_structure())
+    return Material(id=id, site=create_dummy_site(), structure=create_dummy_structure())
