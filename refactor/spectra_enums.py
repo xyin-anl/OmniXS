@@ -1,6 +1,11 @@
 from enum import StrEnum
 
 
+class MaterialIDPrefix(StrEnum):
+    mp = "mp"
+    mvc = "mvc"  # depricated in materials project
+
+
 class Element(StrEnum):
     Ti = "Ti"
     V = "V"
@@ -10,11 +15,6 @@ class Element(StrEnum):
     Co = "Co"
     Ni = "Ni"
     Cu = "Cu"
-
-
-class MaterialIDPrefix(StrEnum):
-    mp = "mp"
-    mvc = "mvc"  # depricated in materials project
 
 
 class SpectraType(StrEnum):

@@ -1,37 +1,20 @@
 # %%
 import json
+from typing import Dict, List, Optional, Self, Union
+
+import numpy as np
 from box import Box  # converts dict keys to attributes (AttributeDict)
-from typing import Dict
+from matgl.ext.pymatgen import Structure
 from pydantic import (
     BaseModel,
     Field,
-    validator,
     NonNegativeFloat,
     NonNegativeInt,
+    computed_field,
     field_validator,
     model_validator,
-    computed_field,
+    validator,
 )
-from typing import Any, List, Self, Union, Optional
-from pathlib import Path
-from refactor.spectra_enums import (
-    Element,
-    MaterialIDPrefix,
-    SpectraType,
-    FEFF,
-    VASP,
-    Ti,
-    V,
-    Cr,
-    Mn,
-    Fe,
-    Co,
-    Ni,
-    Cu,
-)
-
-import numpy as np
-from matgl.ext.pymatgen import Structure
 
 from refactor.spectra_enums import Element, MaterialIDPrefix, SpectraType
 from refactor.utils import HumanReadable
@@ -104,62 +87,38 @@ class Material(BaseModel):
         return v
 
 
-@HumanReadable()
-class ElementSpectra(BaseModel, validate_assignment=True):
-    element: Element = Field(..., description="Element of the material")
-    type: SpectraType = Field(..., description="Type of Spectra")
-    spectra: Optional[List[Spectrum]] = Field(
-        None, description="Collection of spectra for the element"
-    )
-    materials: Optional[List[Material]] = Field(
-        None, description="Collection of materials"
-    )
+# %%
 
-    @field_validator("materials")
-    @classmethod
-    def _validate_materials(cls, materials, values):
-        if materials is None:
-            return materials
-        element = cls._get_common_element(materials)
-        if element != values.data["element"]:
-            raise ValueError("Element does not match the materials")
-        # update spectra
-        values.data["spectra"] = cls._extract_spectra(materials, values.data["type"])
-        return materials
+# @HumanReadable()
+# class ElementSpectra(BaseModel, validate_assignment=True):
+#     element: Element = Field(..., description="Element of the material")
+#     type: SpectraType = Field(..., description="Type of Spectra")
+#     spectra: Optional[List[Spectrum]] = Field(
+#         None, description="Collection of spectra for the element"
+#     )
 
-    @staticmethod
-    def _get_common_element(materials: List[Material]) -> Element:
-        elements = set(
-            material.site.element for material in materials if material.site is not None
-        )
-        if len(elements) > 1:
-            raise ValueError("All materials must have the same element")
-        return next(iter(elements))
+#     def populate_spectra_from_materials(self, materials: List[Material]) -> Self:
+#         self.spectra = [
+#             m.site.spectra[self.type]
+#             for m in materials
+#             if self._material_has_required_spectrum(m, self.element, self.type)
+#         ]
+#         return self
 
-    @classmethod
-    def _extract_spectra(
-        cls, materials: List[Material], spectra_type: SpectraType
-    ) -> List[Spectrum]:
-        spectra = []
-        for material in materials:
-            spectrum = cls._get_spectrum_for_material(material, spectra_type)
-            # spectrum_dict = spectrum.dict()
-            # del spectrum_dict["type"]  # Exclude the type property
-            spectra.append(spectrum)
-        return spectra
+#     @staticmethod
+#     def _material_has_required_spectrum(
+#         material: Material,
+#         element: Element,
+#         type: SpectraType,
+#     ) -> bool:
 
-    @classmethod
-    def _get_spectrum_for_material(cls, material: Material, spectra_type: SpectraType):
-        if material.site is None or material.site.spectra is None:
-            raise ValueError(f"{cls.type} spectra not found for material")
-
-        spectrum = next(
-            (s for s in material.site.spectra.values() if s.type == spectra_type), None
-        )
-        if spectrum is None:
-            raise ValueError(f"{cls.type} spectra not found for material")
-
-        return spectrum
+#         if material.site is None:
+#             raise ValueError(f"Absorption site not found in material {material.id}")
+#         if material.site.element != element:
+#             raise ValueError(f"Element {element} not found in material {material.id}")
+#         if type not in material.site.spectra:
+#             raise ValueError(f"{type} spectrum not found in material {material.id}")
+#         return True
 
 
 # %%
@@ -182,23 +141,20 @@ if __name__ == "__main__":
             ),
         )
     ]
+    print(materials)
 
-    elementSpectra = ElementSpectra(
-        element=Element.Ti,
-        type=SpectraType.FEFF,
-        materials=materials,
-    )
-    print(elementSpectra)
+    # elementSpectra = ElementSpectra(
+    #     element=Element.Ti,
+    #     type=SpectraType.FEFF,
+    # ).populate_spectra_from_materials(materials)
+    # print(elementSpectra)
+    # # serialization
+    # with open(f"{elementSpectra.element}_{elementSpectra.type}.json", "w") as f:
+    #     f.write(elementSpectra.json())
+    # # deserialization
+    # with open(f"{elementSpectra.element}_{elementSpectra.type}.json", "r") as f:
+    #     data = f.read()
+    #     elementSpectra_loaded = ElementSpectra(**json.loads(data))
+    # print(elementSpectra_loaded)
 
-    # serialization
-    with open(f"{elementSpectra.element}_{elementSpectra.type}.json", "w") as f:
-        f.write(elementSpectra.json())
-
-    # deserialization
-
-    with open(f"{elementSpectra.element}_{elementSpectra.type}.json", "r") as f:
-        data = f.read()
-        elementSpectra_loaded = ElementSpectra(**json.loads(data))
-    print(elementSpectra_loaded)
-
-    # %%
+# %%
