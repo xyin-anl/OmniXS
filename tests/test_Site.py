@@ -31,3 +31,7 @@ class TestSite(unittest.TestCase):
         site.assign_spectra(spectrum2)
         with self.assertRaises(ValueError):
             _ = site.spectrum
+
+
+if __name__ == "__main__":
+    unittest.main()

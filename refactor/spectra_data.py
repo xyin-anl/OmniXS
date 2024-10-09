@@ -1,5 +1,4 @@
 # %%
-import json
 from typing import Dict, List, Optional, Self, Union
 
 import numpy as np
@@ -12,9 +11,12 @@ from pydantic import (
     NonNegativeInt,
     computed_field,
     field_validator,
+    model_serializer,
     model_validator,
     validator,
+    field_serializer,
 )
+from pymatgen.core import Structure as PymatgenStructure
 
 from refactor.spectra_enums import Element, MaterialIDPrefix, SpectraType
 from refactor.utils import HumanReadable
@@ -67,8 +69,14 @@ class Site(BaseModel):
 @HumanReadable()
 class Material(BaseModel):
     id: str = Field(..., description="Material ID")
-    structure: Optional[Structure] = Field(None, description="Material structure")
+    structure: Optional[PymatgenStructure] = Field(
+        None, description="Pymatgen structure"
+    )
     site: Optional[Site] = Field(None, description="Absorption site")
+
+    @field_serializer("structure")
+    def serialize_structure(self, v):
+        return v.as_dict()
 
     @field_validator("id")
     @classmethod
@@ -87,74 +95,22 @@ class Material(BaseModel):
         return v
 
 
-# %%
-
-# @HumanReadable()
-# class ElementSpectra(BaseModel, validate_assignment=True):
-#     element: Element = Field(..., description="Element of the material")
-#     type: SpectraType = Field(..., description="Type of Spectra")
-#     spectra: Optional[List[Spectrum]] = Field(
-#         None, description="Collection of spectra for the element"
-#     )
-
-#     def populate_spectra_from_materials(self, materials: List[Material]) -> Self:
-#         self.spectra = [
-#             m.site.spectra[self.type]
-#             for m in materials
-#             if self._material_has_required_spectrum(m, self.element, self.type)
-#         ]
-#         return self
-
-#     @staticmethod
-#     def _material_has_required_spectrum(
-#         material: Material,
-#         element: Element,
-#         type: SpectraType,
-#     ) -> bool:
-
-#         if material.site is None:
-#             raise ValueError(f"Absorption site not found in material {material.id}")
-#         if material.site.element != element:
-#             raise ValueError(f"Element {element} not found in material {material.id}")
-#         if type not in material.site.spectra:
-#             raise ValueError(f"{type} spectrum not found in material {material.id}")
-#         return True
-
-
-# %%
-
 if __name__ == "__main__":
 
-    materials = [
-        Material(
-            id="mp-1234",
-            site=Site(
-                index=0,
-                element=Element.Ti,
-                spectra={
-                    SpectraType.FEFF: Spectrum(
-                        type=SpectraType.FEFF,
-                        energies=[1, 2, 3],
-                        intensities=[4, 5, 6],
-                    )
-                },
-            ),
-        )
-    ]
-    print(materials)
-
-    # elementSpectra = ElementSpectra(
-    #     element=Element.Ti,
-    #     type=SpectraType.FEFF,
-    # ).populate_spectra_from_materials(materials)
-    # print(elementSpectra)
-    # # serialization
-    # with open(f"{elementSpectra.element}_{elementSpectra.type}.json", "w") as f:
-    #     f.write(elementSpectra.json())
-    # # deserialization
-    # with open(f"{elementSpectra.element}_{elementSpectra.type}.json", "r") as f:
-    #     data = f.read()
-    #     elementSpectra_loaded = ElementSpectra(**json.loads(data))
-    # print(elementSpectra_loaded)
+    material = Material(
+        id="mp-1234",
+        site=Site(
+            index=0,
+            element=Element.Ti,
+            spectra={
+                SpectraType.FEFF: Spectrum(
+                    type=SpectraType.FEFF,
+                    energies=[1, 2, 3],
+                    intensities=[4, 5, 6],
+                )
+            },
+        ),
+    )
+    print(material)
 
 # %%

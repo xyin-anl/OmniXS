@@ -38,3 +38,6 @@ class TestSpectrum(unittest.TestCase):
             Spectrum(
                 type=SpectraType.VASP, energies=[1.0, 2.0], intensities=[0.1, 0.2, 0.3]
             )
+            
+if __name__ == "__main__":
+    unittest.main()
