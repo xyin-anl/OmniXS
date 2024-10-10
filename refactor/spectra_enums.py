@@ -17,13 +17,13 @@ class Element(StrEnum):
     Cu = "Cu"
 
 
-class SpectraType(StrEnum):
+class SpectrumType(StrEnum):
     VASP = "VASP"
     FEFF = "FEFF"
 
 
-FEFF = SpectraType.FEFF
-VASP = SpectraType.VASP
+FEFF = SpectrumType.FEFF
+VASP = SpectrumType.VASP
 
 Ti = Element.Ti
 V = Element.V

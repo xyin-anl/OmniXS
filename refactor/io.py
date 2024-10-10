@@ -14,6 +14,7 @@ class FileHandler:
         self,
         config: Union[YAMLCONFIGPATH, Dict[str, Any]],
         default_serialization: str = "json",
+        replace_existing: bool = False,
     ):
         if isinstance(config, str):
             if not os.path.exists(config):
@@ -23,6 +24,7 @@ class FileHandler:
         else:
             self.config = config
         self.default_serialization = default_serialization
+        self.replace_existing = replace_existing
 
     def save(
         self,
@@ -38,10 +40,14 @@ class FileHandler:
             raise ValueError(f"Configuration for {config_name} not found")
 
         dir_path = config["directory"]
+        dir_path = self._resolve_template(obj, dir_path)
         os.makedirs(dir_path, exist_ok=True)
 
-        filename = self._get_filename(obj, config)
+        filename = self._resolve_template(obj, config["filename"])
         filepath = os.path.join(dir_path, filename)
+
+        if os.path.exists(filepath) and not self.replace_existing:
+            raise FileExistsError(f"File already exists: {filepath}")
 
         default_include = set(config.get("include", []))
         default_exclude = set(config.get("exclude", []))
@@ -80,7 +86,9 @@ class FileHandler:
             raise ValueError(f"Configuration for {config_name} not found")
 
         dir_path = config["directory"]
-        filename = self._get_filename_for_load(kwargs, config)
+        dir_path = self._resolve_load_template(kwargs, dir_path)
+
+        filename = self._resolve_load_template(kwargs, config["filename"])
         filepath = os.path.join(dir_path, filename)
 
         if not os.path.exists(filepath):
@@ -128,30 +136,30 @@ class FileHandler:
 
         return _recursive_get(obj, attr.split("."))
 
-    def _get_filename_for_load(
-        self, kwargs: Dict[str, Any], config: Dict[str, Any]
-    ) -> str:
-        filename_template = config["filename"]
-        properties = self._get_args(filename_template)
+    # def _get_filename_for_load( self, kwargs: Dict[str, Any], config: Dict[str, Any]) -> str:
+    def _resolve_load_template(self, kwargs: Dict[str, Any], template: str) -> str:
+        # filename_template = config["filename"]
+        properties = self._get_args(template)
 
         for p in properties:
             value = self._get_nested_attr(kwargs, p)
             value = "" if value is None else str(value)
-            filename_template = filename_template.replace("{" + p + "}", value)
+            template = template.replace("{" + p + "}", value)
 
-        return filename_template
+        return template
 
-    def _get_filename(self, obj: Any, config: Dict[str, Any]) -> str:
-        filename_template = config["filename"]
-        properties = self._get_args(filename_template)
+    # def _get_filename(self, obj: Any, config: Dict[str, Any]) -> str:
+    def _resolve_template(self, obj: Any, template: str) -> str:
+        # filename_template = config["filename"]
+        properties = self._get_args(template)
 
         for p in properties:
             value = self._get_nested_attr(obj, p)
             if value is None:
                 value = ""  # or some default value
-            filename_template = filename_template.replace("{" + p + "}", str(value))
+            template = template.replace("{" + p + "}", str(value))
 
-        return filename_template
+        return template
 
 
 # %%

@@ -1,12 +1,13 @@
 # %%
-from typing import Dict, List, Optional, Self, Union
+from typing import Dict, List, Optional, Self, Union, Literal
+from pathlib import Path
 
 import numpy as np
 from box import Box  # converts dict keys to attributes (AttributeDict)
-from matgl.ext.pymatgen import Structure
 from pydantic import (
     BaseModel,
     Field,
+    PositiveInt,
     NonNegativeFloat,
     NonNegativeInt,
     computed_field,
@@ -15,70 +16,19 @@ from pydantic import (
     model_validator,
     validator,
     field_serializer,
+    RootModel,
+    ValidationInfo,
 )
 from pymatgen.core import Structure as PymatgenStructure
 
-from refactor.spectra_enums import Element, MaterialIDPrefix, SpectraType
-from refactor.utils import HumanReadable
+from refactor.spectra_enums import Element, MaterialIDPrefix, SpectrumType
+from refactor.utilities.readable_enums import ReadableEnums
 
 
-@HumanReadable()
-class Spectrum(BaseModel, validate_assignment=True):
-    type: SpectraType
-    energies: List[NonNegativeFloat] = Field(None, min_length=1)
-    intensities: List[NonNegativeFloat] = Field(None, min_length=1)
+class MaterialID(RootModel, validate_assignment=True):
+    root: str = Field(..., description="Material ID")
 
-    @field_validator("energies")
-    @classmethod
-    def check_monotonic(cls, v):
-        if not all(np.diff(v) > 0):
-            raise ValueError("Energies must be monotonically increasing")
-        return v
-
-    @model_validator(mode="after")
-    @classmethod
-    def check_length(cls, v):
-        if None in [v.energies, v.intensities]:
-            return v
-        if len(v.energies) != len(v.intensities):
-            raise ValueError("Energies and intensities must have the same length")
-        return v
-
-
-@HumanReadable()
-class Site(BaseModel):
-    index: NonNegativeInt = Field(..., description="Absorption site index")
-    element: Optional[Element] = Field(None, description="Element at absorption site")
-    spectra: Optional[Union[Box, Dict[SpectraType, Spectrum]]] = Field(
-        default_factory=Box, description="Spectra for the site"
-    )
-
-    @property
-    def spectrum(self) -> Spectrum:
-        if len(self.spectra) > 1:
-            raise ValueError("Multiple spectra found for site")
-        return list(self.spectra.values())[0]
-
-    def assign_spectra(self, spectrum: Spectrum):
-        self.spectra[spectrum.type] = spectrum
-
-    class Config:
-        arbitrary_types_allowed = True  # for Box
-
-
-@HumanReadable()
-class Material(BaseModel):
-    id: str = Field(..., description="Material ID")
-    structure: Optional[PymatgenStructure] = Field(
-        None, description="Pymatgen structure"
-    )
-    site: Optional[Site] = Field(None, description="Absorption site")
-
-    @field_serializer("structure")
-    def serialize_structure(self, v):
-        return v.as_dict()
-
-    @field_validator("id")
+    @field_validator("root")
     @classmethod
     def check_id(cls, v):
         if not v:
@@ -94,23 +44,157 @@ class Material(BaseModel):
             raise ValueError(msg)
         return v
 
+    def __str__(self):
+        return self.root
 
-if __name__ == "__main__":
+    def __repr__(self):
+        return self.root
 
-    material = Material(
-        id="mp-1234",
-        site=Site(
-            index=0,
-            element=Element.Ti,
-            spectra={
-                SpectraType.FEFF: Spectrum(
-                    type=SpectraType.FEFF,
-                    energies=[1, 2, 3],
-                    intensities=[4, 5, 6],
-                )
-            },
-        ),
-    )
-    print(material)
+    def __hash__(self):
+        return hash(self.root)
 
-# %%
+    def __eq__(self, other):
+        return self.root == other.root
+
+
+@ReadableEnums()
+class EnergyGrid(RootModel, validate_assignment=True):
+    root: List[NonNegativeFloat] = Field(None, min_length=1)
+
+    @field_validator("root")
+    @classmethod
+    def check_monotonic(cls, v):
+        if not all(np.diff(v) > 0):
+            raise ValueError("Energies must be monotonically increasing")
+        return v
+
+    def __iter__(self):
+        return iter(self.root)
+
+    def __getitem__(self, item):
+        return self.root[item]
+
+    def __len__(self):
+        return len(self.root)
+
+
+@ReadableEnums()
+class IntensityValues(RootModel, validate_assignment=True):
+    root: List[NonNegativeFloat] = Field(None, min_length=1)
+
+    @field_validator("root")
+    @classmethod
+    def check_non_negative(cls, v):
+        if not all(i >= 0 for i in v):
+            raise ValueError("All intensities must be non-negative")
+        return v
+
+    def __iter__(self):
+        return iter(self.root)
+
+    def __getitem__(self, item):
+        return self.root[item]
+
+    def __len__(self):
+        return len(self.root)
+
+
+@ReadableEnums()
+class Spectrum(BaseModel, validate_assignment=True):
+    intensities: IntensityValues
+    energies: Optional[EnergyGrid]
+
+    @model_validator(mode="after")
+    def check_length(cls, values):
+        energies = values.energies
+        intensities = values.intensities
+        if energies is not None and len(energies) != len(intensities):
+            raise ValueError("Energies and intensities must have the same length")
+        return values
+
+
+@ReadableEnums()
+class MaterialStructure(RootModel, validate_assignment=True):
+    root: PymatgenStructure = Field(None, description="Pymatgen structure")
+
+    @classmethod
+    def from_file(cls, path: Path):
+        return cls(root=PymatgenStructure.from_file(path))
+
+    @field_serializer("root")
+    def serialize_structure(self, pymatgen_structure):
+        return pymatgen_structure.as_dict()
+
+    @property
+    def sites(self):
+        return self.root.sites
+
+
+@ReadableEnums()
+class Material(BaseModel):
+    id: MaterialID
+    structure: Optional[MaterialStructure] = Field(None)
+
+
+from pymatgen.core.sites import PeriodicSite
+
+
+@ReadableEnums()
+class PymatgenSite(RootModel, validate_assignment=True):
+    root: PeriodicSite = Field(None, description="Pymatgen site")
+
+    @model_serializer()
+    def serialize_model(self):
+        return self.as_dict()
+
+    @classmethod
+    def from_site_index(cls, structure: MaterialStructure, index: int):
+        return cls(structure.sites[index])
+
+
+@ReadableEnums()
+class SiteSpectrum(Spectrum):
+    type: SpectrumType
+    material: Material
+    index: NonNegativeInt
+
+    @property
+    def site(self) -> PymatgenSite:
+        return self.material.structure.sites[self.index]
+
+    @property
+    def index_string(self) -> str:  # helper for file i/o
+        return f"{self.index:03d}"
+
+
+@ReadableEnums()
+class ElementSpectrum(SiteSpectrum, validate_assignment=True):
+    element: Element
+
+    @model_validator(mode="after")
+    def validate_element(self) -> Self:
+        asked_element = self.element
+        site_element = Element(ElementSpectrum.extract_element(self.site))
+        site_element = Element(site_element)
+        if asked_element != site_element:
+            raise ValueError(
+                f"Element {asked_element} does not match site element {site_element}"
+            )
+        return self
+
+    @staticmethod
+    def extract_element(site: PymatgenSite) -> str:
+        species = site.species
+        if not species.is_element:
+            raise ValueError("Site must be an element")
+        return str(list(dict(species).keys())[0])
+
+
+# loaded_spectrum = file_handler.load(
+#     model=ElementSpectrum,
+#     element=element,
+#     material=Material(id=material_id),
+#     index=site_index,
+#     type=spectra_type,
+# )
+# assert element_spectrum == loaded_spectrum

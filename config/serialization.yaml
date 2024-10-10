@@ -1,0 +1,5 @@
+serialization:
+  ElementSpectrum:
+    directory: dataset/spectra/{type}/{element}
+    filename: "{material.id}_site_{index_string}_{element}_{type}.json"
+    serialization: json
