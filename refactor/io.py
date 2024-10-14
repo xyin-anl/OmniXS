@@ -1,184 +1,140 @@
 # %%
+from glob import glob
+from typing import Iterator
 import json
 import os
 import re
-import yaml
-from typing import Any, Dict, List, Optional, Set, Type, Union
-from pydantic import BaseModel, FilePath
+from typing import Any, Dict, List, Optional, Set, Type, TypeVar, Union
 
-YAMLCONFIGPATH = FilePath
+import yaml
+from pydantic import BaseModel
+
+
+T = TypeVar("T", bound=BaseModel)
 
 
 class FileHandler:
     def __init__(
         self,
-        config: Union[YAMLCONFIGPATH, Dict[str, Any]],
-        default_serialization: str = "json",
+        config: Union[str, Dict[str, Any]],
         replace_existing: bool = False,
     ):
+        self.config = self._load_config(config)
+        self.replace_existing = replace_existing
+
+    def _load_config(self, config: Union[str, Dict[str, Any]]) -> Dict[str, Any]:
         if isinstance(config, str):
             if not os.path.exists(config):
                 raise FileNotFoundError(f"Configuration file not found: {config}")
             with open(config, "r") as config_file:
-                self.config = yaml.safe_load(config_file)
-        else:
-            self.config = config
-        self.default_serialization = default_serialization
-        self.replace_existing = replace_existing
+                return yaml.safe_load(config_file)
+        return config
 
-    def save(
-        self,
-        obj: BaseModel,
-        config_name: Union[str, None] = None,
-        include: Optional[Set[str]] = None,
-        exclude: Optional[Set[str]] = None,
-    ):
-        if config_name is None:
-            config_name = obj.__class__.__name__
-        config = self.config.get(config_name)
-        if not config:
-            raise ValueError(f"Configuration for {config_name} not found")
+    def serialize_json(
+        self, obj: BaseModel, custom_filepath: Optional[str] = None
+    ) -> None:
+        filepath = custom_filepath or self._get_filepath(obj)
+        self._ensure_directory(os.path.dirname(filepath))
+        self._check_file_exists(filepath)
 
-        dir_path = config["directory"]
-        dir_path = self._resolve_template(obj, dir_path)
-        os.makedirs(dir_path, exist_ok=True)
+        with open(filepath, "w") as f:
+            json.dump(obj.model_dump(), f, indent=2)
 
-        filename = self._resolve_template(obj, config["filename"])
-        filepath = os.path.join(dir_path, filename)
-
-        if os.path.exists(filepath) and not self.replace_existing:
-            raise FileExistsError(f"File already exists: {filepath}")
-
-        default_include = set(config.get("include", []))
-        default_exclude = set(config.get("exclude", []))
-        final_include = (
-            default_include.union(include) if include else default_include or None
-        )
-        final_exclude = (
-            default_exclude.union(exclude) if exclude else default_exclude or None
-        )
-
-        serialization_method = config.get("serialization", self.default_serialization)
-        if serialization_method == "json":
-            with open(filepath, "w") as f:
-                json.dump(
-                    obj.model_dump(include=final_include, exclude=final_exclude),
-                    f,
-                    indent=2,
-                )
-        else:
-            raise ValueError(
-                f"Unsupported serialization method: {serialization_method}"
-            )
-
-    def load(
-        self,
-        model: Type[BaseModel],
-        config_name: Union[str, None] = None,
-        include: Optional[Set[str]] = None,
-        exclude: Optional[Set[str]] = None,
-        **kwargs,
-    ) -> BaseModel:
-        if config_name is None:
-            config_name = model.__name__
-        config = self.config.get(config_name)
-        if not config:
-            raise ValueError(f"Configuration for {config_name} not found")
-
-        dir_path = config["directory"]
-        dir_path = self._resolve_load_template(kwargs, dir_path)
-
-        filename = self._resolve_load_template(kwargs, config["filename"])
-        filepath = os.path.join(dir_path, filename)
+    def deserialize_json(
+        self, obj_class: Type[T], custom_filepath: Optional[str] = None
+    ) -> T:
+        filepath = custom_filepath or self._get_filepath(obj_class)
 
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"File not found: {filepath}")
 
-        default_include = set(config.get("include", []))
-        default_exclude = set(config.get("exclude", []))
-        final_include = (
-            default_include.union(include) if include else default_include or None
-        )
-        final_exclude = (
-            default_exclude.union(exclude) if exclude else default_exclude or None
-        )
+        with open(filepath, "r") as f:
+            data = json.load(f)
+            return obj_class(**data)
 
-        serialization_method = config.get("serialization", self.default_serialization)
-        if serialization_method == "json":
-            with open(filepath, "r") as f:
-                data = json.load(f)
+    def _get_filepath(self, obj: Union[BaseModel, Type[BaseModel]]) -> str:
+        config_name = obj.__name__ if isinstance(obj, type) else obj.__class__.__name__
+        config = self._get_config(config_name)
+        dir_path = self._resolve_template(obj, config["directory"])
+        filename = self._resolve_template(obj, config["filename"])
+        return os.path.join(dir_path, filename)
 
-            if final_include:
-                data = {k: v for k, v in data.items() if k in final_include}
-            if final_exclude:
-                data = {k: v for k, v in data.items() if k not in final_exclude}
+    def _get_config(self, config_name: str) -> Dict[str, Any]:
+        config = self.config.get(config_name)
+        if not config:
+            raise ValueError(f"Configuration for {config_name} not found")
+        return config
 
-            return model(**data)
-        else:
-            raise ValueError(
-                f"Unsupported serialization method: {serialization_method}"
-            )
+    def _ensure_directory(self, dir_path: str) -> None:
+        os.makedirs(dir_path, exist_ok=True)
 
-    def _get_args(self, filename: str) -> List[str]:
-        return re.findall(r"\{(.*?)\}", filename, re.DOTALL)
+    def _check_file_exists(self, filepath: str) -> None:
+        if os.path.exists(filepath) and not self.replace_existing:
+            raise FileExistsError(f"File already exists: {filepath}")
 
-    def _get_nested_attr(self, obj: Any, attr: str) -> Any:
-        def _recursive_get(obj: Any, parts: List[str]) -> Any:
-            if not parts:
-                return obj
-            part = parts[0]
+    @staticmethod
+    def _resolve_template(obj: Any, template: str) -> str:
+        for prop in re.findall(r"\{(.*?)\}", template, re.DOTALL):
+            value = FileHandler._get_nested_attr(obj, prop)
+            value = "" if value is None else str(value)
+            template = template.replace("{" + prop + "}", value)
+        return template
+
+    @staticmethod
+    def _get_nested_attr(obj: Any, attr: str) -> Any:
+        parts = attr.split(".")
+        for part in parts:
             if isinstance(obj, dict):
-                return _recursive_get(obj.get(part, {}), parts[1:])
+                obj = obj.get(part, {})
             elif hasattr(obj, part):
-                return _recursive_get(getattr(obj, part), parts[1:])
+                obj = getattr(obj, part)
             else:
                 return None
+        return obj
 
-        return _recursive_get(obj, attr.split("."))
+    def fetch_serialized_objects(
+        self, obj_class: Type[T], **template_params: Any
+    ) -> Iterator[T]:
+        config_name = obj_class.__name__
+        config = self._get_config(config_name)
 
-    # def _get_filename_for_load( self, kwargs: Dict[str, Any], config: Dict[str, Any]) -> str:
-    def _resolve_load_template(self, kwargs: Dict[str, Any], template: str) -> str:
-        # filename_template = config["filename"]
-        properties = self._get_args(template)
+        dir_template = config["directory"]
+        file_template = config["filename"]
 
-        for p in properties:
-            value = self._get_nested_attr(kwargs, p)
-            value = "" if value is None else str(value)
-            template = template.replace("{" + p + "}", value)
+        # Resolve directory template with provided parameters
+        dir_path = self._resolve_template(template_params, dir_template)
 
-        return template
+        # Create a regex pattern from the filename template
+        file_pattern = self._template_to_regex(file_template)
 
-    # def _get_filename(self, obj: Any, config: Dict[str, Any]) -> str:
-    def _resolve_template(self, obj: Any, template: str) -> str:
-        # filename_template = config["filename"]
-        properties = self._get_args(template)
+        # Find all files in the directory that match the pattern
+        for filepath in glob(os.path.join(dir_path, "*")):
+            filename = os.path.basename(filepath)
+            if re.match(file_pattern, filename):
+                yield self.deserialize_json(obj_class, custom_filepath=filepath)
 
-        for p in properties:
-            value = self._get_nested_attr(obj, p)
-            if value is None:
-                value = ""  # or some default value
-            template = template.replace("{" + p + "}", str(value))
-
-        return template
+    def _template_to_regex(self, template: str) -> str:
+        # Convert template to regex pattern
+        pattern = re.escape(template)
+        pattern = pattern.replace(r"\{", "{").replace(r"\}", "}")
+        pattern = re.sub(r"{.*?}", r".*?", pattern)
+        return f"^{pattern}$"
 
 
 # %%
 
 if __name__ == "__main__":
-    config = {
-        "Material": {
-            "directory": ".",
-            "filename": "{id}.json",
-            "serialization": "json",
-        }
-    }
-    file_handler = FileHandler(config)
+    from config.defaults import cfg
 
-    from tests.test_utils import create_dummy_material, create_dummy_spectrum
-    from refactor.spectra_data import Material
+    file_handler = FileHandler(config=cfg.serialization, replace_existing=False)
 
-    dummy_material = create_dummy_material()
-    file_handler.save(create_dummy_material())
-    loaded_material = file_handler.load(model=Material, id="mp-1234", site={"index": 0})
+    from refactor.spectra_data import ElementSpectrum
+    from refactor.spectra_enums import Element, SpectrumType
+
+    objects = file_handler.fetch_serialized_objects(
+        ElementSpectrum, element=Element.Cu, type=SpectrumType.FEFF
+    )
+    objects = list(objects)
+    print("Length:", len(objects))
 
 # %%
