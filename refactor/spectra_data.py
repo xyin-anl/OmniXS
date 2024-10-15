@@ -129,11 +129,17 @@ class MaterialStructure(RootModel, validate_assignment=True):
     def sites(self):
         return self.root.sites
 
+    def __eq__(self, other):
+        return self.root.as_dict() == other.root.as_dict()
+
 
 @ReadableEnums()
 class Material(BaseModel):
     id: MaterialID
     structure: Optional[MaterialStructure] = Field(None)
+
+    def __name__(self):
+        return self.id.root
 
 
 from pymatgen.core.sites import PeriodicSite
@@ -155,8 +161,8 @@ class PymatgenSite(RootModel, validate_assignment=True):
 @ReadableEnums()
 class SiteSpectrum(Spectrum):
     type: SpectrumType
-    material: Material
     index: NonNegativeInt
+    material: Optional[Material]
 
     @property
     def site(self) -> PymatgenSite:
@@ -174,12 +180,14 @@ class ElementSpectrum(SiteSpectrum, validate_assignment=True):
     @model_validator(mode="after")
     def validate_element(self) -> Self:
         asked_element = self.element
-        site_element = Element(ElementSpectrum.extract_element(self.site))
-        site_element = Element(site_element)
-        if asked_element != site_element:
-            raise ValueError(
-                f"Element {asked_element} does not match site element {site_element}"
-            )
+        if self.type != SpectrumType.VASP:  # TODO: remove in deployment
+            # coz vasp sims were done this way
+            site_element = Element(ElementSpectrum.extract_element(self.site))
+            site_element = Element(site_element)
+            if asked_element != site_element:
+                raise ValueError(
+                    f"Element {asked_element} does not match site element {site_element}"
+                )
         return self
 
     @staticmethod
@@ -198,3 +206,9 @@ class ElementSpectrum(SiteSpectrum, validate_assignment=True):
 #     type=spectra_type,
 # )
 # assert element_spectrum == loaded_spectrum
+
+# %%
+
+# print([x for x in dir(PymatgenStructure) if "__" not in x])
+
+# %%

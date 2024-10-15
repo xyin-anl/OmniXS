@@ -31,9 +31,12 @@ class FileHandler:
         return config
 
     def serialize_json(
-        self, obj: BaseModel, custom_filepath: Optional[str] = None
+        self,
+        obj: BaseModel,
+        supplemental_info: Optional[Union[Dict[str, Any], T]] = None,
+        custom_filepath: Optional[str] = None,
     ) -> None:
-        filepath = custom_filepath or self._get_filepath(obj)
+        filepath = custom_filepath or self._get_filepath(obj, supplemental_info)
         self._ensure_directory(os.path.dirname(filepath))
         self._check_file_exists(filepath)
 
@@ -41,9 +44,12 @@ class FileHandler:
             json.dump(obj.model_dump(), f, indent=2)
 
     def deserialize_json(
-        self, obj_class: Type[T], custom_filepath: Optional[str] = None
+        self,
+        obj_class: Type[T],
+        supplemental_info: Optional[Union[Dict[str, Any], T]] = None,
+        custom_filepath: Optional[str] = None,
     ) -> T:
-        filepath = custom_filepath or self._get_filepath(obj_class)
+        filepath = custom_filepath or self._get_filepath(obj_class, supplemental_info)
 
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"File not found: {filepath}")
@@ -52,9 +58,17 @@ class FileHandler:
             data = json.load(f)
             return obj_class(**data)
 
-    def _get_filepath(self, obj: Union[BaseModel, Type[BaseModel]]) -> str:
+    def _get_filepath(
+        self,
+        obj: Union[BaseModel, Type[BaseModel]],
+        supplemental_info: Optional[Union[Dict[str, Any], BaseModel]] = None,
+    ) -> str:
         config_name = obj.__name__ if isinstance(obj, type) else obj.__class__.__name__
         config = self._get_config(config_name)
+        if supplemental_info:
+            if isinstance(supplemental_info, BaseModel):
+                supplemental_info = supplemental_info.dict()
+            obj = {**obj.dict(), **supplemental_info}
         dir_path = self._resolve_template(obj, config["directory"])
         filename = self._resolve_template(obj, config["filename"])
         return os.path.join(dir_path, filename)
@@ -85,11 +99,13 @@ class FileHandler:
         parts = attr.split(".")
         for part in parts:
             if isinstance(obj, dict):
-                obj = obj.get(part, {})
+                if part not in obj:
+                    raise AttributeError(f"Key {part} not found in {obj}")
+                obj = obj[part]
             elif hasattr(obj, part):
                 obj = getattr(obj, part)
             else:
-                return None
+                raise AttributeError(f"Attribute {part} not found in {obj}")
         return obj
 
     def fetch_serialized_objects(

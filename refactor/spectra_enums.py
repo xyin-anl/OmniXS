@@ -17,6 +17,14 @@ class Element(StrEnum):
     Cu = "Cu"
 
 
+class ElementsVASP(StrEnum):
+    Ti = "Ti"
+    Cu = "Cu"
+
+
+ElementsFEFF = Element
+
+
 class SpectrumType(StrEnum):
     VASP = "VASP"
     FEFF = "FEFF"

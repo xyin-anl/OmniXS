@@ -2,4 +2,11 @@ serialization:
   ElementSpectrum:
     directory: dataset/spectra/{type}/{element}
     filename: "{material.id}_site_{index_string}_{element}_{type}.json"
-    serialization: json
+
+  M3GNetSiteFeature:
+    directory: dataset/features/{type}/{element}
+    filename: "m3gnet_{material.id}_site_{index_string}_{element}_{type}.json"
+
+  MLData:
+    directory: dataset/ml_data/{type}/{element}
+    filename: "{material.id}_site_{index_string}_{element}_{type}.json"
