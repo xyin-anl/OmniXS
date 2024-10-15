@@ -6,11 +6,13 @@ import numpy as np
 import torch
 from matgl import load_model
 from matgl.ext.pymatgen import Structure2Graph
-from matgl.graph.compute import (compute_pair_vector_and_distance,
-                                 compute_theta_and_phi, create_line_graph)
+from matgl.graph.compute import (
+    compute_pair_vector_and_distance,
+    compute_theta_and_phi,
+    create_line_graph,
+)
 from matgl.utils.cutoff import polynomial_cutoff
 
-from refactor.new_ml_data import MLData
 from refactor.spectra_data import MaterialStructure
 
 
@@ -83,8 +85,8 @@ if __name__ == "__main__":
     from config.defaults import cfg
     from refactor.io import FileHandler
     from refactor.spectra_data import ElementSpectrum
-    from refactor.spectra_enums import (Element, ElementsFEFF, ElementsVASP,
-                                        SpectrumType)
+    from refactor.spectra_enums import Element, ElementsFEFF, ElementsVASP, SpectrumType
+    from refactor.MlData import MLData
 
     file_handler = FileHandler(config=cfg.serialization, replace_existing=False)
 
@@ -99,7 +101,6 @@ if __name__ == "__main__":
             element=element,
             type=spectrum_type,
         )
-        spectra = list(spectra)
 
         def save_ml_data(spectrum):
             featurizer = M3GNetSiteFeaturizer()
