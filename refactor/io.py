@@ -108,26 +108,28 @@ class FileHandler:
                 raise AttributeError(f"Attribute {part} not found in {obj}")
         return obj
 
-    def fetch_serialized_objects(
+    def serialized_objetcs_filepaths(
         self, obj_class: Type[T], **template_params: Any
-    ) -> Iterator[T]:
+    ) -> Iterator[str]:
         config_name = obj_class.__name__
         config = self._get_config(config_name)
 
         dir_template = config["directory"]
         file_template = config["filename"]
 
-        # Resolve directory template with provided parameters
         dir_path = self._resolve_template(template_params, dir_template)
-
-        # Create a regex pattern from the filename template
         file_pattern = self._template_to_regex(file_template)
 
-        # Find all files in the directory that match the pattern
         for filepath in glob(os.path.join(dir_path, "*")):
             filename = os.path.basename(filepath)
             if re.match(file_pattern, filename):
-                yield self.deserialize_json(obj_class, custom_filepath=filepath)
+                yield filepath
+
+    def fetch_serialized_objects(
+        self, obj_class: Type[T], **template_params: Any
+    ) -> Iterator[T]:
+        for filepath in self.serialized_objetcs_filepaths(obj_class, **template_params):
+            yield self.deserialize_json(obj_class, custom_filepath=filepath)
 
     def _template_to_regex(self, template: str) -> str:
         # Convert template to regex pattern
