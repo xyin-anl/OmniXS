@@ -13,7 +13,7 @@ from matgl.graph.compute import (
 )
 from matgl.utils.cutoff import polynomial_cutoff
 
-from refactor.spectra_data import MaterialStructure
+from refactor.data.data import MaterialStructure
 
 
 class M3GNetFeaturizer:
@@ -83,10 +83,10 @@ if __name__ == "__main__":
     from tqdm import tqdm
 
     from config.defaults import cfg
-    from refactor.io import FileHandler
-    from refactor.spectra_data import ElementSpectrum
-    from refactor.spectra_enums import Element, ElementsFEFF, ElementsVASP, SpectrumType
-    from refactor.MlData import MLData
+    from refactor.utilities.io import FileHandler
+    from refactor.data.data import ElementSpectrum
+    from refactor.data.enums import Element, ElementsFEFF, ElementsVASP, SpectrumType
+    from refactor.data.ml_data import MlData
 
     file_handler = FileHandler(config=cfg.serialization, replace_existing=False)
 
@@ -105,7 +105,7 @@ if __name__ == "__main__":
         def save_ml_data(spectrum):
             featurizer = M3GNetSiteFeaturizer()
             features = featurizer.featurize(spectrum.material.structure, spectrum.index)
-            ml_data = MLData(X=features, y=np.array(spectrum.intensities))
+            ml_data = MlData(X=features, y=np.array(spectrum.intensities))
             FileHandler(cfg.serialization).serialize_json(
                 ml_data,
                 supplemental_info={

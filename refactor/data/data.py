@@ -21,7 +21,7 @@ from pydantic import (
 )
 from pymatgen.core import Structure as PymatgenStructure
 
-from refactor.spectra_enums import Element, MaterialIDPrefix, SpectrumType
+from refactor.data.enums import Element, MaterialIDPrefix, SpectrumType
 from refactor.utilities.readable_enums import ReadableEnums
 
 

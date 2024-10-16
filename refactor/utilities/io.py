@@ -146,8 +146,8 @@ if __name__ == "__main__":
 
     file_handler = FileHandler(config=cfg.serialization, replace_existing=False)
 
-    from refactor.spectra_data import ElementSpectrum
-    from refactor.spectra_enums import Element, SpectrumType
+    from refactor.data.data import ElementSpectrum
+    from refactor.data.enums import Element, SpectrumType
 
     objects = file_handler.fetch_serialized_objects(
         ElementSpectrum, element=Element.Cu, type=SpectrumType.FEFF

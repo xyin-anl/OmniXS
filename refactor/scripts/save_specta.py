@@ -6,8 +6,8 @@ import numpy as np
 from p_tqdm import p_map
 
 from config.defaults import cfg
-from refactor.io import FileHandler
-from refactor.spectra_data import (
+from refactor.utilities.io import FileHandler
+from refactor.data.data import (
     ElementSpectrum,
     EnergyGrid,
     IntensityValues,
@@ -15,7 +15,7 @@ from refactor.spectra_data import (
     MaterialID,
     MaterialStructure,
 )
-from refactor.spectra_enums import Element, SpectrumType
+from refactor.data.enums import Element, SpectrumType
 from refactor.utilities._legacy.ml_data_generator import MLDataGenerator
 from src.data.vasp_data_raw import RAWDataVASP
 
