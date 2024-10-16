@@ -154,14 +154,12 @@ DEFAULTFILEHANDLER = FileHandler(
 # %%
 
 if __name__ == "__main__":
-    from config.defaults import cfg
-
-    file_handler = FileHandler(config=cfg.serialization, replace_existing=False)
 
     from refactor.data.data import ElementSpectrum
     from refactor.data.enums import Element, SpectrumType
+    from refactor.utilities.io import DEFAULTFILEHANDLER
 
-    objects = file_handler.fetch_serialized_objects(
+    objects = DEFAULTFILEHANDLER.fetch_serialized_objects(
         ElementSpectrum, element=Element.Cu, type=SpectrumType.FEFF
     )
     objects = list(objects)

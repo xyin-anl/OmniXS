@@ -1,5 +1,4 @@
 # %%
-from config.defaults import cfg
 from refactor.data.enums import Element, ElementsVASP, SpectrumType
 from refactor.data.merge_ml_splits import MergedSplits
 from refactor.data.ml_data import DataTag

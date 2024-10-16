@@ -84,13 +84,11 @@ if __name__ == "__main__":
     from p_tqdm import p_map
     from tqdm import tqdm
 
-    from config.defaults import cfg
+    from refactor.utilities.io import DEFAULTFILEHANDLER
     from refactor.utilities.io import FileHandler
     from refactor.data.data import ElementSpectrum
     from refactor.data.enums import Element, ElementsVASP, SpectrumType
     from refactor.data.ml_data import MlData
-
-    file_handler = FileHandler(config=cfg.serialization, replace_existing=False)
 
     elements, spectrum_type = ElementsVASP, SpectrumType.VASP
     # elements, spectrum_type = ElementsFEFF, SpectrumType.FEFF
@@ -98,7 +96,7 @@ if __name__ == "__main__":
     # for element in elements:
     for element in [Element.Cu]:
 
-        spectra = file_handler.fetch_serialized_objects(
+        spectra = DEFAULTFILEHANDLER.fetch_serialized_objects(
             ElementSpectrum,
             element=element,
             type=spectrum_type,
@@ -108,7 +106,7 @@ if __name__ == "__main__":
             featurizer = M3GNetSiteFeaturizer()
             features = featurizer.featurize(spectrum.material.structure, spectrum.index)
             ml_data = MlData(X=features, y=np.array(spectrum.intensities))
-            FileHandler(cfg.serialization).serialize_json(
+            DEFAULTFILEHANDLER.serialize_json(
                 ml_data,
                 supplemental_info={
                     **spectrum.dict(),

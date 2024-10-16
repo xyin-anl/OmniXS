@@ -2,7 +2,7 @@ import numpy as np
 import os
 from config.defaults import cfg
 from refactor.data.constants import ElementsFEFF
-from refactor.utilities.io import FileHandler
+from refactor.utilities.io import FileHandler, DEFAULTFILEHANDLER
 from refactor.data.ml_data import MLData
 from refactor.data.data import ElementSpectrum
 from refactor.data.enums import Element, ElementsVASP, SpectrumType
@@ -12,20 +12,19 @@ from refactor.utilities.spectra_outliers import OutlierDetector
 
 
 def remove_outliers_in_ml_data(element, spectra_type):
-    load_file_handler = FileHandler(cfg.serialization)
 
     ml_file_paths = list(
-        load_file_handler.serialized_objects_filepaths(
+        DEFAULTFILEHANDLER.serialized_objects_filepaths(
             MLData, element=element, type=spectra_type
         )
     )
 
     ml_data = [
-        load_file_handler.deserialize_json(MLData, custom_filepath=fp)
+        DEFAULTFILEHANDLER.deserialize_json(MLData, custom_filepath=fp)
         for fp in ml_file_paths
     ]
 
-    std_factors = cfg.ml_data.anamoly_filter_std_cutoff
+    std_factors = cfg.ml_data.anamoly_filter_std_cutoff # TODO: replace with CONFIGS
     std_factor = std_factors[spectra_type]
 
     spectras = np.array([data.y for data in ml_data])
@@ -59,7 +58,7 @@ for element in ElementsVASP:
 
 
 def remove_outliers_in_spectrum(element, spectra_type):
-    load_file_handler = FileHandler(cfg.serialization)
+    load_file_handler = DEFAULTFILEHANDLER
 
     spectrum_file_paths = list(
         load_file_handler.serialized_objects_filepaths(

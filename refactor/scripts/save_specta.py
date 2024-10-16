@@ -6,7 +6,7 @@ import numpy as np
 from p_tqdm import p_map
 
 from config.defaults import cfg
-from refactor.utilities.io import FileHandler
+from refactor.utilities.io import DEFAULTFILEHANDLER
 from refactor.data.data import (
     ElementSpectrum,
     EnergyGrid,
@@ -95,8 +95,7 @@ def save_spectrum(spectra_type, element, id_and_site, poscar_path):
 
         output.append(material)
 
-        file_handler = FileHandler(config=cfg.serialization, replace_existing=False)
-        file_handler.serialize_json(element_spectrum, custom_filepath=save_path)
+        DEFAULTFILEHANDLER.serialize_json(element_spectrum, custom_filepath=save_path)
 
     except Exception as e:  # there are missing data/files. Ignore them.
         print(f"Error: {e}")

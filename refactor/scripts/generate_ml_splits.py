@@ -7,8 +7,7 @@ from refactor.data.constants import ElementsFEFF
 from refactor.data.ml_data import MLSplits
 from refactor.data.ml_data import MLData
 from src.data.material_split import MaterialSplitter
-from refactor.utilities.io import FileHandler
-from config.defaults import cfg
+from refactor.utilities.io import FileHandler, DEFAULTFILEHANDLER
 from refactor.data.enums import Element, SpectrumType
 
 
@@ -39,9 +38,8 @@ def ml_filename_to_idSite(
 def load_ml_data(
     idSite: Tuple[str, str], element: Element, spectra_type: SpectrumType
 ) -> MLData:
-    file_handler = FileHandler(cfg.serialization)
     filepath = idSite_to_ml_filename(idSite, element, spectra_type)
-    return file_handler.deserialize_json(MLData, custom_filepath=filepath)
+    return DEFAULTFILEHANDLER.deserialize_json(MLData, custom_filepath=filepath)
 
 
 def to_ml_data(
@@ -55,8 +53,7 @@ def to_ml_data(
 
 def main(element: Element, spectra_type: SpectrumType):
 
-    file_handler = FileHandler(cfg.serialization)
-    file_paths = file_handler.serialized_objects_filepaths(
+    file_paths = DEFAULTFILEHANDLER.serialized_objects_filepaths(
         MLData, element=element, type=spectra_type
     )
 
@@ -75,7 +72,7 @@ def main(element: Element, spectra_type: SpectrumType):
 
     ml_splits = MLSplits(train=train_data, val=val_data, test=test_data)
 
-    FileHandler(cfg.serialization).serialize_json(
+    DEFAULTFILEHANDLER.serialize_json(
         ml_splits, {"element": element, "type": spectra_type}
     )
 
@@ -92,7 +89,7 @@ if __name__ == "__main__":
     for element in tqdm(ElementsVASP, "VASP"):
         main(element, SpectrumType.VASP)
 
-    ml_splits = FileHandler(cfg.serialization).deserialize_json(
+    ml_splits = DEFAULTFILEHANDLER.deserialize_json(
         MLSplits, supplemental_info={"element": Element.Cu, "type": SpectrumType.VASP}
     )
 
