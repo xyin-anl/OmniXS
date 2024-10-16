@@ -68,7 +68,12 @@ class FileHandler:
         if supplemental_info:
             if isinstance(supplemental_info, BaseModel):
                 supplemental_info = supplemental_info.dict()
-            obj = {**obj.dict(), **supplemental_info}
+            if isinstance(obj, BaseModel):
+                obj = obj.dict()
+            elif isinstance(obj, type):
+                obj = {}
+                
+            obj = {**obj, **supplemental_info}
         dir_path = self._resolve_template(obj, config["directory"])
         filename = self._resolve_template(obj, config["filename"])
         return os.path.join(dir_path, filename)
@@ -108,7 +113,7 @@ class FileHandler:
                 raise AttributeError(f"Attribute {part} not found in {obj}")
         return obj
 
-    def serialized_objetcs_filepaths(
+    def serialized_objects_filepaths(
         self, obj_class: Type[T], **template_params: Any
     ) -> Iterator[str]:
         config_name = obj_class.__name__
@@ -128,7 +133,7 @@ class FileHandler:
     def fetch_serialized_objects(
         self, obj_class: Type[T], **template_params: Any
     ) -> Iterator[T]:
-        for filepath in self.serialized_objetcs_filepaths(obj_class, **template_params):
+        for filepath in self.serialized_objects_filepaths(obj_class, **template_params):
             yield self.deserialize_json(obj_class, custom_filepath=filepath)
 
     def _template_to_regex(self, template: str) -> str:

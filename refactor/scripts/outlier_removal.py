@@ -14,7 +14,7 @@ def remove_outliers_in_ml_data(element, spectra_type):
     load_file_handler = FileHandler(cfg.serialization)
 
     ml_file_paths = list(
-        load_file_handler.serialized_objetcs_filepaths(
+        load_file_handler.serialized_objects_filepaths(
             MLData, element=element, type=spectra_type
         )
     )
@@ -61,7 +61,7 @@ def remove_outliers_in_spectrum(element, spectra_type):
     load_file_handler = FileHandler(cfg.serialization)
 
     spectrum_file_paths = list(
-        load_file_handler.serialized_objetcs_filepaths(
+        load_file_handler.serialized_objects_filepaths(
             ElementSpectrum, element=element, type=spectra_type
         )
     )

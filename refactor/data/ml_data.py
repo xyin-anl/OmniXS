@@ -1,5 +1,5 @@
 # %%
-from typing import List
+from typing import Optional
 
 import numpy as np
 from pydantic import BaseModel, field_validator, model_serializer
@@ -27,10 +27,17 @@ class MLData(BaseModel):
         arbitrary_types_allowed = True
 
 
+class MLSplits(BaseModel):
+    train: Optional[MLData]
+    val: Optional[MLData]
+    test: Optional[MLData]
+
+
 # %%
 
 if __name__ == "__main__":
     import unittest
+    from tempfile import NamedTemporaryFile
 
     class TestMLData(unittest.TestCase):  # TODO: move to tests
         def test_data(self):
@@ -43,9 +50,6 @@ if __name__ == "__main__":
 
             data = MLData(X=X.tolist(), y=y.tolist())
             self.assertIsInstance(data.X, np.ndarray)
-
-            # use temp file
-            from tempfile import NamedTemporaryFile
 
             temp_file = NamedTemporaryFile()
             with open(temp_file.name, "w") as f:
@@ -61,8 +65,32 @@ if __name__ == "__main__":
                 self.assertIsInstance(data_loaded.y, np.ndarray)
                 self.assertTrue(np.allclose(data_loaded.y, data.y))
 
-    unittest.main(argv=[""], exit=False)
+    class TestMLSplits(unittest.TestCase):
+        def test_data(self):
+            X = np.random.rand(10, 10)
+            y = np.random.rand(10)
 
-    # # %%
+            data = MLData(X=X, y=y)
+            splits = MLSplits(train=data, val=data, test=data)
+            self.assertIsInstance(splits.train, MLData)
+            self.assertIsInstance(splits.val, MLData)
+            self.assertIsInstance(splits.test, MLData)
+
+            # use temp file
+
+            temp_file = NamedTemporaryFile()
+            with open(temp_file.name, "w") as f:
+                f.write(splits.json())
+
+            with open(temp_file.name, "r") as f:
+                import json
+
+                data_loaded = json.loads(f.read())
+                data_loaded = MLSplits(**data_loaded)
+                self.assertIsInstance(data_loaded.train, MLData)
+                self.assertIsInstance(data_loaded.val, MLData)
+                self.assertIsInstance(data_loaded.test, MLData)
+
+    unittest.main(argv=[""], exit=False)
 
 # %%
