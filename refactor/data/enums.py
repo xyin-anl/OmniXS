@@ -22,22 +22,6 @@ class ElementsVASP(StrEnum):
     Cu = "Cu"
 
 
-ElementsFEFF = Element
-
-
 class SpectrumType(StrEnum):
     VASP = "VASP"
     FEFF = "FEFF"
-
-
-FEFF = SpectrumType.FEFF
-VASP = SpectrumType.VASP
-
-Ti = Element.Ti
-V = Element.V
-Cr = Element.Cr
-Mn = Element.Mn
-Fe = Element.Fe
-Co = Element.Co
-Ni = Element.Ni
-Cu = Element.Cu

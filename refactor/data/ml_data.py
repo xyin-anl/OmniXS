@@ -1,13 +1,17 @@
 # %%
 from typing import Optional
+from refactor.utilities.io import FileHandler
 
 import numpy as np
 from pydantic import BaseModel, field_validator, model_serializer
 
+from refactor.data.enums import Element, SpectrumType
+from refactor.utilities.readable_enums import ReadableEnums
+
 
 class MLData(BaseModel):
-    X: np.ndarray
-    y: np.ndarray
+    X: Optional[np.ndarray] = None
+    y: Optional[np.ndarray] = None
 
     @field_validator("X", "y", mode="before")
     @classmethod
@@ -23,14 +27,37 @@ class MLData(BaseModel):
             "y": self.y.tolist(),
         }
 
+    def __len__(self):
+        len_X = len(self.X) if self.X is not None else 0
+        len_y = len(self.y) if self.y is not None else 0
+        if len_X != len_y:
+            raise ValueError(
+                f"X and y must have the same length. Got {len_X} and {len_y}."
+            )
+        return len_X
+
     class Config:
         arbitrary_types_allowed = True
 
 
+@ReadableEnums()
+class DataTag(BaseModel):
+    element: Element
+    type: SpectrumType
+
+    def __hash__(self) -> int:  # store as dict key
+        return hash((self.element, self.type))
+
+
 class MLSplits(BaseModel):
-    train: Optional[MLData]
-    val: Optional[MLData]
-    test: Optional[MLData]
+    train: Optional[MLData] = None
+    val: Optional[MLData] = None
+    test: Optional[MLData] = None
+
+    def __len__(self):
+        return sum(
+            len(getattr(self, split_name)) for split_name in self.__fields__.keys()
+        )
 
 
 # %%
@@ -65,6 +92,21 @@ if __name__ == "__main__":
                 self.assertIsInstance(data_loaded.y, np.ndarray)
                 self.assertTrue(np.allclose(data_loaded.y, data.y))
 
+        def test_len(self):
+            X = np.random.rand(10, 10)
+            y = np.random.rand(10)
+
+            data = MLData(X=X, y=y)
+            self.assertEqual(len(data), 10)
+
+        def test_len_mismatch(self):
+            X = np.random.rand(10, 10)
+            y = np.random.rand(11)
+
+            data = MLData(X=X, y=y)
+            with self.assertRaises(ValueError):
+                len(data)
+
     class TestMLSplits(unittest.TestCase):
         def test_data(self):
             X = np.random.rand(10, 10)
@@ -92,5 +134,9 @@ if __name__ == "__main__":
                 self.assertIsInstance(data_loaded.test, MLData)
 
     unittest.main(argv=[""], exit=False)
+
+
+# %%
+
 
 # %%

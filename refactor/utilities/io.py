@@ -1,13 +1,15 @@
 # %%
-from glob import glob
-from typing import Iterator
 import json
 import os
 import re
-from typing import Any, Dict, List, Optional, Set, Type, TypeVar, Union
+from glob import glob
+from typing import Any, Dict, Iterator, List, Optional, Set, Type, TypeVar, Union
 
 import yaml
+from omegaconf import OmegaConf
 from pydantic import BaseModel
+
+# %%
 
 
 T = TypeVar("T", bound=BaseModel)
@@ -72,7 +74,7 @@ class FileHandler:
                 obj = obj.dict()
             elif isinstance(obj, type):
                 obj = {}
-                
+
             obj = {**obj, **supplemental_info}
         dir_path = self._resolve_template(obj, config["directory"])
         filename = self._resolve_template(obj, config["filename"])
@@ -143,6 +145,11 @@ class FileHandler:
         pattern = re.sub(r"{.*?}", r".*?", pattern)
         return f"^{pattern}$"
 
+
+DEFAULTFILEHANDLER = FileHandler(
+    config=OmegaConf.load("config/serialization.yaml").serialization,
+    replace_existing=False,
+)
 
 # %%
 

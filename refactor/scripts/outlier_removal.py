@@ -1,10 +1,11 @@
 import numpy as np
 import os
 from config.defaults import cfg
+from refactor.data.constants import ElementsFEFF
 from refactor.utilities.io import FileHandler
 from refactor.data.ml_data import MLData
 from refactor.data.data import ElementSpectrum
-from refactor.data.enums import Element, ElementsFEFF, ElementsVASP, SpectrumType
+from refactor.data.enums import Element, ElementsVASP, SpectrumType
 from refactor.utilities.spectra_outliers import OutlierDetector
 
 # %%

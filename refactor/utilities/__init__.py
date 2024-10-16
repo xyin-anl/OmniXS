@@ -1,0 +1,3 @@
+from .io import DEFAULTFILEHANDLER
+
+__all__ = ["DEFAULTFILEHANDLER"]

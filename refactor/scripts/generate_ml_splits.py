@@ -3,6 +3,7 @@ import numpy as np
 import re
 from typing import List, Tuple
 
+from refactor.data.constants import ElementsFEFF
 from refactor.data.ml_data import MLSplits
 from refactor.data.ml_data import MLData
 from src.data.material_split import MaterialSplitter
@@ -82,7 +83,7 @@ def main(element: Element, spectra_type: SpectrumType):
 # %%
 
 if __name__ == "__main__":
-    from refactor.data.enums import ElementsFEFF, ElementsVASP, SpectrumType
+    from refactor.data.enums import ElementsVASP, SpectrumType
     from tqdm import tqdm
 
     for element in tqdm(ElementsFEFF, "FEFF"):

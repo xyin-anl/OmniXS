@@ -12,7 +12,9 @@ from matgl.graph.compute import (
     create_line_graph,
 )
 from matgl.utils.cutoff import polynomial_cutoff
+from refactor.utilities.io import DEFAULTFILEHANDLER
 
+from refactor.data.constants import ElementsFEFF
 from refactor.data.data import MaterialStructure
 
 
@@ -85,7 +87,7 @@ if __name__ == "__main__":
     from config.defaults import cfg
     from refactor.utilities.io import FileHandler
     from refactor.data.data import ElementSpectrum
-    from refactor.data.enums import Element, ElementsFEFF, ElementsVASP, SpectrumType
+    from refactor.data.enums import Element, ElementsVASP, SpectrumType
     from refactor.data.ml_data import MlData
 
     file_handler = FileHandler(config=cfg.serialization, replace_existing=False)
