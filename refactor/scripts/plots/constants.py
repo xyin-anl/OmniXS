@@ -1,5 +1,5 @@
 # %%
-from refactor.utilities.io import DEFAULTFILEHANDLER
+from refactor.utils  import DEFAULTFILEHANDLER
 from refactor.data.constants import FEFFDataTags, VASPDataTags
 from refactor.data.ml_data import MLSplits
 

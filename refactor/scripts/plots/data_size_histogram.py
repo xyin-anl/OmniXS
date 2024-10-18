@@ -7,10 +7,16 @@ import numpy as np
 from matplotlib.patches import Patch
 
 from config.defaults import cfg
-from refactor.data.constants import ElementsFEFF, ElementsVASP
-from refactor.data.enums import Element, ElementsVASP, SpectrumType
-from refactor.data.ml_data import DataTag, MLData, MLSplits
-from refactor.utilities.io import DEFAULTFILEHANDLER, FileHandler
+from refactor.data import (
+    DataTag,
+    Element,
+    ElementsFEFF,
+    ElementsVASP,
+    MLData,
+    MLSplits,
+    SpectrumType,
+)
+from refactor.utils  import DEFAULTFILEHANDLER, FileHandler
 from src.data.feff_data_raw import RAWDataFEFF
 from src.data.vasp_data_raw import RAWDataVASP
 from utils.src.plots.heatmap_of_lines import heatmap_of_lines

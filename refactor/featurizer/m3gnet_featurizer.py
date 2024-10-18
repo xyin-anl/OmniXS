@@ -12,10 +12,10 @@ from matgl.graph.compute import (
     create_line_graph,
 )
 from matgl.utils.cutoff import polynomial_cutoff
-from refactor.utilities.io import DEFAULTFILEHANDLER
 
 from refactor.data.constants import ElementsFEFF
 from refactor.data.data import MaterialStructure
+from refactor.utils  import DEFAULTFILEHANDLER
 
 
 class M3GNetFeaturizer:
@@ -84,11 +84,14 @@ if __name__ == "__main__":
     from p_tqdm import p_map
     from tqdm import tqdm
 
-    from refactor.utilities.io import DEFAULTFILEHANDLER
-    from refactor.utilities.io import FileHandler
-    from refactor.data.data import ElementSpectrum
-    from refactor.data.enums import Element, ElementsVASP, SpectrumType
-    from refactor.data.ml_data import MlData
+    from refactor.data import (
+        Element,
+        ElementSpectrum,
+        ElementsVASP,
+        MLData,
+        SpectrumType,
+    )
+    from refactor.utils  import DEFAULTFILEHANDLER, FileHandler
 
     elements, spectrum_type = ElementsVASP, SpectrumType.VASP
     # elements, spectrum_type = ElementsFEFF, SpectrumType.FEFF
@@ -105,7 +108,7 @@ if __name__ == "__main__":
         def save_ml_data(spectrum):
             featurizer = M3GNetSiteFeaturizer()
             features = featurizer.featurize(spectrum.material.structure, spectrum.index)
-            ml_data = MlData(X=features, y=np.array(spectrum.intensities))
+            ml_data = MLData(X=features, y=np.array(spectrum.intensities))
             DEFAULTFILEHANDLER.serialize_json(
                 ml_data,
                 supplemental_info={

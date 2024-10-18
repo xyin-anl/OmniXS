@@ -21,8 +21,8 @@ from pydantic import (
 )
 from pymatgen.core import Structure as PymatgenStructure
 
-from refactor.data.enums import Element, MaterialIDPrefix, SpectrumType
-from refactor.utilities.readable_enums import ReadableEnums
+from refactor.data import Element, MaterialIDPrefix, SpectrumType
+from refactor.utils.readable_enums import ReadableEnums
 
 
 class MaterialID(RootModel, validate_assignment=True):

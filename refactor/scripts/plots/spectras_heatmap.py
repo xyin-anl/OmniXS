@@ -6,20 +6,15 @@ import scienceplots
 from matplotlib.colors import NoNorm, PowerNorm
 
 from config.defaults import cfg
-from refactor.scripts.baseline import baseline_mse
-from refactor.utilities.plots import plot_line_heatmap
-from scripts.plots.plot_all_spectras import MLDATAPlotter
-from src.data.ml_data import load_xas_ml_data
-from src.data.ml_data import DataQuery
-
-from refactor.utilities.io import DEFAULTFILEHANDLER, FileHandler
-from refactor.data.enums import SpectrumType, Element
 
 # from refactor.data.constants import Element, ElementsFEFF, ElementsVASP, FEFF, VASP
-from refactor.data.constants import *
-from refactor.data.ml_data import MLData
+from refactor.data import Element, MLData, SpectrumType
+from refactor.scripts.baseline import baseline_mse
 from refactor.scripts.plots.constants import FEFFSplits, VASPSplits
-
+from refactor.utils import DEFAULTFILEHANDLER, FileHandler
+from refactor.utils.plots import plot_line_heatmap
+from scripts.plots.plot_all_spectras import MLDATAPlotter
+from src.data.ml_data import DataQuery, load_xas_ml_data
 
 # %%
 

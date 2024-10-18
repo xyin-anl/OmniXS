@@ -1,14 +1,18 @@
 # %%
-import numpy as np
 import re
 from typing import List, Tuple
 
-from refactor.data.constants import ElementsFEFF
-from refactor.data.ml_data import MLSplits
-from refactor.data.ml_data import MLData
-from src.data.material_split import MaterialSplitter
-from refactor.utilities.io import FileHandler, DEFAULTFILEHANDLER
-from refactor.data.enums import Element, SpectrumType
+import numpy as np
+
+from refactor.data import (
+    Element,
+    ElementsFEFF,
+    MaterialSplitter,
+    MLData,
+    MLSplits,
+    SpectrumType,
+)
+from refactor.utils import DEFAULTFILEHANDLER, FileHandler
 
 
 def construct_filename(
@@ -80,8 +84,9 @@ def main(element: Element, spectra_type: SpectrumType):
 # %%
 
 if __name__ == "__main__":
-    from refactor.data.enums import ElementsVASP, SpectrumType
     from tqdm import tqdm
+
+    from refactor.data import ElementsVASP, SpectrumType
 
     for element in tqdm(ElementsFEFF, "FEFF"):
         main(element, SpectrumType.FEFF)

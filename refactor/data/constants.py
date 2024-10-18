@@ -1,8 +1,8 @@
 # %%
-from refactor.data.enums import Element, ElementsVASP, SpectrumType
-from refactor.data.merge_ml_splits import MergedSplits
-from refactor.data.ml_data import DataTag
-from refactor.utilities.io import DEFAULTFILEHANDLER
+from refactor.data import Element, ElementsVASP, SpectrumType
+from refactor.data import MergedSplits
+from refactor.data import DataTag
+from refactor.utils import DEFAULTFILEHANDLER
 
 ElementsFEFF = Element
 

@@ -1,11 +1,13 @@
 # %%
 from typing import Any, ClassVar, Dict, List, Optional
+
 import numpy as np
 from pydantic import Field, field_validator
-from refactor.data.ml_data import MLSplits, DataTag
+
+from refactor.data.ml_data import DataTag, MLSplits
 
 # from refactor.data.constants import FEFFDataTags, VASPDataTags
-from refactor.utilities.io import DEFAULTFILEHANDLER, FileHandler
+from refactor.utils import DEFAULTFILEHANDLER, FileHandler
 
 
 class MergedSplits(MLSplits):
@@ -34,4 +36,6 @@ class MergedSplits(MLSplits):
 
     def __len__(self):
         return sum([len(s) for s in self.splits.values() if s is not None])
+
+
 # %%

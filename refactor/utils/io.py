@@ -155,9 +155,8 @@ DEFAULTFILEHANDLER = FileHandler(
 
 if __name__ == "__main__":
 
-    from refactor.data.data import ElementSpectrum
-    from refactor.data.enums import Element, SpectrumType
-    from refactor.utilities.io import DEFAULTFILEHANDLER
+    from refactor.data import Element, ElementSpectrum, SpectrumType
+    from refactor.utils import DEFAULTFILEHANDLER
 
     objects = DEFAULTFILEHANDLER.fetch_serialized_objects(
         ElementSpectrum, element=Element.Cu, type=SpectrumType.FEFF
