@@ -1,8 +1,6 @@
 # %%
 from refactor.data import Element, ElementsVASP, SpectrumType
-from refactor.data import MergedSplits
-from refactor.data import DataTag
-from refactor.utils import DEFAULTFILEHANDLER
+from refactor.data.ml_data import DataTag
 
 ElementsFEFF = Element
 
@@ -27,7 +25,4 @@ VASPDataTags = [
 ]
 
 
-FEFFSplits = MergedSplits.load(FEFFDataTags, DEFAULTFILEHANDLER)
-VASPSplits = MergedSplits.load(VASPDataTags, DEFAULTFILEHANDLER)
 
-# %%

@@ -13,8 +13,6 @@ from .constants import (
     Cu,
     FEFFDataTags,
     VASPDataTags,
-    FEFFSplits,
-    VASPSplits,
 )
 
 from .ml_data import MLData, DataTag, MLSplits
@@ -30,7 +28,11 @@ from .data import (
     IntensityValues,
 )
 
-from merge_ml_splits import MergedSplits
+# from .merge_ml_splits import (
+#     FEFFSplits,
+#     MergedSplits,
+#     VASPSplits,
+# )  # Slows down the import
 
 
 __all__ = [
@@ -51,8 +53,6 @@ __all__ = [
     "Cu",
     "FEFFDataTags",
     "VASPDataTags",
-    "FEFFSplits",
-    "VASPSplits",
     "MLData",
     "DataTag",
     "MLSplits",
@@ -65,5 +65,7 @@ __all__ = [
     "Spectrum",
     "EnergyGrid",
     "IntensityValues",
-    "MergedSplits",
+    # "MergedSplits",
+    # "FEFFSplits",
+    # "VASPSplits",
 ]
