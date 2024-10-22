@@ -1,3 +1,3 @@
-from .io import DEFAULTFILEHANDLER, FileHandler
+from .io import FileHandler
 
-__all__ = ["DEFAULTFILEHANDLER", "FileHandler"]
+__all__ = ["FileHandler"]

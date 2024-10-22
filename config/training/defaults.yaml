@@ -1,0 +1,34 @@
+defaults:
+  - hparams
+  - trainer
+  - _self_
+
+element: ???
+type: ???
+feature: null
+
+hydra:
+  run:
+    dir: output/training/expertXAS/m3gnet/${element}_${type}
+
+module:
+  _target_: refactor.model.training.PlModule
+  model: ${model}
+
+data_module:
+  _target_: refactor.model.training.LightningXASData
+  ml_splits: ${ml_splits}
+  batch_size: ${hparams.${type}.${element}.batch_size}
+  num_workers: 11
+  persistent_workers: True
+
+ml_splits:
+  _target_: refactor.utils.io.DEFAULTFILEHANDLER.deserialize_json
+  obj_class:
+    _target_: hydra.utils.get_class
+    path: refactor.data.ml_data.MLSplits
+
+  supplemental_info:
+    element: ${element}
+    type: ${type}
+    feature: ${feature}

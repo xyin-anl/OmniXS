@@ -28,6 +28,8 @@ from .data import (
     IntensityValues,
 )
 
+from .scaler import ScaledMlSplit
+
 # from .merge_ml_splits import (
 #     FEFFSplits,
 #     MergedSplits,
@@ -68,4 +70,5 @@ __all__ = [
     # "MergedSplits",
     # "FEFFSplits",
     # "VASPSplits",
+    "ScaledMlSplit",
 ]

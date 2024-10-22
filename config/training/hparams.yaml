@@ -1,0 +1,41 @@
+hparams:
+  FEFF:
+    Co:
+      batch_size: 32
+      widths: [600, 550, 450]
+    Cr:
+      batch_size: 32
+      widths: [450, 350, 150]
+    Cu:
+      batch_size: 32
+      widths: [600, 600, 400]
+    Fe:
+      batch_size: 64
+      widths: [450, 400, 450]
+    Mn:
+      batch_size: 64
+      widths: [500, 400, 300]
+    Ni:
+      batch_size: 32
+      widths: [600, 300]
+    Ti:
+      batch_size: 32
+      widths: [600, 600, 450]
+    V:
+      batch_size: 32
+      widths: [600, 550, 450]
+    ALL:
+      batch_size: 32
+      widths: [500, 500, 550]
+  VASP:
+    Ti:
+      batch_size: 64
+      widths: [500, 600, 400]
+    Cu:
+      batch_size: 64
+      widths: [550, 600, 450]
+    ALL:
+      batch_size: 32
+      widths: [500, 500, 550] # same as FEFF
+  SOAP: ${hparams.FEFF}
+  ACSF: ${hparams.FEFF}
