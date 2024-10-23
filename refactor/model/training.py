@@ -1,5 +1,6 @@
 # %%
 
+import numpy as np
 from typing import Callable, Optional
 
 import hydra
@@ -14,6 +15,7 @@ from refactor.data import DataTag, MLData, MLSplits
 from refactor.data.scaler import ScaledMlSplit
 from refactor.utils.callbacks import TensorboardLogTestTrainLoss
 from refactor.utils.io import DEFAULTFILEHANDLER, FileHandler
+from sklearn.preprocessing import RobustScaler
 
 # %%
 

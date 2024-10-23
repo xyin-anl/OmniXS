@@ -1,15 +1,53 @@
 # %%
+import warnings
+from functools import partial
 from typing import Any, Self
 
 from pydantic import Field, model_validator
-from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import FunctionTransformer, RobustScaler
 
 from refactor.data import MLData, MLSplits
 
 
+class UncenteredRobustScaler(RobustScaler):
+    """For spectra prediction models that produce only positive values (e.g XASBlock)"""
+
+    def __init__(self):
+        super().__init__(with_centering=False)
+
+
+class IdentityScaler(FunctionTransformer):
+    """Useful for cleaner code later"""
+
+    def __init__(self):
+        super().__init__(
+            func=lambda X: X,
+            inverse_func=lambda X: X,
+        )
+
+
+class MultiplicativeScaler(FunctionTransformer):
+    def __init__(self, factor: float):
+        self.factor = factor
+        super().__init__(
+            func=lambda X: X * self.factor,
+            inverse_func=lambda X: X / self.factor,
+        )
+
+
+class ThousandScaler(FunctionTransformer):
+    """As done in arxiv_v1 manuscript"""
+
+    def __init__(self):
+        super().__init__(
+            func=lambda X: X * 1000,
+            inverse_func=lambda X: X / 1000,
+        )
+
+
 class ScaledMlSplit(MLSplits):
-    x_scaler: Any = Field(default_factory=RobustScaler)
-    y_scaler: Any = Field(default_factory=RobustScaler)
+    x_scaler: Any = Field(default_factory=IdentityScaler)
+    y_scaler: Any = Field(default_factory=IdentityScaler)
 
     @model_validator(mode="after")
     def fit_transform(self):
@@ -30,10 +68,16 @@ class ScaledMlSplit(MLSplits):
         return self
 
     def transform(self, data: MLData) -> MLData:
-        return MLData(
+        split = MLData(
             X=self.x_scaler.transform(data.X),
             y=self.y_scaler.transform(data.y),
         )
+        if (split.y < 0).any():
+            msg = "y values are negative after scaling."
+            msg += "Avoid using models that only gives positive values"
+            msg += "e.g: XASBlock with softplus activation"
+            warnings.warn(msg)
+        return split
 
     def inverse_transform(self, data: MLData) -> MLData:
         return MLData(
@@ -42,24 +86,46 @@ class ScaledMlSplit(MLSplits):
         )
 
     @classmethod
-    def from_splits(cls, splits: MLSplits):
-        return cls(train=splits.train, test=splits.test, val=splits.val)
+    def from_splits(cls, splits: MLSplits, scaler: Any = IdentityScaler):
+        return cls(
+            train=splits.train,
+            test=splits.test,
+            val=splits.val,
+            x_scaler=scaler(),
+            y_scaler=scaler(),
+        )
 
-
-# %%
 
 if __name__ == "__main__":
     import numpy as np
+    from matplotlib import pyplot as plt
 
     from refactor.data.merge_ml_splits import FEFFSplits
 
     split = FEFFSplits
-    scaled_mlsplit = ScaledMlSplit.from_splits(split)
 
-    print(f"Original data: {split.train.X[0][:3]}")
-    print(f"Scaled data: {scaled_mlsplit.train.X[0][:3]}")
-    print(
-        f"Inverted data: {scaled_mlsplit.inverse_transform(scaled_mlsplit.train).X[0][:3]}"
+    # scaled_mlsplit = ScaledMlSplit.from_splits(
+    #     split, scaler=RobustScaler
+    # )  # should raise warning
+
+    # scaled_mlsplit = ScaledMlSplit.from_splits(split, scaler=ThousadScaler)
+
+    # scaled_mlsplit = ScaledMlSplit.from_splits(
+    #     split, scaler=partial(MultiplicativeScaler, factor=10)
+    # )  # warning: hydra do not support partial
+
+    scaled_mlsplit = ScaledMlSplit.from_splits(
+        split,
+        scaler=UncenteredRobustScaler,
     )
+
+    # plt.hist(scaled_mlsplit.test.y.flatten(), bins=100)
+
+    print(f"Original y data: {split.train.y[0][:3]}")
+    print(f"Scaled y data: {scaled_mlsplit.train.y[0][:3]}")
+    print(
+        f"Inverted y data: {scaled_mlsplit.inverse_transform(scaled_mlsplit.train).y[0][:3]}"
+    )
+
 
 # %%

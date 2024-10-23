@@ -4,8 +4,8 @@ defaults:
   - _self_
 
 element: ???
-type: ???
-feature: null
+type: ??? # FEFF, VASP ..
+feature: null # m3gnet, ACSF...
 
 hydra:
   run:
@@ -18,7 +18,10 @@ module:
 data_module:
   _target_: refactor.model.training.LightningXASData
   ml_splits: ${ml_splits}
-  batch_size: ${hparams.${type}.${element}.batch_size}
+  batch_size: ${hparams.${name}.${type}.${element}.batch_size}
+  scaler:
+    _target_: hydra.utils.get_class
+    path: refactor.data.ThousandScaler
   num_workers: 11
   persistent_workers: True
 
