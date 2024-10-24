@@ -1,6 +1,5 @@
-from .enums import MaterialIDPrefix, Element, ElementsVASP, SpectrumType
+from .enums import MaterialIDPrefix, Element, ElementsVASP, SpectrumType, ElementsFEFF
 from .constants import (
-    ElementsFEFF,
     FEFF,
     VASP,
     Ti,

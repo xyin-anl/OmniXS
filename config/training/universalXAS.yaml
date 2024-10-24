@@ -3,7 +3,7 @@ defaults:
   - _self_
 
 name: universalXAS
-element: ALL # placeholder for hparms
+element: All # placeholder for hparms
 type: FEFF # FEFF, VASP ..
 feature: m3gnet # m3gnet, ACSF...
 

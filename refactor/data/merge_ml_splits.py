@@ -51,13 +51,7 @@ class FEFFSplits(MergedSplits):
             val=merged.val,
             test=merged.test,
         )
-        return ml_split
-
-
-class VASPSplits(MergedSplits):
-    def __new__(cls):
-        # useful for hydra config
-        return MergedSplits.load(VASPDataTags, DEFAULTFILEHANDLER)
+        return ml_split.shuffled()
 
 
 # %%

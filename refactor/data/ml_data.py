@@ -13,6 +13,13 @@ class MLData(BaseModel):
     X: Optional[np.ndarray] = None
     y: Optional[np.ndarray] = None
 
+    @property
+    def shuffled(self):
+        if not self.X or not self.y:
+            raise ValueError("X and y must be set before shuffling.")
+        indices = np.random.permutation(len(self.X))
+        return MLData(X=self.X[indices], y=self.y[indices])
+
     @field_validator("X", "y", mode="before")
     @classmethod
     def _to_numpy(cls, v):
@@ -53,6 +60,13 @@ class MLSplits(BaseModel):
     train: Optional[MLData] = None
     val: Optional[MLData] = None
     test: Optional[MLData] = None
+
+    def shuffled(self):
+        return MLSplits(
+            train=self.train.shuffled,
+            val=self.val.shuffled,
+            test=self.test.shuffled,
+        )
 
     def __len__(self):
         return sum(

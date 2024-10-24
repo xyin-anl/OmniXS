@@ -1,8 +1,6 @@
 # %%
-from refactor.data import Element, ElementsVASP, SpectrumType
+from refactor.data.enums import Element, ElementsVASP, SpectrumType, ElementsFEFF
 from refactor.data.ml_data import DataTag
-
-ElementsFEFF = Element
 
 
 FEFF = SpectrumType.FEFF
@@ -23,6 +21,3 @@ FEFFDataTags = [
 VASPDataTags = [
     DataTag(element=element, type=SpectrumType.VASP) for element in ElementsVASP
 ]
-
-
-

@@ -34,7 +34,7 @@ hparams:
         widths: [550, 600, 450]
   universalXAS:
     FEFF:
-      ALL: # placeholder for hparams
+      All: # placeholder for hparams
         batch_size: 32
         widths:
           [500, 500, 550]

@@ -15,6 +15,18 @@ class Element(StrEnum):
     Co = "Co"
     Ni = "Ni"
     Cu = "Cu"
+    All = "All"  # placeholder for universalXAS
+
+
+class ElementsFEFF(StrEnum):
+    Ti = "Ti"
+    V = "V"
+    Cr = "Cr"
+    Mn = "Mn"
+    Fe = "Fe"
+    Co = "Co"
+    Ni = "Ni"
+    Cu = "Cu"
 
 
 class ElementsVASP(StrEnum):
