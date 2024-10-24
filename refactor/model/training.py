@@ -48,12 +48,12 @@ class LightningXASData(lightning.LightningDataModule):
             LightningXASData.to_tensor(split.y),
         )
 
-    def setup(self, stage: str = None):
+    def setup(self, stage: str = None, seed: int = 42):
         scaled_splits = ScaledMlSplit(
             x_scaler=self.x_scaler(),
             y_scaler=self.y_scaler(),
             **self.splits.dict(),
-        )
+        ).shuffled_view(seed)
         self.train = self.to_tensor_dataset(scaled_splits.train)
         self.val = self.to_tensor_dataset(scaled_splits.val)
         self.test = self.to_tensor_dataset(scaled_splits.test)

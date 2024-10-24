@@ -13,10 +13,10 @@ class MLData(BaseModel):
     X: Optional[np.ndarray] = None
     y: Optional[np.ndarray] = None
 
-    @property
-    def shuffled(self):
-        if not self.X or not self.y:
+    def shuffled_view(self, seed: Optional[int] = 42):
+        if self.X is None or self.y is None:
             raise ValueError("X and y must be set before shuffling.")
+        np.random.seed(seed)
         indices = np.random.permutation(len(self.X))
         return MLData(X=self.X[indices], y=self.y[indices])
 
@@ -61,11 +61,11 @@ class MLSplits(BaseModel):
     val: Optional[MLData] = None
     test: Optional[MLData] = None
 
-    def shuffled(self):
+    def shuffled_view(self, seed: Optional[int] = 42):
         return MLSplits(
-            train=self.train.shuffled,
-            val=self.val.shuffled,
-            test=self.test.shuffled,
+            train=self.train.shuffled_view(seed),
+            val=self.val.shuffled_view(seed),
+            test=self.test.shuffled_view(seed),
         )
 
     def __len__(self):

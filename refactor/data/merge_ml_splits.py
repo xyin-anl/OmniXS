@@ -51,7 +51,7 @@ class FEFFSplits(MergedSplits):
             val=merged.val,
             test=merged.test,
         )
-        return ml_split.shuffled()
+        return ml_split.shuffled_view()
 
 
 # %%
