@@ -23,7 +23,7 @@ data_module:
   batch_size: ${hparams.${name}.${type}.${element}.batch_size}
   x_scaler:
     _target_: hydra.utils.get_class
-    path: refactor.data.IdentityScaler
+    path: refactor.data.ThousandScaler
   y_scaler:
     _target_: hydra.utils.get_class
     path: refactor.data.ThousandScaler
