@@ -86,13 +86,18 @@ class ScaledMlSplit(MLSplits):
         )
 
     @classmethod
-    def from_splits(cls, splits: MLSplits, scaler: Any = IdentityScaler):
+    def from_splits(
+        cls,
+        splits: MLSplits,
+        x_scaler: Any = IdentityScaler,
+        y_scaler: Any = IdentityScaler,
+    ):
         return cls(
             train=splits.train,
             test=splits.test,
             val=splits.val,
-            x_scaler=scaler(),
-            y_scaler=scaler(),
+            x_scaler=x_scaler(),
+            y_scaler=y_scaler(),
         )
 
 

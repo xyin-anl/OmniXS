@@ -25,13 +25,15 @@ class LightningXASData(lightning.LightningDataModule):
         self,
         ml_splits: MLSplits,
         batch_size: int,
-        scaler: type = ThousandScaler,
+        x_scaler: type = IdentityScaler,
+        y_scaler: type = ThousandScaler,
         **kwargs,
     ):
         super().__init__()
         self.splits = ml_splits
         self.batch_size = batch_size
-        self.scaler = scaler
+        self.x_scaler = x_scaler
+        self.y_scaler = y_scaler
         self.kwargs = kwargs
 
     @staticmethod
@@ -48,8 +50,8 @@ class LightningXASData(lightning.LightningDataModule):
 
     def setup(self, stage: str = None):
         scaled_splits = ScaledMlSplit(
-            x_scaler=self.scaler(),
-            y_scaler=self.scaler(),
+            x_scaler=self.x_scaler(),
+            y_scaler=self.y_scaler(),
             **self.splits.dict(),
         )
         self.train = self.to_tensor_dataset(scaled_splits.train)

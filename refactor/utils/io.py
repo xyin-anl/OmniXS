@@ -116,14 +116,18 @@ class FileHandler:
         return obj
 
     def serialized_objects_filepaths(
-        self, obj_class: Type[T], **template_params: Any
+        self,
+        config_name: Union[Type[T], str],
+        **template_params: Any,
     ) -> Iterator[str]:
-        config_name = obj_class.__name__
+        config_name = (
+            config_name.__name__ if isinstance(config_name, type) else config_name
+        )
         config = self._get_config(config_name)
-
+        
         dir_template = config["directory"]
         file_template = config["filename"]
-
+        
         dir_path = self._resolve_template(template_params, dir_template)
         file_pattern = self._template_to_regex(file_template)
 

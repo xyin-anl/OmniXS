@@ -15,7 +15,10 @@ data_module:
   _target_: refactor.model.training.LightningXASData
   ml_splits: ${ml_splits}
   batch_size: ${hparams.${name}.${type}.${element}.batch_size}
-  scaler:
+  x_scaler:
+    _target_: hydra.utils.get_class
+    path: refactor.data.IdentityScaler
+  y_scaler:
     _target_: hydra.utils.get_class
     path: refactor.data.ThousandScaler
   num_workers: 11
