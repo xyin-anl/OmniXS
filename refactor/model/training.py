@@ -63,13 +63,19 @@ class LightningXASData(lightning.LightningDataModule):
         return DataLoader(self.train, batch_size=self.batch_size, **self.kwargs)
 
     def val_dataloader(self):
-        return DataLoader(self.val, batch_size=self.batch_size, **self.kwargs)
+        return DataLoader(
+            self.val, batch_size=self.batch_size, **{**self.kwargs, "shuffle": False}
+        )
 
     def test_dataloader(self):
-        return DataLoader(self.test, batch_size=self.batch_size, **self.kwargs)
+        return DataLoader(
+            self.test, batch_size=self.batch_size, **{**self.kwargs, "shuffle": False}
+        )
 
     def predict_dataloader(self):
-        return DataLoader(self.test, batch_size=self.batch_size, **self.kwargs)
+        return DataLoader(
+            self.test, batch_size=self.batch_size, **{**self.kwargs, "shuffle": False}
+        )
 
 
 class PlModule(lightning.LightningModule):
