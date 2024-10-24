@@ -5,11 +5,11 @@ defaults:
 
 element: ???
 type: ??? # FEFF, VASP ..
-feature: null # m3gnet, ACSF...
+feature: m3gnet # m3gnet, ACSF...
 
 hydra:
   run:
-    dir: output/training/expertXAS/m3gnet/${element}_${type}
+    dir: output/training/{name}/${element}_${type}
 
 module:
   _target_: refactor.model.training.PlModule

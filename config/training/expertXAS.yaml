@@ -2,8 +2,10 @@ defaults:
   - defaults
   - _self_
 
+name: expertXAS
+
 model:
   _target_: refactor.model.xasblock.XASBlock
   input_dim: 64
-  hidden_dims: ${hparams.${type}.${element}.widths}
+  hidden_dims: ${hparams.${name}.${type}.${element}.widths}
   output_dim: 141
