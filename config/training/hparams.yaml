@@ -33,11 +33,13 @@ hparams:
         batch_size: 64
         widths: [550, 600, 450]
   universalXAS:
-    batch_size: 32
-    widths:
-      [500, 500, 550]
-      # ALL:
-      #   batch_size: 32
-      #   widths: [500, 500, 550] # same as FEFF
-  # SOAP: ${hparams.FEFF}
-  # ACSF: ${hparams.FEFF}
+    FEFF:
+      ALL: # placeholder for hparams
+        batch_size: 32
+        widths:
+          [500, 500, 550]
+          # ALL:
+          #   batch_size: 32
+          #   widths: [500, 500, 550] # same as FEFF
+      # SOAP: ${hparams.FEFF}
+      # ACSF: ${hparams.FEFF}

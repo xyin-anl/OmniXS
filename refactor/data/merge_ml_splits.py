@@ -1,5 +1,10 @@
 # %%
+from pydantic import BaseModel, Field, field_serializer
 from typing import Any, ClassVar, Dict, List, Optional
+
+# skip splits serilziation
+from pydantic import model_serializer
+
 
 import numpy as np
 from pydantic import Field, field_validator
@@ -13,7 +18,7 @@ from refactor.utils.io import DEFAULTFILEHANDLER, FileHandler
 
 
 class MergedSplits(MLSplits):
-    splits: Dict[DataTag, MLSplits] = Field(default_factory=dict)
+    # splits: Dict[DataTag, MLSplits] = Field(default_factory=dict)
 
     @classmethod
     def load(cls, tags: List[DataTag], file_handler: "FileHandler") -> "MergedSplits":
@@ -34,13 +39,25 @@ class MergedSplits(MLSplits):
             else:
                 existing_data.X = np.concatenate([existing_data.X, new_data.X])
                 existing_data.y = np.concatenate([existing_data.y, new_data.y])
-            self.splits[tag] = split
-
-    def __len__(self):
-        return sum([len(s) for s in self.splits.values() if s is not None])
+            # self.splits[tag] = split
 
 
-FEFFSplits = MergedSplits.load(FEFFDataTags, DEFAULTFILEHANDLER)
-VASPSplits = MergedSplits.load(VASPDataTags, DEFAULTFILEHANDLER)
+class FEFFSplits(MergedSplits):
+    def __new__(cls):
+        # useful for hydra config
+        merged = MergedSplits.load(FEFFDataTags, DEFAULTFILEHANDLER)
+        ml_split = MLSplits(
+            train=merged.train,
+            val=merged.val,
+            test=merged.test,
+        )
+        return ml_split
+
+
+class VASPSplits(MergedSplits):
+    def __new__(cls):
+        # useful for hydra config
+        return MergedSplits.load(VASPDataTags, DEFAULTFILEHANDLER)
+
 
 # %%

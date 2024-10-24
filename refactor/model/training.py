@@ -15,7 +15,7 @@ from refactor.data import DataTag, MLData, MLSplits
 from refactor.data.scaler import ScaledMlSplit
 from refactor.utils.callbacks import TensorboardLogTestTrainLoss
 from refactor.utils.io import DEFAULTFILEHANDLER, FileHandler
-from sklearn.preprocessing import RobustScaler
+from refactor.data.scaler import ThousandScaler, IdentityScaler, UncenteredRobustScaler
 
 # %%
 
@@ -25,7 +25,7 @@ class LightningXASData(lightning.LightningDataModule):
         self,
         ml_splits: MLSplits,
         batch_size: int,
-        scaler: type = RobustScaler,
+        scaler: type = ThousandScaler,
         **kwargs,
     ):
         super().__init__()
@@ -110,6 +110,7 @@ class PlModule(lightning.LightningModule):
     def predict_step(self, batch, batch_idx):
         x, y = batch
         return self.model(x)
+
 
 @hydra.main(version_base=None)
 def trainModel(cfg: DictConfig):

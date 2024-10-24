@@ -3,9 +3,17 @@ defaults:
   - _self_
 
 name: expertXAS
+element: ???
+type: ??? # FEFF, VASP ..
+feature: m3gnet # m3gnet, ACSF...
 
-model:
-  _target_: refactor.model.xasblock.XASBlock
-  input_dim: 64
-  hidden_dims: ${hparams.${name}.${type}.${element}.widths}
-  output_dim: 141
+ml_splits:
+  _target_: refactor.utils.io.DEFAULTFILEHANDLER.deserialize_json
+  obj_class:
+    _target_: hydra.utils.get_class
+    path: refactor.data.ml_data.MLSplits
+  supplemental_info:
+    element: ${element}
+    type: ${type}
+    feature: ${feature}
+
