@@ -16,5 +16,5 @@ serialization:
     filename: "{element}_{type}_m3gnet.json"
 
   TrainedXASBlock:
-    directory: "{element}_{type}/checkpoints"
+    directory: output/training/{name}/{element}_{type}/checkpoints
     filename: "{}.ckpt"
