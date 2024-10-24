@@ -36,10 +36,6 @@ hparams:
     FEFF:
       All: # placeholder for hparams
         batch_size: 32
-        widths:
-          [500, 500, 550]
-          # ALL:
-          #   batch_size: 32
-          #   widths: [500, 500, 550] # same as FEFF
-      # SOAP: ${hparams.FEFF}
-      # ACSF: ${hparams.FEFF}
+        widths: [500, 500, 550]
+  tunedUniversalXAS: ${hparams.expertXAS}
+

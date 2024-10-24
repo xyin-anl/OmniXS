@@ -21,3 +21,8 @@ trainer:
       save_top_k: 1
       verbose: False
       auto_insert_metric_name: False
+  logger:
+    _target_: lightning.pytorch.loggers.TensorBoardLogger
+    save_dir: ${hydra:run.dir}/tensorboard
+    name: null # This will use the run name from hydra
+    version: null # This will auto-increment versions

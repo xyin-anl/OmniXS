@@ -63,8 +63,8 @@ class ScaledMlSplit(MLSplits):
 
     def _self_transform(self) -> Self:
         self.train = self.transform(self.train)
-        self.test = self.transform(self.test) if self.test else None
-        self.val = self.transform(self.val) if self.val else None
+        self.test = self.transform(self.test)
+        self.val = self.transform(self.val)
         return self
 
     def transform(self, data: MLData) -> MLData:

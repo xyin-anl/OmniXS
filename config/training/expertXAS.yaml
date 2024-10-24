@@ -6,14 +6,3 @@ name: expertXAS
 element: ???
 type: ??? # FEFF, VASP ..
 feature: m3gnet # m3gnet, ACSF...
-
-ml_splits:
-  _target_: refactor.utils.io.DEFAULTFILEHANDLER.deserialize_json
-  obj_class:
-    _target_: hydra.utils.get_class
-    path: refactor.data.ml_data.MLSplits
-  supplemental_info:
-    element: ${element}
-    type: ${type}
-    feature: ${feature}
-

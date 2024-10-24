@@ -7,9 +7,15 @@ hydra:
   run:
     dir: output/training/${name}/${element}_${type}
 
-module:
-  _target_: refactor.model.training.PlModule
-  model: ${model}
+ml_splits:
+  _target_: refactor.utils.io.DEFAULTFILEHANDLER.deserialize_json
+  obj_class:
+    _target_: hydra.utils.get_class
+    path: refactor.data.ml_data.MLSplits
+  supplemental_info:
+    element: ${element}
+    type: ${type}
+    feature: ${feature}
 
 data_module:
   _target_: refactor.model.training.LightningXASData
@@ -29,4 +35,8 @@ model:
   _target_: refactor.model.xasblock.XASBlock
   input_dim: 64
   hidden_dims: ${hparams.${name}.${type}.${element}.widths}
-  output_dim: 141
+  output_dim: 141 # TODO: remove hardcoding
+
+module:
+  _target_: refactor.model.training.PlModule
+  model: ${model}
