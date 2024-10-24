@@ -2,6 +2,7 @@
 import json
 import os
 import re
+import warnings
 from glob import glob
 from typing import Any, Dict, Iterator, List, Optional, Set, Type, TypeVar, Union
 
@@ -119,22 +120,30 @@ class FileHandler:
         self,
         config_name: Union[Type[T], str],
         **template_params: Any,
-    ) -> Iterator[str]:
+    ) -> List[str]:
         config_name = (
             config_name.__name__ if isinstance(config_name, type) else config_name
         )
         config = self._get_config(config_name)
-        
+
         dir_template = config["directory"]
         file_template = config["filename"]
-        
+
         dir_path = self._resolve_template(template_params, dir_template)
         file_pattern = self._template_to_regex(file_template)
 
-        for filepath in glob(os.path.join(dir_path, "*")):
-            filename = os.path.basename(filepath)
-            if re.match(file_pattern, filename):
-                yield filepath
+        paths = glob(os.path.join(dir_path, "*"))
+        if not paths:
+            msg = f"No files found for {config_name} with params {template_params}"
+            msg += f"\nDir: {dir_path}\nPattern: {file_pattern}"
+            warnings.warn(msg)
+            return []
+
+        return [
+            filepath
+            for filepath in paths
+            if re.match(file_pattern, os.path.basename(filepath))
+        ]
 
     def fetch_serialized_objects(
         self, obj_class: Type[T], **template_params: Any

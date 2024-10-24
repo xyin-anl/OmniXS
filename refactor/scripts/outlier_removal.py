@@ -15,10 +15,8 @@ from refactor.utils.spectra_outliers import OutlierDetector
 
 def remove_outliers_in_ml_data(element, spectra_type):
 
-    ml_file_paths = list(
-        DEFAULTFILEHANDLER.serialized_objects_filepaths(
-            MLData, element=element, type=spectra_type
-        )
+    ml_file_paths = DEFAULTFILEHANDLER.serialized_objects_filepaths(
+        MLData, element=element, type=spectra_type
     )
 
     ml_data = [
@@ -26,7 +24,7 @@ def remove_outliers_in_ml_data(element, spectra_type):
         for fp in ml_file_paths
     ]
 
-    std_factors = cfg.ml_data.anamoly_filter_std_cutoff # TODO: replace with CONFIGS
+    std_factors = cfg.ml_data.anamoly_filter_std_cutoff  # TODO: replace with CONFIGS
     std_factor = std_factors[spectra_type]
 
     spectras = np.array([data.y for data in ml_data])
@@ -62,10 +60,8 @@ for element in ElementsVASP:
 def remove_outliers_in_spectrum(element, spectra_type):
     load_file_handler = DEFAULTFILEHANDLER
 
-    spectrum_file_paths = list(
-        load_file_handler.serialized_objects_filepaths(
-            ElementSpectrum, element=element, type=spectra_type
-        )
+    spectrum_file_paths = load_file_handler.serialized_objects_filepaths(
+        ElementSpectrum, element=element, type=spectra_type
     )
 
     spectra = [
