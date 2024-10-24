@@ -23,6 +23,7 @@ data_module:
     path: refactor.data.ThousandScaler
   num_workers: 11
   persistent_workers: True
+  shuffle: True # very important for MergedMLSplits (used in UniversalXAS)
 
 model:
   _target_: refactor.model.xasblock.XASBlock
