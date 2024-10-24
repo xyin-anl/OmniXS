@@ -1,3 +1,4 @@
+# %%
 import os
 
 import numpy as np
@@ -9,8 +10,6 @@ from refactor.data.data import ElementSpectrum
 from refactor.data.ml_data import MLData
 from refactor.utils import DEFAULTFILEHANDLER, FileHandler
 from refactor.utils.spectra_outliers import OutlierDetector
-
-# %%
 
 
 def remove_outliers_in_ml_data(element, spectra_type):
@@ -50,6 +49,7 @@ def remove_outliers_in_ml_data(element, spectra_type):
 
 for element in ElementsFEFF:
     remove_outliers_in_ml_data(element, SpectrumType.FEFF)
+
 for element in ElementsVASP:
     remove_outliers_in_ml_data(element, SpectrumType.VASP)
 

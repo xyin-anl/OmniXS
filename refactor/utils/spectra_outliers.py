@@ -2,9 +2,7 @@
 from typing import List
 import numpy as np
 from pydantic import Field, validate_call, BaseModel
-from refactor.scripts.outlier_removal import remove_outliers_in_spectrum
 from refactor.data.data import Spectrum
-from refactor.scripts.outlier_removal import remove_outliers_in_ml_data
 
 
 class OutlierDetector:
