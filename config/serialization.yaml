@@ -14,3 +14,7 @@ serialization:
   MLSplits:
     directory: dataset/ml_data/splits
     filename: "{element}_{type}_m3gnet.json"
+
+  TrainedXASBlock:
+    directory: "{element}_{type}/checkpoints"
+    filename: "{}.ckpt"

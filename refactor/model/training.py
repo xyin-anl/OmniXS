@@ -25,34 +25,37 @@ class LightningXASData(lightning.LightningDataModule):
         self,
         ml_splits: MLSplits,
         batch_size: int,
+        scaler: type = RobustScaler,
         **kwargs,
     ):
         super().__init__()
         self.splits = ml_splits
         self.batch_size = batch_size
+        self.scaler = scaler
         self.kwargs = kwargs
+
+    @staticmethod
+    def to_tensor(arr: np.ndarray):
+        # used by external classes for consistent dtype
+        return tensor(arr, dtype=torch.float32)
 
     @staticmethod
     def to_tensor_dataset(split: MLData):
         return TensorDataset(
-            tensor(split.X, dtype=torch.float32),
-            tensor(split.y, dtype=torch.float32),
+            LightningXASData.to_tensor(split.X),
+            LightningXASData.to_tensor(split.y),
         )
 
     def setup(self, stage: str = None):
-        splits = ScaledMlSplit.from_splits(self.splits)
-        self.train = self.to_tensor_dataset(splits.train)
-        self.val = self.to_tensor_dataset(splits.val)
-        self.test = self.to_tensor_dataset(splits.test)
+        scaled_splits = ScaledMlSplit(
+            x_scaler=self.scaler(),
+            y_scaler=self.scaler(),
+            **self.splits.dict(),
+        )
+        self.train = self.to_tensor_dataset(scaled_splits.train)
+        self.val = self.to_tensor_dataset(scaled_splits.val)
+        self.test = self.to_tensor_dataset(scaled_splits.test)
         return self
-
-    # def setup(self, file_handler: FileHandler = DEFAULTFILEHANDLER, stage: str = None):
-    #     splits = file_handler.deserialize_json(MLSplits, self.tag)
-    #     splits = ScaledMlSplit.from_splits(splits)
-    #     self.train = self.to_tensor_dataset(splits.train)
-    #     self.val = self.to_tensor_dataset(splits.val)
-    #     self.test = self.to_tensor_dataset(splits.test)
-    #     return self
 
     def train_dataloader(self):
         return DataLoader(self.train, batch_size=self.batch_size, **self.kwargs)
@@ -104,9 +107,13 @@ class PlModule(lightning.LightningModule):
         x, y = batch
         return self.logged_loss("test_loss", y, self.model(x))
 
+    def predict_step(self, batch, batch_idx):
+        x, y = batch
+        return self.model(x)
 
 @hydra.main(version_base=None)
 def trainModel(cfg: DictConfig):
+    # torch.set_float32_matmul_precision('medium') # useful for tensor cores
     data_module = instantiate(cfg.data_module)
     module = instantiate(cfg.module)
     trainer = instantiate(cfg.trainer)

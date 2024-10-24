@@ -9,7 +9,7 @@ feature: m3gnet # m3gnet, ACSF...
 
 hydra:
   run:
-    dir: output/training/{name}/${element}_${type}
+    dir: output/training/${name}/${element}_${type}
 
 module:
   _target_: refactor.model.training.PlModule
