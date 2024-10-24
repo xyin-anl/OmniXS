@@ -6,3 +6,7 @@ name: expertXAS
 element: ???
 type: ??? # FEFF, VASP ..
 feature: m3gnet # m3gnet, ACSF...
+
+module:
+  _target_: refactor.model.training.PlModule
+  model: ${model}
