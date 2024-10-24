@@ -18,7 +18,7 @@ from refactor.utils.io import DEFAULTFILEHANDLER, FileHandler
 
 
 class MergedSplits(MLSplits):
-    # splits: Dict[DataTag, MLSplits] = Field(default_factory=dict)
+    splits: Dict[DataTag, MLSplits] = Field(default_factory=dict)
 
     @classmethod
     def load(cls, tags: List[DataTag], file_handler: "FileHandler") -> "MergedSplits":
@@ -39,7 +39,7 @@ class MergedSplits(MLSplits):
             else:
                 existing_data.X = np.concatenate([existing_data.X, new_data.X])
                 existing_data.y = np.concatenate([existing_data.y, new_data.y])
-            # self.splits[tag] = split
+            self.splits[tag] = split
 
 
 class FEFFSplits(MergedSplits):
