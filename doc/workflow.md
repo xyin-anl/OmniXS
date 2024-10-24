@@ -27,4 +27,18 @@
 ```
 ````
 
-## Spectra Object
+## Scaling
+
+- `Warning`: Do not use scaler that makes the spectrum values negative if the models produce only positive values (e.g. `XASBlock` with `Softplus` activation !!)
+
+## Training
+
+```bash
+    python -m refactor.model.training --config-path ../../config/training --config-name expertXAS element=Cu type=FEFF
+```
+
+Universal
+
+```bash
+python -m refactor.model.training --config-path ../../config/training --config-name universalXAS
+```
