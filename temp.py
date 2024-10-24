@@ -4,6 +4,9 @@ from abc import ABC, abstractmethod
 from functools import partial
 from typing import Any, List, Literal, Optional, Self, Union
 
+# from get_eta import get_eta
+from refactor.data.merge_ml_splits import FEFFSplits, MergedSplits
+
 import numpy as np
 import torch
 from lightning.pytorch import Trainer
@@ -17,7 +20,6 @@ from sklearn.preprocessing import RobustScaler
 from refactor.data import (
     FEFF,
     VASP,
-    Cu,
     DataTag,
     IdentityScaler,
     MLData,
@@ -67,10 +69,8 @@ class TrainedModelLoader:
 
     @staticmethod
     def get_ckpt_path(tag: ModelTag):
-        paths = list(
-            TrainedModelLoader.file_handler.serialized_objects_filepaths(
-                "TrainedXASBlock", **tag.dict()
-            )
+        paths = TrainedModelLoader.file_handler.serialized_objects_filepaths(
+            "TrainedXASBlock", **tag.dict()
         )
         if len(paths) != 1:
             raise ValueError(f"Expected 1 path, got {len(paths)}")
@@ -84,9 +84,15 @@ class TrainedModelLoader:
         )
 
     @staticmethod
-    def load_scaled_splits(tag: ModelTag, scaler: type = RobustScaler):
+    def load_scaled_splits(
+        tag: ModelTag, x_scaler: type = IdentityScaler, y_scaler: type = ThousandScaler
+    ):
         splits = TrainedModelLoader.load_ml_splits(tag)
-        return ScaledMlSplit(x_scaler=scaler(), y_scaler=scaler(), **splits.dict())
+        return ScaledMlSplit(
+            x_scaler=x_scaler(),
+            y_scaler=y_scaler(),
+            **splits.dict(),
+        )
 
 
 class ModelMetrics(BaseModel):
@@ -132,7 +138,8 @@ class ModelMetrics(BaseModel):
 class TrainedModel(BaseModel, ABC):
     tag: ModelTag
     model: Optional[Any] = None
-    train_scaler: type = ThousandScaler
+    train_x_scaler: type = IdentityScaler
+    train_y_scaler: type = ThousandScaler
 
     @abstractmethod
     def predict(self, X: np.ndarray) -> np.ndarray:
@@ -144,7 +151,13 @@ class TrainedModel(BaseModel, ABC):
 
     @property
     def default_split(self) -> ScaledMlSplit:
-        return TrainedModelLoader.load_scaled_splits(self.tag, self.train_scaler)
+        if self.tag.element == "All":
+            return FEFFSplits()
+        return TrainedModelLoader.load_scaled_splits(
+            self.tag,
+            self.train_x_scaler,
+            self.train_y_scaler,
+        )
 
     def compute_metrics(self, splits: ScaledMlSplit) -> ModelMetrics:
         predictions = self.predict(splits.test.X)
@@ -163,12 +176,22 @@ class TrainedXASBlock(TrainedModel):
         return self.model(X.to(self.model.device)).detach().cpu().numpy()
 
     @classmethod
-    def load(cls, tag: ModelTag):
+    def load(
+        cls,
+        tag: ModelTag,
+        train_x_scaler: type = IdentityScaler,
+        train_y_scaler: type = ThousandScaler,
+    ):
         model = TrainedModelLoader.load_model(tag)
         model.eval()
         model.freeze()
-        instance = cls(tag=tag, model=model, train_scaler=ThousandScaler)
-        instance.model_rebuild()  # Explicitly rebuild the model
+        instance = cls(
+            tag=tag,
+            model=model,
+            train_x_scaler=train_x_scaler,
+            train_y_scaler=train_y_scaler,
+        )
+        # instance.model_rebuild()  # Explicitly rebuild the model
         return instance
 
 
@@ -192,47 +215,128 @@ EXPERTXASTAGS = EXPERTFEFFS + EXPERTVASPS
 
 
 def get_eta(model_tag: ModelTag):
-    expert = TrainedXASBlock.load(model_tag)
-    mean = MeanModel(tag=model_tag)
-    return (
-        mean.metrics.median_of_mse_per_spectra
-        / expert.metrics.median_of_mse_per_spectra
-    )
+    x_scaler = IdentityScaler
+    y_scaler = ThousandScaler
+    scalers = dict(train_x_scaler=x_scaler, train_y_scaler=y_scaler)
+    model = TrainedXASBlock.load(model_tag, **scalers)
+    mean = MeanModel(tag=model_tag, **scalers)
+    model_mse = model.metrics.median_of_mse_per_spectra
+    mean_mse = mean.metrics.median_of_mse_per_spectra
+    return mean_mse / model_mse
 
 
-# %%
+# tag = ModelTag(name="expertXAS", element="Ti", type="VASP")
+# get_eta(tag)
 
-for model_tag in EXPERTXASTAGS:
-    print(f"{model_tag.element}_{model_tag.type}: {get_eta(model_tag)}")
-
-
-# %%
-
-expert = TrainedXASBlock.load(EXPERTXASTAGS[0])
-mean = MeanModel(tag=EXPERTXASTAGS[0])
-plt.plot(expert.metrics.targets.T, c="gray", alpha=0.1)
-plt.plot(expert.metrics.predictions.T, c="blue", linestyle="-.")
-plt.plot(mean.metrics.predictions.T, c="red", linestyle="--")
+# for model_tag in EXPERTXASTAGS:
+#     print(f"{model_tag.element}_{model_tag.type}: {get_eta(model_tag)}")
 
 # %%
 
-idx = np.random.randint(0, len(expert.metrics.targets), 1)[0]
-plt.plot(expert.metrics.targets[idx], c="gray", label="Target")
-plt.plot(expert.metrics.predictions[idx], c="blue", linestyle="-.", label="Expert")
+tag = ModelTag(name="expertXAS", element="Ti", type="VASP")
+
+model = TrainedXASBlock.load(
+    tag,
+    train_x_scaler=ThousandScaler,
+    train_y_scaler=ThousandScaler,
+)
+
+mean_model = MeanModel(
+    tag=tag,
+    train_x_scaler=ThousandScaler,
+    train_y_scaler=ThousandScaler,
+)
+
+
+# %%
+plt.scatter(
+    mean_model.metrics.targets,
+    mean_model.metrics.predictions,
+    s=1,
+    alpha=0.5,
+    color="blue",
+    label="Mean",
+)
+
+plt.scatter(
+    model.metrics.targets,
+    model.metrics.predictions,
+    s=1,
+    alpha=0.5,
+    color="red",
+    label="Expert",
+)
+
+plt.gca().set_aspect("equal", adjustable="box")
+plt.gca().set_xlabel("True")
+plt.gca().set_ylabel("Predicted")
+plt.plot([0, 1], [0, 1], transform=plt.gca().transAxes, color="black")
 plt.legend()
 
 # %%
 
-for d in expert.metrics.deciles:
-    plt.plot(d[0], c="blue", linestyle="-.")
-    plt.plot(d[1], c="red", linestyle="-")
-    plt.show()
+plt.plot(model.metrics.targets.T, label="True", color="green", linestyle="-.")
+plt.plot(model.metrics.predictions.T, label="Expert", color="red")
+plt.plot(mean_model.metrics.predictions.T, label="Mean")
+
+# %%
+
+
+idx = np.random.randint(0, len(model.metrics.predictions))
+plt.plot(model.metrics.predictions[idx], label="Expert", color="gray", alpha=0.5)
+plt.plot(mean_model.metrics.predictions[idx], label="Mean")
+plt.plot(model.metrics.targets[idx], label="True", color="green", linestyle="--")
+# fill from predictions to true
+plt.fill_between(
+    np.arange(len(model.metrics.predictions[idx])),
+    model.metrics.predictions[idx],
+    model.metrics.targets[idx],
+    color="gray",
+    alpha=0.5,
+)
+plt.legend()
 
 
 # %%
 
-MeanModel(tag=EXPERTVASPS[0]).metrics.mse, TrainedXASBlock.load(
-    EXPERTVASPS[0]
-).metrics.mse, get_eta(EXPERTVASPS[0])
+universal_tag = ModelTag(
+    name="universalXAS",
+    element="All",
+    type="FEFF",
+)
+universalXAS = TrainedXASBlock.load(
+    tag=universal_tag,
+    train_x_scaler=IdentityScaler,
+    train_y_scaler=ThousandScaler,
+)
+merged_feff_splits = MergedSplits.load(FEFFDataTags, DEFAULTFILEHANDLER)
+
+# %%
+
+# %%
+
+
+def get_universal_model_eta(data_tag: DataTag):
+    split = merged_feff_splits.splits[data_tag]
+    split = ScaledMlSplit.from_splits(
+        split,
+        x_scaler=IdentityScaler,
+        y_scaler=ThousandScaler,
+    )
+    universal_element_metric = universalXAS.compute_metrics(
+        split
+    ).median_of_mse_per_spectra
+    expert_element_metric = MeanModel(
+        # tag=ModelTag(name="expertXAS", **FEFFDataTags[0].dict()),
+        tag=ModelTag(name="expertXAS", **data_tag.dict()),
+        train_x_scaler=IdentityScaler,
+        train_y_scaler=ThousandScaler,
+    ).metrics.median_of_mse_per_spectra
+    return expert_element_metric / universal_element_metric
+
+
+for data_tag in FEFFDataTags:
+    print(f"{data_tag.element}: {get_universal_model_eta(data_tag)}")
+
 
 # %%
