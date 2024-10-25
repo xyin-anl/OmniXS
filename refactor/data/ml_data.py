@@ -20,6 +20,9 @@ class MLData(BaseModel):
         indices = np.random.permutation(len(self.X))
         return MLData(X=self.X[indices], y=self.y[indices])
 
+    def __getitem__(self, idx):
+        return MLData(X=self.X[idx], y=self.y[idx])
+
     @field_validator("X", "y", mode="before")
     @classmethod
     def _to_numpy(cls, v):
@@ -67,6 +70,10 @@ class MLSplits(BaseModel):
             val=self.val.shuffled_view(seed),
             test=self.test.shuffled_view(seed),
         )
+
+    def __getitem__(self, idx):
+        # useful for slicing
+        return MLSplits(train=self.train[idx], val=self.val[idx], test=self.test[idx])
 
     def __len__(self):
         return sum(

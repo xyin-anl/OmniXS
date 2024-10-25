@@ -10,7 +10,7 @@ import numpy as np
 from pydantic import Field, field_validator
 
 from refactor.data.constants import FEFFDataTags, VASPDataTags
-from refactor.data.ml_data import DataTag, MLSplits
+from refactor.data.ml_data import DataTag, MLSplits, MLData
 
 # from refactor.data.constants import FEFFDataTags, VASPDataTags
 from refactor.utils import DEFAULTFILEHANDLER
@@ -21,11 +21,36 @@ class MergedSplits(MLSplits):
     splits: Dict[DataTag, MLSplits] = Field(default_factory=dict)
 
     @classmethod
-    def load(cls, tags: List[DataTag], file_handler: "FileHandler") -> "MergedSplits":
+    def load(
+        cls,
+        tags: List[DataTag],
+        file_handler: "FileHandler",
+        balanced: bool = False,
+    ) -> "MergedSplits":
+        splits = [
+            file_handler.deserialize_json(MLSplits, supplemental_info=tag)
+            for tag in tags
+        ]
+
+        if balanced:
+            min_sizes = dict(
+                train=min(split.train.X.shape[0] for split in splits),
+                val=min(split.val.X.shape[0] for split in splits),
+                test=min(split.test.X.shape[0] for split in splits),
+            )
+
+            splits = [
+                MLSplits(
+                    train=split.train[: min_sizes["train"]],
+                    val=split.val[: min_sizes["val"]],
+                    test=split.test[: min_sizes["test"]],
+                )
+                for split in splits
+            ]
+
         merged = cls()
-        for tag in tags:
-            split = file_handler.deserialize_json(MLSplits, supplemental_info=tag)
-            merged.append(tag=tag, split=split)
+        for split, tag in zip(splits, tags):
+            merged.append(tag, split)
         return merged
 
     def append(self, tag: DataTag, split: MLSplits):
@@ -43,9 +68,12 @@ class MergedSplits(MLSplits):
 
 
 class FEFFSplits(MergedSplits):
-    def __new__(cls):
-        # useful for hydra config
-        merged = MergedSplits.load(FEFFDataTags, DEFAULTFILEHANDLER)
+    balanced = False
+
+    def __new__(cls, *args, **kwargs):
+        merged = MergedSplits.load(
+            FEFFDataTags, DEFAULTFILEHANDLER, balanced=cls.balanced, **kwargs
+        )
         ml_split = MLSplits(
             train=merged.train,
             val=merged.val,
@@ -54,4 +82,5 @@ class FEFFSplits(MergedSplits):
         return ml_split.shuffled_view()
 
 
-# %%
+class BALANCEDFEFFSplits(FEFFSplits):
+    balanced = True
