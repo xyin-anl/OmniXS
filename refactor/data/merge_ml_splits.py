@@ -26,6 +26,7 @@ class MergedSplits(MLSplits):
         tags: List[DataTag],
         file_handler: "FileHandler",
         balanced: bool = False,
+        **kwargs,
     ) -> "MergedSplits":
         splits = [
             file_handler.deserialize_json(MLSplits, supplemental_info=tag)
@@ -38,12 +39,11 @@ class MergedSplits(MLSplits):
                 val=min(split.val.X.shape[0] for split in splits),
                 test=min(split.test.X.shape[0] for split in splits),
             )
-
             splits = [
                 MLSplits(
-                    train=split.train[: min_sizes["train"]],
-                    val=split.val[: min_sizes["val"]],
-                    test=split.test[: min_sizes["test"]],
+                    train=split.train.shuffled_view()[: min_sizes["train"]],
+                    val=split.val.shuffled_view()[: min_sizes["val"]],
+                    test=split.test.shuffled_view()[: min_sizes["test"]],
                 )
                 for split in splits
             ]
@@ -68,7 +68,7 @@ class MergedSplits(MLSplits):
 
 
 class FEFFSplits(MergedSplits):
-    balanced = False
+    balanced: ClassVar[bool] = False
 
     def __new__(cls, *args, **kwargs):
         merged = MergedSplits.load(
@@ -83,4 +83,4 @@ class FEFFSplits(MergedSplits):
 
 
 class BALANCEDFEFFSplits(FEFFSplits):
-    balanced = True
+    balanced: ClassVar[bool] = True

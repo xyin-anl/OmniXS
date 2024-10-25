@@ -5,7 +5,7 @@ defaults:
 
 hydra:
   run:
-    dir: output/training/${name}/${element}_${type}
+    dir: output/training/${name}/balanced/${element}_${type}
 
 ml_splits:
   _target_: refactor.utils.io.DEFAULTFILEHANDLER.deserialize_json
