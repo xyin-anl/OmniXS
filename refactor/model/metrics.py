@@ -76,7 +76,7 @@ class ModelMetrics(BaseModel):
 class TrainedModel(BaseModel, ABC):
     tag: ModelTag
     model: Optional[Any] = None
-    train_x_scaler: type = IdentityScaler
+    train_x_scaler: type = ThousandScaler
     train_y_scaler: type = ThousandScaler
 
     @abstractmethod
@@ -117,7 +117,7 @@ class TrainedXASBlock(TrainedModel):
     def load(
         cls,
         tag: ModelTag,
-        train_x_scaler: type = IdentityScaler,
+        train_x_scaler: type = ThousandScaler,
         train_y_scaler: type = ThousandScaler,
     ):
         model = TrainedModelLoader.load_model(tag)
@@ -129,7 +129,6 @@ class TrainedXASBlock(TrainedModel):
             train_x_scaler=train_x_scaler,
             train_y_scaler=train_y_scaler,
         )
-        # instance.model_rebuild()  # Explicitly rebuild the model
         return instance
 
 
@@ -143,17 +142,8 @@ class MeanModel(TrainedModel):
         return np.repeat(self.train_mean[None, :], len(X), axis=0)
 
 
-EXPERTFEFFS = [
-    ModelTag(name="expertXAS", **data_tag.dict()) for data_tag in FEFFDataTags
-]
-EXPERTVASPS = [
-    ModelTag(name="expertXAS", **data_tag.dict()) for data_tag in VASPDataTags
-]
-EXPERTXASTAGS = EXPERTFEFFS + EXPERTVASPS
-
-
 def get_eta(model_tag: ModelTag):
-    x_scaler = IdentityScaler
+    x_scaler = ThousandScaler
     y_scaler = ThousandScaler
     scalers = dict(train_x_scaler=x_scaler, train_y_scaler=y_scaler)
     model = TrainedXASBlock.load(model_tag, **scalers)
@@ -163,11 +153,50 @@ def get_eta(model_tag: ModelTag):
     return mean_mse / model_mse
 
 
-# tag = ModelTag(name="expertXAS", element="Ti", type="VASP")
-# get_eta(tag)
+# %%
 
-# for model_tag in EXPERTXASTAGS:
-#     print(f"{model_tag.element}_{model_tag.type}: {get_eta(model_tag)}")
+EXPERTFEFFS = [
+    ModelTag(name="expertXAS", **data_tag.dict()) for data_tag in FEFFDataTags
+]
+EXPERTVASPS = [
+    ModelTag(name="expertXAS", **data_tag.dict()) for data_tag in VASPDataTags
+]
+EXPERTXASTAGS = EXPERTFEFFS + EXPERTVASPS
+TUNEDUNIVERSALXASTAGS = [
+    ModelTag(name="tunedUniversalXAS", element=tag.element, type=tag.type)
+    for tag in EXPERTXASTAGS
+]
+
+
+eta_values = {}
+for set_name, tag_set in zip(
+    ["expertXAS", "tunedUniversalXAS"],
+    [EXPERTXASTAGS, TUNEDUNIVERSALXASTAGS],
+):
+    eta_set = {}
+    for model_tag in tag_set:
+        if (
+            model_tag.element == "Ti"
+            and model_tag.type == "VASP"
+            and set_name == "tunedUniversalXAS"
+        ):
+            print("Skipping Ti VASP with dummy")
+            eta = np.nan
+        else:
+            eta = get_eta(model_tag)
+        print(f"{model_tag.element}_{model_tag.type}: {eta}")
+        eta_set[f"{model_tag.element}_{model_tag.type}"] = eta
+    eta_values[set_name] = eta_set
+
+# %%
+
+for element in eta_values["expertXAS"].keys():
+    expert = eta_values["expertXAS"][element]
+    tuned = eta_values["tunedUniversalXAS"][element]
+    print(
+        f"{element}: \t{expert:.2f},\t{tuned:.2f} \t({(tuned-expert)/expert*100:.2f}%)"
+    )
+
 
 # %%
 
@@ -244,21 +273,21 @@ universal_tag = ModelTag(
 )
 universalXAS = TrainedXASBlock.load(
     tag=universal_tag,
-    train_x_scaler=IdentityScaler,
+    train_x_scaler=ThousandScaler,
     train_y_scaler=ThousandScaler,
 )
-merged_feff_splits = MergedSplits.load(FEFFDataTags, DEFAULTFILEHANDLER)
+merged_feff_splits = MergedSplits.load(FEFFDataTags, DEFAULTFILEHANDLER, balanced=False)
 
-# %%
 
 # %%
 
 
 def get_universal_model_eta(data_tag: DataTag):
-    split = merged_feff_splits.splits[data_tag]
+    # split = merged_feff_splits.splits[data_tag]
+    split = TrainedModelLoader.load_ml_splits(data_tag)
     split = ScaledMlSplit.from_splits(
         split,
-        x_scaler=IdentityScaler,
+        x_scaler=ThousandScaler,
         y_scaler=ThousandScaler,
     )
     universal_element_metric = universalXAS.compute_metrics(
@@ -267,14 +296,20 @@ def get_universal_model_eta(data_tag: DataTag):
     expert_element_metric = MeanModel(
         # tag=ModelTag(name="expertXAS", **FEFFDataTags[0].dict()),
         tag=ModelTag(name="expertXAS", **data_tag.dict()),
-        train_x_scaler=IdentityScaler,
+        train_x_scaler=ThousandScaler,
         train_y_scaler=ThousandScaler,
     ).metrics.median_of_mse_per_spectra
     return expert_element_metric / universal_element_metric
 
 
+universal_metrics = {}
 for data_tag in FEFFDataTags:
-    print(f"{data_tag.element}: {get_universal_model_eta(data_tag)}")
+    eta = get_universal_model_eta(data_tag)
+    universal_metrics[data_tag.element + data_tag.type] = eta
+    print(f"{data_tag.element}: {eta}")
 
+# %%
+
+len(merged_feff_splits)
 
 # %%
