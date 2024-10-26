@@ -1,0 +1,9 @@
+defautls:
+  - universalXAS
+  - _self_
+hydra:
+  run:
+    dir: output/training/${name}/balanced/${element}_${type}
+
+ml_splits:
+  _target_: refactor.data.merge_ml_splits.BALANCEDFEFFSplits

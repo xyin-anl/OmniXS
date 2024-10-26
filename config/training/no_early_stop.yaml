@@ -1,18 +1,17 @@
+defaults:
+  - tunedUniversalXAS
+  - _self_
+
 trainer:
-  _target_: lightning.Trainer
-  max_epochs: 1000
-  log_every_n_steps: 1
-  check_val_every_n_epoch: 2
-  devices: 1
   callbacks:
     - _target_: lightning.pytorch.callbacks.lr_finder.LearningRateFinder
     - _target_: lightning.pytorch.callbacks.LearningRateMonitor
       logging_interval: epoch
-    - _target_: lightning.pytorch.callbacks.early_stopping.EarlyStopping
-      monitor: val_loss
-      patience: 25 # 50 (25 if logging every 2 epochs, else 50)
-      mode: min
-      verbose: False
+    # - _target_: lightning.pytorch.callbacks.early_stopping.EarlyStopping
+    #   monitor: val_loss
+    #   patience: 25 # 50 (25 if logging every 2 epochs, else 50)
+    #   mode: min
+    #   verbose: True
     - _target_: lightning.pytorch.callbacks.ModelCheckpoint
       dirpath: ${hydra:run.dir}/checkpoints
       filename: "best-model-{epoch:02d}-{val_loss:.4f}"
@@ -27,3 +26,7 @@ trainer:
     save_dir: ${hydra:run.dir}/tensorboard
     name: null # This will use the run name from hydra
     version: null # This will auto-increment versions
+
+hydra:
+  run:
+    dir: output/training/${name}/balanced/${element}_${type}/no_early_stop
