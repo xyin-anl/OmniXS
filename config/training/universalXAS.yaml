@@ -8,8 +8,7 @@ type: FEFF # FEFF, VASP ..
 feature: m3gnet # m3gnet, ACSF...
 
 ml_splits:
-  # _target_: refactor.data.merge_ml_splits.FEFFSplits
-  _target_: refactor.data.merge_ml_splits.BALANCEDFEFFSplits
+  _target_: refactor.data.merge_ml_splits.FEFFSplits
 
 module:
   _target_: refactor.model.training.PlModule
