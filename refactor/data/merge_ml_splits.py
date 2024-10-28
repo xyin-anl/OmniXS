@@ -73,7 +73,7 @@ class FEFFSplits(MergedSplits):
     def __new__(cls, *args, **kwargs):
         merged = MergedSplits.load(
             FEFFDataTags,
-            DEFAULTFILEHANDLER,
+            DEFAULTFILEHANDLER(),
             balanced=cls.balanced,
             **kwargs,
         )
