@@ -72,14 +72,18 @@ class FEFFSplits(MergedSplits):
 
     def __new__(cls, *args, **kwargs):
         merged = MergedSplits.load(
-            FEFFDataTags, DEFAULTFILEHANDLER, balanced=cls.balanced, **kwargs
+            FEFFDataTags,
+            DEFAULTFILEHANDLER,
+            balanced=cls.balanced,
+            **kwargs,
         )
         ml_split = MLSplits(
             train=merged.train,
             val=merged.val,
             test=merged.test,
         )
-        return ml_split.shuffled_view()
+        # return ml_split.shuffled_view()
+        return ml_split
 
 
 class BALANCEDFEFFSplits(FEFFSplits):

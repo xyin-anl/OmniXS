@@ -29,4 +29,4 @@ trainer:
 
 hydra:
   run:
-    dir: output/training/${name}/balanced/${element}_${type}/no_early_stop
+    dir: output/training/no_early_stop/${name}/${element}_${type}

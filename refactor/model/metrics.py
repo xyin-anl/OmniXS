@@ -185,7 +185,6 @@ for set_name, tag_set in zip(
         eta_set[f"{model_tag.element}_{model_tag.type}"] = eta
     eta_values[set_name] = eta_set
 
-# %%
 
 # %%
 
