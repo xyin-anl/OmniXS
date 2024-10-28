@@ -54,6 +54,7 @@ class MLData(BaseModel):
 class DataTag(BaseModel):
     element: Element
     type: SpectrumType
+    feature: Optional[str] = None
 
     def __hash__(self) -> int:  # store as dict key
         return hash((self.element, self.type))

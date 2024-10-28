@@ -7,16 +7,15 @@ hydra:
   run:
     dir: output/training/${name}/${element}_${type}
 
+data_tag:
+  _target_: refactor.data.DataTag
+  element: ${element}
+  type: ${type}
+  feature: ${feature}
+
 ml_splits:
-  _target_: hydra.utils.call
-  fn: ${hydra.utils.get_method:refactor.utils.io.DEFAULTFILEHANDLER().deserialize_json}
-  obj_class:
-    _target_: hydra.utils.get_class
-    path: refactor.data.ml_data.MLSplits
-  supplemental_info:
-    element: ${element}
-    type: ${type}
-    feature: ${feature}
+  _target_: refactor.utils.utils.load_ml_splits
+  data_tag: ${data_tag}
 
 data_module:
   _target_: refactor.model.training.LightningXASData
