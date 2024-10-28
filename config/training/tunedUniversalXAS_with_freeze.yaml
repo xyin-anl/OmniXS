@@ -2,10 +2,6 @@ defaults:
   - tunedUniversalXAS
   - _self_
 
-hydra:
-  run:
-    dir: output/training/${name}/${element}_${type}/
-
 module:
   _target_: refactor.model.trained_model.TrainedModelLoader.load_model_for_finetuning
   tag:
@@ -14,11 +10,3 @@ module:
     element: All
     type: FEFF
   freeze_first_k_layers: 0 # 0-3 (for xasblocks)
-
-trainer:
-  callbacks:
-    - ${callbacks.lr_finder}
-    - ${callbacks.lr_monitor}
-    - ${callbacks.model_checkpoint}
-    - ${callbacks.train_val_loss}
-    # - ${callbacks.early_stopping}

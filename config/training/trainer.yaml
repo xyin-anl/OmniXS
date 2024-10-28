@@ -39,4 +39,4 @@ callbacks:
     monitor: val_loss
     patience: 25 # 50 (25 if logging every 2 epochs, else 50)
     mode: min
-    verbose: True
+    verbose: False

@@ -14,3 +14,11 @@ module:
     name: universalXAS
     element: All
     type: FEFF
+
+trainer:
+  callbacks:
+    - ${callbacks.lr_finder}
+    - ${callbacks.lr_monitor}
+    - ${callbacks.model_checkpoint}
+    - ${callbacks.train_val_loss}
+    # - ${callbacks.early_stopping}
