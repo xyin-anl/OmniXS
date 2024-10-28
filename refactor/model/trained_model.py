@@ -1,17 +1,11 @@
+from omegaconf import OmegaConf
 from pydantic import Field
-from refactor.data import (
-    DataTag,
-    IdentityScaler,
-    MLSplits,
-    ScaledMlSplit,
-    ThousandScaler,
-)
+
+from refactor.data import (DataTag, IdentityScaler, MLSplits, ScaledMlSplit,
+                           ThousandScaler)
 from refactor.model.training import PlModule
 from refactor.model.xasblock import XASBlock
 from refactor.utils.io import DEFAULTFILEHANDLER, FileHandler
-
-
-from omegaconf import OmegaConf
 
 
 class ModelTag(DataTag):
@@ -19,38 +13,41 @@ class ModelTag(DataTag):
 
 
 class TrainedModelLoader:
-    file_handler: FileHandler = DEFAULTFILEHANDLER
-    hparams = OmegaConf.load("config/training/hparams.yaml").hparams
-    input_dim = 64  # TODO: remove hardcoding of i/o dims
-    output_dim = 141
 
     @staticmethod
-    def load_model(tag: ModelTag):
+    def load_model(
+        tag: ModelTag,
+        file_handler: FileHandler = DEFAULTFILEHANDLER(),
+    ) -> PlModule:
         return PlModule.load_from_checkpoint(
-            checkpoint_path=TrainedModelLoader.get_ckpt_path(tag),
+            checkpoint_path=TrainedModelLoader.get_ckpt_path(tag, file_handler),
             model=XASBlock(**TrainedModelLoader.get_layer_widths(tag)),
         )
 
     @staticmethod
-    def get_layer_widths(tag: ModelTag):
+    def get_layer_widths(
+        tag: ModelTag,
+        hparams: dict = OmegaConf.load("config/training/hparams.yaml").hparams,
+        input_dim: int = 64,
+        output_dim: int = 141,
+    ):
         if tag.name != "tunedUniversalXAS":
-            hidden_widths = TrainedModelLoader.hparams[tag.name][tag.type][
-                tag.element
-            ].widths
+            hidden_widths = hparams[tag.name][tag.type][tag.element].widths
         else:
-            hidden_widths = TrainedModelLoader.hparams["universalXAS"]["FEFF"][
-                "All"
-            ].widths  # TODO: hacky
+            hidden_widths = hparams["universalXAS"]["FEFF"]["All"].widths  # TODO: hacky
 
         return dict(
-            input_dim=TrainedModelLoader.input_dim,
+            input_dim=input_dim,
             hidden_dims=hidden_widths,
-            output_dim=TrainedModelLoader.output_dim,
+            output_dim=output_dim,
         )
 
     @staticmethod
-    def get_ckpt_path(tag: ModelTag):
-        paths = TrainedModelLoader.file_handler.serialized_objects_filepaths(
+    def get_ckpt_path(
+        tag: ModelTag,
+        file_handler=DEFAULTFILEHANDLER(),
+    ):
+        paths = file_handler.serialized_objects_filepaths(
             "TrainedXASBlock", **tag.dict()
         )
         if len(paths) != 1:
@@ -58,8 +55,11 @@ class TrainedModelLoader:
         return paths[0]
 
     @staticmethod
-    def load_ml_splits(tag: ModelTag):
-        return TrainedModelLoader.file_handler.deserialize_json(
+    def load_ml_splits(
+        tag: ModelTag,
+        file_handler: FileHandler = DEFAULTFILEHANDLER(),
+    ):
+        return file_handler.deserialize_json(
             MLSplits,
             DataTag(element=tag.element, type=tag.type),
         )

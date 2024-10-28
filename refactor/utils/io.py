@@ -159,10 +159,14 @@ class FileHandler:
         return f"^{pattern}$"
 
 
-DEFAULTFILEHANDLER = FileHandler(
-    config=OmegaConf.load("config/serialization.yaml").serialization,
-    replace_existing=False,
-)
+class DEFAULTFILEHANDLER:
+
+    def __new__(cls):
+        return FileHandler(
+            config=OmegaConf.load("config/serialization.yaml").serialization,
+            replace_existing=False,
+        )
+
 
 # %%
 

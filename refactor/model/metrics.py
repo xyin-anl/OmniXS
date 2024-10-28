@@ -30,7 +30,7 @@ from refactor.data import (
 )
 from refactor.model.trained_model import ModelTag, TrainedModelLoader
 from refactor.model.training import LightningXASData
-from refactor.utils.io import DEFAULTFILEHANDLER
+from refactor.utils.io import DEFAULTFILEHANDLER, FileHandler
 
 
 class ModelMetrics(BaseModel):
@@ -119,8 +119,9 @@ class TrainedXASBlock(TrainedModel):
         tag: ModelTag,
         train_x_scaler: type = ThousandScaler,
         train_y_scaler: type = ThousandScaler,
+        **kwargs,
     ):
-        model = TrainedModelLoader.load_model(tag)
+        model = TrainedModelLoader.load_model(tag, **kwargs)
         model.eval()
         model.freeze()
         instance = cls(
@@ -142,11 +143,11 @@ class MeanModel(TrainedModel):
         return np.repeat(self.train_mean[None, :], len(X), axis=0)
 
 
-def get_eta(model_tag: ModelTag):
+def get_eta(model_tag: ModelTag, file_handler: FileHandler = DEFAULTFILEHANDLER()):
     x_scaler = ThousandScaler
     y_scaler = ThousandScaler
     scalers = dict(train_x_scaler=x_scaler, train_y_scaler=y_scaler)
-    model = TrainedXASBlock.load(model_tag, **scalers)
+    model = TrainedXASBlock.load(model_tag, file_handler=file_handler, **scalers)
     mean = MeanModel(tag=model_tag, **scalers)
     model_mse = model.metrics.median_of_mse_per_spectra
     mean_mse = mean.metrics.median_of_mse_per_spectra
@@ -175,18 +176,16 @@ for set_name, tag_set in zip(
 ):
     eta_set = {}
     for model_tag in tag_set:
-        if (
-            model_tag.element == "Ti"
-            and model_tag.type == "VASP"
-            and set_name == "tunedUniversalXAS"
-        ):
-            print("Skipping Ti VASP with dummy")
-            eta = np.nan
-        else:
-            eta = get_eta(model_tag)
+        file_handler = DEFAULTFILEHANDLER()
+        file_handler.config["TrainedXASBlock"]["filename"] = (
+            "last{}.ckpt" if set_name == "tunedUniversalXAS" else "best{}.ckpt"
+        )
+        eta = get_eta(model_tag=model_tag, file_handler=file_handler)
         print(f"{model_tag.element}_{model_tag.type}: {eta}")
         eta_set[f"{model_tag.element}_{model_tag.type}"] = eta
     eta_values[set_name] = eta_set
+
+# %%
 
 # %%
 
@@ -200,7 +199,9 @@ for element in eta_values["expertXAS"].keys():
 
 # %%
 
-tag = ModelTag(name="expertXAS", element="Ti", type="VASP")
+element = "Cu"
+type = "FEFF"
+tag = ModelTag(name="expertXAS", element=element, type=type)
 
 model = TrainedXASBlock.load(
     tag,
@@ -215,7 +216,6 @@ mean_model = MeanModel(
 )
 
 
-# %%
 plt.scatter(
     mean_model.metrics.targets,
     mean_model.metrics.predictions,
@@ -238,6 +238,8 @@ plt.gca().set_aspect("equal", adjustable="box")
 plt.gca().set_xlabel("True")
 plt.gca().set_ylabel("Predicted")
 plt.plot([0, 1], [0, 1], transform=plt.gca().transAxes, color="black")
+plt.gca().set_title(f"{element} {type}")
+
 plt.legend()
 
 # %%
@@ -247,7 +249,6 @@ plt.plot(model.metrics.predictions.T, label="Expert", color="red")
 plt.plot(mean_model.metrics.predictions.T, label="Mean")
 
 # %%
-
 
 idx = np.random.randint(0, len(model.metrics.predictions))
 plt.plot(model.metrics.predictions[idx], label="Expert", color="gray", alpha=0.5)
@@ -276,7 +277,9 @@ universalXAS = TrainedXASBlock.load(
     train_x_scaler=ThousandScaler,
     train_y_scaler=ThousandScaler,
 )
-merged_feff_splits = MergedSplits.load(FEFFDataTags, DEFAULTFILEHANDLER, balanced=False)
+merged_feff_splits = MergedSplits.load(
+    FEFFDataTags, DEFAULTFILEHANDLER(), balanced=False
+)
 
 
 # %%
@@ -313,3 +316,26 @@ for data_tag in FEFFDataTags:
 len(merged_feff_splits)
 
 # %%
+
+lens = []
+for tag in FEFFDataTags:
+    split = TrainedModelLoader.load_ml_splits(tag)
+    lens.append(len(split.train.X))
+    print(len(split.train))
+
+# %%
+
+lens = []
+for split in merged_feff_splits.splits.values():
+    lens.append(len(split.train.X))
+    print(len(split.train))
+
+# %%
+
+get_eta(
+    ModelTag(
+        element="Cr",
+        type="FEFF",
+        name="tunedUniversalXAS",
+    )
+)

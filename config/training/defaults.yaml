@@ -8,7 +8,8 @@ hydra:
     dir: output/training/${name}/${element}_${type}
 
 ml_splits:
-  _target_: refactor.utils.io.DEFAULTFILEHANDLER.deserialize_json
+  _target_: hydra.utils.call
+  fn: ${hydra.utils.get_method:refactor.utils.io.DEFAULTFILEHANDLER().deserialize_json}
   obj_class:
     _target_: hydra.utils.get_class
     path: refactor.data.ml_data.MLSplits
