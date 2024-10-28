@@ -1,8 +1,15 @@
+# %%
 from omegaconf import OmegaConf
 from pydantic import Field
+from torch import nn
 
-from refactor.data import (DataTag, IdentityScaler, MLSplits, ScaledMlSplit,
-                           ThousandScaler)
+from refactor.data import (
+    DataTag,
+    IdentityScaler,
+    MLSplits,
+    ScaledMlSplit,
+    ThousandScaler,
+)
 from refactor.model.training import PlModule
 from refactor.model.xasblock import XASBlock
 from refactor.utils.io import DEFAULTFILEHANDLER, FileHandler
@@ -13,6 +20,30 @@ class ModelTag(DataTag):
 
 
 class TrainedModelLoader:
+
+    @staticmethod
+    def load_model_for_finetuning(
+        tag: ModelTag,
+        file_handler: FileHandler = DEFAULTFILEHANDLER(),
+        freeze_first_k_layers: int = 0,
+    ) -> PlModule:
+        model = TrainedModelLoader.load_model(tag, file_handler)
+        for m in model.modules():
+            if isinstance(m, nn.Dropout):
+                m.p = 0.0
+        layer_count = 0
+        for m in model.modules():
+            if isinstance(m, (nn.Linear, nn.BatchNorm1d)):
+                if layer_count < freeze_first_k_layers:
+                    m.weight.requires_grad = False
+                    m.bias.requires_grad = False
+                elif isinstance(m, nn.BatchNorm1d):
+                    m.reset_running_stats()
+
+                if isinstance(m, nn.Linear):
+                    layer_count += 1
+
+        return model
 
     @staticmethod
     def load_model(
@@ -74,3 +105,58 @@ class TrainedModelLoader:
             y_scaler=y_scaler(),
             **splits.dict(),
         )
+
+
+# %%
+if __name__ == "__main__":
+
+    def param_count(model):
+        return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+    def linear_param_count(model):
+        count = 0
+        for m in model.modules():
+            if isinstance(m, nn.Linear) and m.weight.requires_grad:
+                count += m.weight.numel()
+                count += m.bias.numel()
+        return count
+
+    for count in range(4):
+        module = TrainedModelLoader.load_model_for_finetuning(
+            tag=ModelTag(
+                element="All",
+                type="FEFF",
+                name="universalXAS",
+            ),
+            freeze_first_k_layers=count,
+        )
+        param_fn = param_count
+        trainable_params = param_fn(module)
+        print(f"Trainable parameters with {count} frozen layers: {trainable_params}")
+
+        print(
+            [
+                layer.__class__.__name__
+                for layer in module.modules()
+                if hasattr(layer, "weight") and layer.weight.requires_grad
+            ]
+        )
+        print("=====================================")
+
+    # %%
+
+    from refactor.data import FEFFDataTags
+
+    min = 1e10
+    min_elem = None
+    for data_tag in FEFFDataTags:
+        model_tag = ModelTag(name="expertXAS", **data_tag.dict())
+        xasblock = XASBlock(**TrainedModelLoader.get_layer_widths(model_tag))
+        param_fn = param_count
+        if param_fn(xasblock) < min:
+            min_elem = data_tag
+            min = param_fn(xasblock)
+        print(data_tag, param_fn(xasblock))
+    print(min_elem, min)
+
+    # %%

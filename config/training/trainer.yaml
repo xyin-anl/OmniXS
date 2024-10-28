@@ -10,6 +10,11 @@ trainer:
     - ${callbacks.model_checkpoint}
     - ${callbacks.train_val_loss}
     - ${callbacks.early_stopping}
+  logger:
+    _target_: pytorch_lightning.loggers.TensorBoardLogger
+    save_dir: ${hydra:run.dir}/tensorboard
+    name: null
+    version: null
 
 callbacks:
   lr_finder:

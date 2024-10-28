@@ -4,7 +4,16 @@ defaults:
 
 hydra:
   run:
-    dir: output/training/no_early_stop/${name}/${element}_${type}
+    dir: output/training/${name}/${element}_${type}/
+
+module:
+  _target_: refactor.model.trained_model.TrainedModelLoader.load_model_for_finetuning
+  tag:
+    _target_: refactor.model.trained_model.ModelTag
+    name: universalXAS
+    element: All
+    type: FEFF
+  freeze_first_k_layers: 0 # 0-3 (for xasblocks)
 
 trainer:
   callbacks:
