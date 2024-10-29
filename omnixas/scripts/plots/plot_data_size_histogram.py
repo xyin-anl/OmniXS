@@ -6,8 +6,7 @@ import matplotlib.ticker as ticker
 import numpy as np
 from matplotlib.patches import Patch
 
-from config.defaults import cfg
-from refactor.data import (
+from omnixas.data import (
     DataTag,
     Element,
     ElementsFEFF,
@@ -16,10 +15,24 @@ from refactor.data import (
     MLSplits,
     SpectrumType,
 )
-from refactor.utils  import DEFAULTFILEHANDLER, FileHandler
+from omnixas.utils import DEFAULTFILEHANDLER, FileHandler
 from src.data.feff_data_raw import RAWDataFEFF
 from src.data.vasp_data_raw import RAWDataVASP
 from utils.src.plots.heatmap_of_lines import heatmap_of_lines
+from omnixas.data import ElementsFEFF
+
+
+# %%
+
+# make cfg dictconfig with compounds given by cfg.compounds from ElementsFEFF
+from omegaconf import OmegaConf, DictConfig
+
+compounds = [str(e) for e in ElementsFEFF]
+cfg = DictConfig(
+    {
+        "compounds": compounds,
+    }
+)
 
 # %%
 
@@ -44,7 +57,7 @@ def get_data_sizes(element: Element, type: SpectrumType):
             ]
         )
 
-    new_config = deepcopy(DEFAULTFILEHANDLER.config)
+    new_config = deepcopy(DEFAULTFILEHANDLER().config)
     new_config["MLData"][
         "directory"
     ] = "dataset/before_outlier_removal/{type}/{element}"
@@ -54,7 +67,7 @@ def get_data_sizes(element: Element, type: SpectrumType):
         )
     )
     post_filter_size = len(
-        DEFAULTFILEHANDLER.deserialize_json(MLSplits, supplemental_info=data_tag)
+        DEFAULTFILEHANDLER().deserialize_json(MLSplits, supplemental_info=data_tag)
     )
     anomalies = pre_filter_size - post_filter_size
 
