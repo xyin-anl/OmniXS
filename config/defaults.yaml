@@ -10,7 +10,7 @@ defaults:
   - dscribe
   - hydra: default
   - logger: tensorboard
-  - hparams
+  # - hparams
   - serialization
   - _self_
 

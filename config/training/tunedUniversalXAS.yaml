@@ -7,13 +7,22 @@ element: ???
 type: ??? # FEFF, VASP ..
 feature: m3gnet # m3gnet, ACSF...
 
-module:
-  _target_: refactor.model.trained_model.TrainedModelLoader.load_model
+# module:
+#   _target_: refactor.model.trained_model.TrainedModelLoader.load_model
+#   tag:
+#     _target_: refactor.model.trained_model.ModelTag
+#     name: universalXAS
+#     element: All
+#     type: FEFF
+
+module: # Removes dropout and resets batchnorm
+  _target_: refactor.model.trained_model.TrainedModelLoader.load_model_for_finetuning
   tag:
     _target_: refactor.model.trained_model.ModelTag
     name: universalXAS
     element: All
     type: FEFF
+  freeze_first_k_layers: 0 # 0-3 (for xasblocks)
 
 trainer:
   callbacks:
