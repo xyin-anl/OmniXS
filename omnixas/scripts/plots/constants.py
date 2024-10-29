@@ -1,17 +1,25 @@
 # %%
-from refactor.utils  import DEFAULTFILEHANDLER
-from refactor.data.constants import FEFFDataTags, VASPDataTags
-from refactor.data.ml_data import MLSplits
+from omnixas.utils import DEFAULTFILEHANDLER
+from omnixas.data.constants import FEFFDataTags, VASPDataTags
+from omnixas.data.ml_data import MLSplits
 
 
-print("Loading splits...")
-FEFFSplits = {
-    tag.element: DEFAULTFILEHANDLER.deserialize_json(MLSplits, tag)
-    for tag in FEFFDataTags
-}
-VASPSplits = {
-    tag.element: DEFAULTFILEHANDLER.deserialize_json(MLSplits, tag)
-    for tag in VASPDataTags
-}
+class VASPSplits:
+
+    def __new__(cls, *args, **kwargs):
+        return {
+            tag.element: DEFAULTFILEHANDLER().deserialize_json(MLSplits, tag)
+            for tag in VASPDataTags()
+        }
+
+
+class FEFFSplits:
+
+    def __new__(cls, *args, **kwargs):
+        return {
+            tag.element: DEFAULTFILEHANDLER().deserialize_json(MLSplits, tag)
+            for tag in FEFFDataTags()
+        }
+
 
 # %%

@@ -8,11 +8,10 @@ from matplotlib.colors import NoNorm, PowerNorm
 from config.defaults import cfg
 
 # from refactor.data.constants import Element, ElementsFEFF, ElementsVASP, FEFF, VASP
-from refactor.data import Element, MLData, SpectrumType
-from refactor.scripts.baseline import baseline_mse
-from refactor.scripts.plots.constants import FEFFSplits, VASPSplits
-from refactor.utils import DEFAULTFILEHANDLER, FileHandler
-from refactor.utils.plots import plot_line_heatmap
+from omnixas.data import Element, MLData, SpectrumType
+from omnixas.scripts.plots.constants import FEFFSplits, VASPSplits
+from omnixas.utils import DEFAULTFILEHANDLER, FileHandler
+from omnixas.utils.plots import plot_line_heatmap
 from scripts.plots.plot_all_spectras import MLDATAPlotter
 from src.data.ml_data import DataQuery, load_xas_ml_data
 

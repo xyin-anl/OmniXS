@@ -15,9 +15,16 @@ Co = Element.Co
 Ni = Element.Ni
 Cu = Element.Cu
 
-FEFFDataTags = [
-    DataTag(element=element, type=SpectrumType.FEFF) for element in ElementsFEFF
-]
-VASPDataTags = [
-    DataTag(element=element, type=SpectrumType.VASP) for element in ElementsVASP
-]
+
+class VASPDataTags:
+    def __new__(cls):
+        return [
+            DataTag(element=element, type=SpectrumType.VASP) for element in ElementsVASP
+        ]
+
+
+class FEFFDataTags:
+    def __new__(cls):
+        return [
+            DataTag(element=element, type=SpectrumType.FEFF) for element in ElementsFEFF
+        ]
