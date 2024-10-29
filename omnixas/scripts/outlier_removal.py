@@ -4,12 +4,12 @@ import os
 import numpy as np
 
 from config.defaults import cfg
-from refactor.data import Element, ElementsVASP, SpectrumType
-from refactor.data.constants import ElementsFEFF
-from refactor.data.data import ElementSpectrum
-from refactor.data.ml_data import MLData
-from refactor.utils import DEFAULTFILEHANDLER, FileHandler
-from refactor.utils.spectra_outliers import OutlierDetector
+from omnixas.data import Element, ElementsVASP, SpectrumType
+from omnixas.data.constants import ElementsFEFF
+from omnixas.data.data import ElementSpectrum
+from omnixas.data.ml_data import MLData
+from omnixas.utils import DEFAULTFILEHANDLER, FileHandler
+from omnixas.utils.spectra_outliers import OutlierDetector
 
 
 def remove_outliers_in_ml_data(element, spectra_type):

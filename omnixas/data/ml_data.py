@@ -1,12 +1,12 @@
 # %%
 from typing import Optional
-from refactor.utils import FileHandler
+from omnixas.utils import FileHandler
 
 import numpy as np
 from pydantic import BaseModel, field_validator, model_serializer
 
-from refactor.data import Element, SpectrumType
-from refactor.utils.readable_enums import ReadableEnums
+from omnixas.data import Element, SpectrumType
+from omnixas.utils.readable_enums import ReadableEnums
 
 
 class MLData(BaseModel):

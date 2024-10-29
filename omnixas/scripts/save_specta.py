@@ -6,7 +6,7 @@ import numpy as np
 from p_tqdm import p_map
 
 from config.defaults import cfg
-from refactor.data import (
+from omnixas.data import (
     Element,
     ElementSpectrum,
     EnergyGrid,
@@ -16,8 +16,8 @@ from refactor.data import (
     MaterialStructure,
     SpectrumType,
 )
-from refactor.utils import DEFAULTFILEHANDLER
-from refactor.utils._legacy.ml_data_generator import MLDataGenerator
+from omnixas.utils import DEFAULTFILEHANDLER
+from omnixas.utils._legacy.ml_data_generator import MLDataGenerator
 from src.data.vasp_data_raw import RAWDataVASP
 
 # %%

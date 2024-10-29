@@ -9,12 +9,12 @@ from pydantic import model_serializer
 import numpy as np
 from pydantic import Field, field_validator
 
-from refactor.data.constants import FEFFDataTags, VASPDataTags
-from refactor.data.ml_data import DataTag, MLSplits, MLData
+from omnixas.data.constants import FEFFDataTags, VASPDataTags
+from omnixas.data.ml_data import DataTag, MLSplits, MLData
 
 # from refactor.data.constants import FEFFDataTags, VASPDataTags
-from refactor.utils import DEFAULTFILEHANDLER
-from refactor.utils.io import DEFAULTFILEHANDLER, FileHandler
+from omnixas.utils import DEFAULTFILEHANDLER
+from omnixas.utils.io import DEFAULTFILEHANDLER, FileHandler
 
 
 class MergedSplits(MLSplits):

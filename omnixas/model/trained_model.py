@@ -9,17 +9,17 @@ from pydantic import BaseModel, Field, computed_field
 from sklearn.metrics import mean_squared_error
 from torch import nn
 
-from refactor.data import (
+from omnixas.data import (
     DataTag,
     IdentityScaler,
     MLSplits,
     ScaledMlSplit,
     ThousandScaler,
 )
-from refactor.data.merge_ml_splits import FEFFSplits
-from refactor.model.training import PlModule
-from refactor.model.xasblock import XASBlock
-from refactor.utils.io import DEFAULTFILEHANDLER, FileHandler
+from omnixas.data.merge_ml_splits import FEFFSplits
+from omnixas.model.training import PlModule
+from omnixas.model.xasblock import XASBlock
+from omnixas.utils.io import DEFAULTFILEHANDLER, FileHandler
 
 
 class ModelTag(DataTag):

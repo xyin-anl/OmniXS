@@ -1,6 +1,6 @@
 # %%
-from refactor.data.enums import Element, ElementsVASP, SpectrumType, ElementsFEFF
-from refactor.data.ml_data import DataTag
+from .enums import Element, ElementsVASP, SpectrumType, ElementsFEFF
+from .ml_data import DataTag
 
 
 FEFF = SpectrumType.FEFF

@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 import numpy as np
 
-from refactor.data import (
+from omnixas.data import (
     Element,
     ElementsFEFF,
     MaterialSplitter,
@@ -12,7 +12,7 @@ from refactor.data import (
     MLSplits,
     SpectrumType,
 )
-from refactor.utils import DEFAULTFILEHANDLER, FileHandler
+from omnixas.utils import DEFAULTFILEHANDLER, FileHandler
 
 
 def construct_filename(
@@ -86,7 +86,7 @@ def main(element: Element, spectra_type: SpectrumType):
 if __name__ == "__main__":
     from tqdm import tqdm
 
-    from refactor.data import ElementsVASP, SpectrumType
+    from omnixas.data import ElementsVASP, SpectrumType
 
     for element in tqdm(ElementsFEFF, "FEFF"):
         main(element, SpectrumType.FEFF)

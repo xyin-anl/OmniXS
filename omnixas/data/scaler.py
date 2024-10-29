@@ -6,7 +6,7 @@ from typing import Any, Self
 from pydantic import Field, model_validator
 from sklearn.preprocessing import FunctionTransformer, RobustScaler
 
-from refactor.data import MLData, MLSplits
+from omnixas.data import MLData, MLSplits
 
 
 class UncenteredRobustScaler(RobustScaler):
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     import numpy as np
     from matplotlib import pyplot as plt
 
-    from refactor.data.merge_ml_splits import FEFFSplits
+    from omnixas.data.merge_ml_splits import FEFFSplits
 
     split = FEFFSplits
 

@@ -11,11 +11,11 @@ from omegaconf import DictConfig, OmegaConf
 from torch import tensor
 from torch.utils.data import DataLoader, TensorDataset
 
-from refactor.data import DataTag, MLData, MLSplits
-from refactor.data.scaler import ScaledMlSplit
-from refactor.utils.callbacks import TensorboardLogTestTrainLoss
-from refactor.utils.io import DEFAULTFILEHANDLER, FileHandler
-from refactor.data.scaler import ThousandScaler, IdentityScaler, UncenteredRobustScaler
+from omnixas.data import DataTag, MLData, MLSplits
+from omnixas.data.scaler import ScaledMlSplit
+from omnixas.utils.callbacks import TensorboardLogTestTrainLoss
+from omnixas.utils.io import DEFAULTFILEHANDLER, FileHandler
+from omnixas.data.scaler import ThousandScaler, IdentityScaler, UncenteredRobustScaler
 
 # %%
 

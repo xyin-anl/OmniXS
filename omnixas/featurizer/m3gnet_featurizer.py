@@ -13,9 +13,9 @@ from matgl.graph.compute import (
 )
 from matgl.utils.cutoff import polynomial_cutoff
 
-from refactor.data.constants import ElementsFEFF
-from refactor.data.data import MaterialStructure
-from refactor.utils  import DEFAULTFILEHANDLER
+from omnixas.data.constants import ElementsFEFF
+from omnixas.data.data import MaterialStructure
+from omnixas.utils  import DEFAULTFILEHANDLER
 
 
 class M3GNetFeaturizer:
@@ -84,14 +84,14 @@ if __name__ == "__main__":
     from p_tqdm import p_map
     from tqdm import tqdm
 
-    from refactor.data import (
+    from omnixas.data import (
         Element,
         ElementSpectrum,
         ElementsVASP,
         MLData,
         SpectrumType,
     )
-    from refactor.utils  import DEFAULTFILEHANDLER, FileHandler
+    from omnixas.utils  import DEFAULTFILEHANDLER, FileHandler
 
     elements, spectrum_type = ElementsVASP, SpectrumType.VASP
     # elements, spectrum_type = ElementsFEFF, SpectrumType.FEFF
