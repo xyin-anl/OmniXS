@@ -1,6 +1,12 @@
 # %%
+from abc import ABC, abstractmethod
+from typing import Any, Optional
+
+import numpy as np
+import torch
 from omegaconf import OmegaConf
-from pydantic import Field
+from pydantic import BaseModel, Field, computed_field
+from sklearn.metrics import mean_squared_error
 from torch import nn
 
 from refactor.data import (
@@ -10,6 +16,7 @@ from refactor.data import (
     ScaledMlSplit,
     ThousandScaler,
 )
+from refactor.data.merge_ml_splits import FEFFSplits
 from refactor.model.training import PlModule
 from refactor.model.xasblock import XASBlock
 from refactor.utils.io import DEFAULTFILEHANDLER, FileHandler
@@ -17,6 +24,116 @@ from refactor.utils.io import DEFAULTFILEHANDLER, FileHandler
 
 class ModelTag(DataTag):
     name: str = Field(..., description="Name of the model")
+
+
+class ModelMetrics(BaseModel):
+    predictions: np.ndarray
+    targets: np.ndarray
+
+    @computed_field
+    def mse(self) -> float:
+        return mean_squared_error(self.targets, self.predictions)
+
+    @computed_field
+    def mse_per_spectra(self) -> np.ndarray:
+        return np.mean((self.targets - self.predictions) ** 2, axis=1)
+
+    @property
+    def median_of_mse_per_spectra(self) -> float:
+        return np.median(self.mse_per_spectra)
+
+    def _sorted_predictions(self, sort_array=None):
+        sort_array = self.mse_per_spectra
+        pair = np.column_stack((self.targets, self.predictions))
+        pair = pair.reshape(-1, 2, self.targets.shape[1])
+        pair = pair[sort_array.argsort()]
+        return pair, sort_array.argsort()
+
+    def top_predictions(self, splits=10, drop_last_split=True):
+        pair = self._sorted_predictions()[0]
+        new_len = len(pair) - divmod(len(pair), splits)[1]
+        pair = pair[:new_len]
+        top_spectra = [s[-1] for s in np.split(pair, splits)]  # bottom of each split
+        if drop_last_split:
+            top_spectra = top_spectra[:-1]
+        return np.array(top_spectra)
+
+    @property
+    def deciles(self):
+        return self.top_predictions(splits=10, drop_last_split=True)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class TrainedModel(BaseModel, ABC):
+    tag: ModelTag
+    model: Optional[Any] = None
+    train_x_scaler: type = ThousandScaler
+    train_y_scaler: type = ThousandScaler
+
+    @abstractmethod
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        raise NotImplementedError
+
+    @computed_field
+    def metrics(self) -> ModelMetrics:
+        return self.compute_metrics(self.default_split)
+
+    @property
+    def default_split(self) -> ScaledMlSplit:
+        if self.tag.element == "All":
+            return FEFFSplits()
+        return TrainedModelLoader.load_scaled_splits(
+            self.tag,
+            self.train_x_scaler,
+            self.train_y_scaler,
+        )
+
+    def compute_metrics(self, splits: ScaledMlSplit) -> ModelMetrics:
+        predictions = self.predict(splits.test.X)
+        targets = splits.test.y
+        predictions = splits.y_scaler.inverse_transform(predictions)
+        targets = splits.y_scaler.inverse_transform(targets)
+        return ModelMetrics(targets=targets, predictions=predictions)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class MeanModel(TrainedModel):
+
+    @computed_field
+    def train_mean(self) -> np.ndarray:
+        return self.default_split.train.y.mean(axis=0)
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        return np.repeat(self.train_mean[None, :], len(X), axis=0)
+
+
+class TrainedXASBlock(TrainedModel):
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        X = torch.tensor(X, dtype=torch.float32)
+        return self.model(X.to(self.model.device)).detach().cpu().numpy()
+
+    @classmethod
+    def load(
+        cls,
+        tag: ModelTag,
+        train_x_scaler: type = ThousandScaler,
+        train_y_scaler: type = ThousandScaler,
+        **kwargs,
+    ):
+        model = TrainedModelLoader.load_model(tag, **kwargs)
+        model.eval()
+        model.freeze()
+        instance = cls(
+            tag=tag,
+            model=model,
+            train_x_scaler=train_x_scaler,
+            train_y_scaler=train_y_scaler,
+        )
+        return instance
 
 
 class TrainedModelLoader:
@@ -50,8 +167,10 @@ class TrainedModelLoader:
         tag: ModelTag,
         file_handler: FileHandler = DEFAULTFILEHANDLER(),
     ) -> PlModule:
+        ckpt_path = TrainedModelLoader.get_ckpt_path(tag, file_handler)
+        print(f"Loading model from {ckpt_path}")
         return PlModule.load_from_checkpoint(
-            checkpoint_path=TrainedModelLoader.get_ckpt_path(tag, file_handler),
+            checkpoint_path=ckpt_path,
             model=XASBlock(**TrainedModelLoader.get_layer_widths(tag)),
         )
 
@@ -105,58 +224,3 @@ class TrainedModelLoader:
             y_scaler=y_scaler(),
             **splits.dict(),
         )
-
-
-# %%
-if __name__ == "__main__":
-
-    def param_count(model):
-        return sum(p.numel() for p in model.parameters() if p.requires_grad)
-
-    def linear_param_count(model):
-        count = 0
-        for m in model.modules():
-            if isinstance(m, nn.Linear) and m.weight.requires_grad:
-                count += m.weight.numel()
-                count += m.bias.numel()
-        return count
-
-    for count in range(4):
-        module = TrainedModelLoader.load_model_for_finetuning(
-            tag=ModelTag(
-                element="All",
-                type="FEFF",
-                name="universalXAS",
-            ),
-            freeze_first_k_layers=count,
-        )
-        param_fn = param_count
-        trainable_params = param_fn(module)
-        print(f"Trainable parameters with {count} frozen layers: {trainable_params}")
-
-        print(
-            [
-                layer.__class__.__name__
-                for layer in module.modules()
-                if hasattr(layer, "weight") and layer.weight.requires_grad
-            ]
-        )
-        print("=====================================")
-
-    # %%
-
-    from refactor.data import FEFFDataTags
-
-    min = 1e10
-    min_elem = None
-    for data_tag in FEFFDataTags:
-        model_tag = ModelTag(name="expertXAS", **data_tag.dict())
-        xasblock = XASBlock(**TrainedModelLoader.get_layer_widths(model_tag))
-        param_fn = param_count
-        if param_fn(xasblock) < min:
-            min_elem = data_tag
-            min = param_fn(xasblock)
-        print(data_tag, param_fn(xasblock))
-    print(min_elem, min)
-
-    # %%
