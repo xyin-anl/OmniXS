@@ -1,7 +1,0 @@
-base_dir: "results/oct_26/optimal_nn_tb_logs/"
-optimal_fc_params:
-  Cu-O:
-    FEFF: [64, 180, 200]
-  Ti-O:
-    FEFF: [64, 190, 180]
-    VASP: [64, 150, 120, 170]

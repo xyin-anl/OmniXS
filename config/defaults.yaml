@@ -1,17 +1,18 @@
 defaults:
-  - data
-  - model
+  - data: default
+  # - data
+  # - model
   # - callbacks
-  - optuna
-  - transformations
-  - compounds
-  - paths
-  - experiment
-  - dscribe
-  - hydra: default
-  - logger: tensorboard
+  # - optuna
+  # - transformations
+  # - compounds
+  # - paths
+  # - experiment
+  # - dscribe
+  # - hydra: default
+  # - logger: tensorboard
   # - hparams
-  - serialization
+  # - serialization
   - _self_
 
 hydra:
