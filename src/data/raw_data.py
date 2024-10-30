@@ -1,5 +1,4 @@
 from typing import List
-from config.defaults import cfg
 import numpy as np
 import yaml
 import os
@@ -75,7 +74,9 @@ class RAWData(ABC):
 
     @staticmethod
     def configs(cfg_path="cfg/transformations.yaml"):
-        return cfg.transformations
+        from omegaconf import OmegaConf, DictConfig
+
+        return OmegaConf.load(cfg_path)
 
     def __len__(self):
         return self.total_sites

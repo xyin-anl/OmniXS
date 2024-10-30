@@ -1,38 +1,16 @@
 import logging
 import sys
-
 import hydra
-import lightning
-import lightning as pl
 import optuna
 from hydra.utils import instantiate
-from lightning import Trainer
 from omegaconf import DictConfig
-from optuna_integration.pytorch_lightning import \
-    PyTorchLightningPruningCallback
-from rich import print
-
-from src.data.ml_data import DataQuery, XASPlData, load_xas_ml_data
-from utils.src.lightning.loggers.tb.log_train_val_loss import \
-    TensorboardLogTestTrainLoss
-from utils.src.lightning.pl_module import PLModule
 
 
-@hydra.main(version_base=None, config_path="config", config_name="defaults")
-def main(cfg: DictConfig):
-    data_module = instantiate(cfg.data_module)
-
-    model = instantiate(cfg.model)
-    if isinstance(model, PLModule):
-        pl_model = model
-    else:
-        pl_model = PLModule(model)
-
-    trainer = instantiate(cfg.trainer)
-    trainer.callbacks.extend([TensorboardLogTestTrainLoss()])
-
-    trainer.fit(pl_model, data_module)
-    trainer.test(pl_model, datamodule=data_module)
+# TODO: move belows to config file
+from optuna_integration.pytorch_lightning import PyTorchLightningPruningCallback
+from utils.src.lightning.loggers.tb.log_train_val_loss import (
+    TensorboardLogTestTrainLoss,
+)
 
 
 class Optimizer:
@@ -56,15 +34,6 @@ class Optimizer:
             )
             for i in range(depth)
         ]
-
-        # # learning_rate = trial.suggest_float("learning_rate", 1e-4, 1e-3, log=True)
-        # learning_rate = trial.suggest_float(
-        #     "learning_rate",
-        #     self.cfg.optuna.params.min_lr,
-        #     self.cfg.optuna.params.max_lr,
-        #     log=True,
-        # )
-        # self.cfg["model"]["learning_rate"] = learning_rate
 
         batch_size = trial.suggest_int(
             "batch_size",
@@ -99,12 +68,10 @@ class Optimizer:
 
 @hydra.main(version_base=None, config_path="config", config_name="defaults")
 def run_optmization(cfg: DictConfig):
-    # hydra_config_is_valid(cfg)
     optuna.logging.get_logger("optuna").addHandler(logging.StreamHandler(sys.stdout))
     study = optuna.create_study(
         study_name=cfg.optuna.study_name,
         storage=cfg.optuna.storage,
-        # storage="sqlite:///{}.db".format("test"),
         load_if_exists=True,
     )
     optimizer_class = Optimizer(hydra_configs=cfg)
@@ -116,9 +83,7 @@ def run_optmization(cfg: DictConfig):
     print("Best params: ", study.best_params)
     print("Best value: ", study.best_value)
     print("Best Trial: ", study.best_trial)
-    # print("Trials: ", study.trials)
 
 
 if __name__ == "__main__":
-    # run_optmization()
-    main()
+    run_optmization()
