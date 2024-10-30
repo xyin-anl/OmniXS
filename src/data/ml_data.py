@@ -1,22 +1,24 @@
-import itertools
+from dataclasses import dataclass
 from typing import List, Union, Literal
 import os
 import pickle
 import warnings
-from dataclasses import dataclass
 from functools import cached_property
 from typing import Any, List, Literal, Union
 
 import numpy as np
-import torch
 from omegaconf import OmegaConf
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-from torch.utils.data import TensorDataset
 
 from config.defaults import cfg
 from src.data.material_split import MaterialSplitter
-from utils.src.lightning.pl_data_module import PlDataModule
+
+
+@dataclass
+class DataQuery:
+    element: str
+    simulation: Literal["FEFF", "VASP"]
 
 
 @dataclass
@@ -30,39 +32,32 @@ class DataSplit:
         if self.X.dtype != self.y.dtype:
             raise ValueError("X and y must have same dtype")
 
-    @property
-    def tensors(self):
-        return torch.tensor(self.X), torch.tensor(self.y)
+    def __len__(self):
+        return len(self.X)
 
 
 @dataclass
-class MLSplits:
+class MlSplit:
     train: DataSplit
     val: DataSplit
     test: DataSplit
 
-    @property
-    def tensors(self):
-        out_tensor = (self.train.tensors, self.val.tensors, self.test.tensors)
-        flatten = itertools.chain.from_iterable
-        return tuple(flatten(out_tensor))
+    def __iter__(self):
+        return iter([self.train, self.val, self.test])
 
-
-@dataclass
-class DataQuery:
-    compound: str
-    simulation_type: Literal["FEFF", "VASP"]
+    def __len__(self):
+        return sum([len(x) for x in self])
 
 
 class FeatureProcessor:
-    def __init__(self, query: DataQuery, data_splits: MLSplits = None):
+    def __init__(self, query: DataQuery, data_splits: MlSplit = None):
         self.query = query
         # none option set to access saved pca and scaler from cache
         self.data_splits = data_splits
 
     @cached_property
     def splits(self):
-        return MLSplits(
+        return MlSplit(
             train=self._reduce_feature_dims(self.data_splits.train),
             val=self._reduce_feature_dims(self.data_splits.val),
             test=self._reduce_feature_dims(self.data_splits.test),
@@ -118,91 +113,75 @@ class FeatureProcessor:
             raise ValueError(msg)
 
 
-def filter_anamolous_spectras(
-    ml_splits: MLSplits,
+def post_split_anomlay_filter(
+    ml_splits: MlSplit,
     std_cutoff: float,
-    id_site: List[tuple],
-) -> MLSplits:
+) -> MlSplit:
 
-    spectras = np.concatenate([ml_splits.train.y, ml_splits.val.y, ml_splits.test.y])
-    mean = np.mean(spectras, axis=0)
-    std = np.std(spectras, axis=0)
-    upper_bound = mean + std_cutoff * std
-    lower_bound = mean - std_cutoff * std
-    select_filters_count = 0
+    def bounds(spectras, std_factor):
+        mean = np.mean(spectras, axis=0)
+        std = np.std(spectras, axis=0)
+        upper_bound = mean + std_factor * std
+        lower_bound = mean - std_factor * std
+        return upper_bound, lower_bound
 
-    # use removed spectra in dict format
-    removed_spectra = np.array(
-        [
-            {
-                "id": id_site[i][0],
-                "site": id_site[i][1],
-                "spectrum": s,
-            }
-            for i, s in enumerate(spectras)
-            if not np.all((s <= upper_bound) & (s >= lower_bound))
-        ]
+    def filter_spectra(spectras, upper_bound, lower_bound):
+        return np.all((spectras <= upper_bound) & (spectras >= lower_bound), axis=1)
+
+    all_spectras = np.concatenate(
+        [ml_splits.train.y, ml_splits.val.y, ml_splits.test.y]
     )
+    upper_bound, lower_bound = bounds(all_spectras, std_cutoff)
+
     for data in [ml_splits.train, ml_splits.val, ml_splits.test]:
-        bound_condition = (data.y <= upper_bound) & (data.y >= lower_bound)
-        filter = np.all(bound_condition, axis=1)
-        select_filters_count += sum(filter)
-        data.y = data.y[filter]
-        data.X = data.X[filter]
+        mask = filter_spectra(data.y, upper_bound, lower_bound)
+        data.y = data.y[mask]
+        data.X = data.X[mask]
 
-    remove_filter_count = len(spectras) - select_filters_count
-    remove_pct = remove_filter_count / len(spectras) * 100
-
-    msg = f"Removed {remove_filter_count}/{len(spectras)} ({remove_pct:.2f}%) anamolies"
-    msg += f"with std_cutoff = {std_cutoff}"
-    warnings.warn(msg)
-
-    return (
-        MLSplits(
-            train=ml_splits.train,
-            val=ml_splits.val,
-            test=ml_splits.test,
-        ),
-        removed_spectra,  # for data publication
-    )
+    return ml_splits
 
 
 def load_xas_ml_data(
     query: DataQuery,
     split_fractions: Union[List[float], None] = None,
-    pca_with_std_scaling: Union[bool, None] = None,
-    scale_feature_and_target: bool = True,
-    for_m3gnet: bool = False,
-    filter_spectra_anomalies: bool = True,
+    scaling_factor: float = 1000.0,
+    post_split_anomaly_filter: bool = True,
+    pre_splits_anomaly_filter: bool = False,
     anomaly_std_cutoff: float = None,  # default loaded from config if None
-    use_cache: bool = True,  # TODO: flip to False
-    save_anomalous_spectras: bool = False,  # for data publication
-    save_loaded_data: bool = False,  # for data publication
-) -> MLSplits:
-    """Loads data and does material splitting."""
+) -> MlSplit:
 
-    if use_cache:
-        cache_file = cfg.paths.cache.splits.format(**query.__dict__)
-        if not os.path.exists(os.path.dirname(cache_file)):
-            os.makedirs(os.path.dirname(cache_file))
-        if os.path.exists(cache_file):
-            warnings.warn(f"Using cached data from {cache_file}")
-            data = np.load(cache_file, allow_pickle=True)
-            return MLSplits(
-                train=DataSplit(data["train_X"], data["train_y"]),
-                val=DataSplit(data["val_X"], data["val_y"]),
-                test=DataSplit(data["test_X"], data["test_y"]),
-            )
+    assert not (
+        post_split_anomaly_filter and pre_splits_anomaly_filter
+    ), "Only one of post and pre should be valid"
 
-    if query.compound == "ALL":  # TODO: hacky
-        return load_all_data(query.simulation_type, split_fractions=split_fractions)
+    if query.element == "ALL":  # TODO: hacky
+        return load_all_data(query.simulation, split_fractions=split_fractions)
 
     file_path = OmegaConf.load("./config/paths.yaml").paths.ml_data
     file_path = file_path.format(**query.__dict__)
-    data_all = np.load(file_path, allow_pickle=True)
+    npz_data = np.load(file_path, allow_pickle=True)
+    data = {
+        "features": npz_data["features"],
+        "spectras": npz_data["spectras"],
+        "ids": npz_data["ids"],
+        "sites": npz_data["sites"],
+    }
+
+    anamoly_std_cutoff = (
+        cfg.ml_data.anamoly_filter_std_cutoff.get(query.simulation)
+        if anomaly_std_cutoff is None
+        else anomaly_std_cutoff
+    )
+
+    if pre_splits_anomaly_filter:
+        mask = MlSplit._identify_anomalies(data["spectras"], anamoly_std_cutoff)
+        data["features"] = data["features"][mask]
+        data["spectras"] = data["spectras"][mask]
+        data["ids"] = data["ids"][mask]
+        data["sites"] = data["sites"][mask]
 
     # greedy multiway partitioning
-    idSite = list(zip(data_all["ids"], data_all["sites"]))
+    idSite = list(zip(data["ids"], data["sites"]))
     train_idSites, val_idSites, test_idSites = MaterialSplitter.split(
         idSite=idSite,
         target_fractions=split_fractions or cfg.data_module.split_fractions,
@@ -211,141 +190,31 @@ def load_xas_ml_data(
     def to_split(ids):
         material_ids = ids[:, 0]
         sites = ids[:, 1]
-        id_match = np.isin(data_all["ids"], material_ids)
-        site_match = np.isin(data_all["sites"], sites)
+        id_match = np.isin(data["ids"], material_ids)
+        site_match = np.isin(data["sites"], sites)
         filter = np.where(id_match & site_match)[0]
-        X = data_all["features"][filter].astype(np.float32)
-        y = data_all["spectras"][filter].astype(np.float32)
+        X = data["features"][filter].astype(np.float32)
+        y = data["spectras"][filter].astype(np.float32)
         return DataSplit(X, y)
 
-    splits = MLSplits(
+    splits = MlSplit(
         train=to_split(train_idSites),
         val=to_split(val_idSites),
         test=to_split(test_idSites),
     )
 
-    if pca_with_std_scaling is None:
-        pca_with_std_scaling = query.simulation_type in cfg.dscribe.features
-    out = FeatureProcessor(query, splits).splits if pca_with_std_scaling else splits
+    def scale_mlsplits(ml_splits: MlSplit, factor: float) -> MlSplit:
+        return MlSplit(*(DataSplit(X=s.X * factor, y=s.y * factor) for s in ml_splits))
 
-    if scale_feature_and_target:  # TODO: use standard scaler or stg
-        out.train.X *= 1000
-        out.val.X *= 1000
-        out.test.X *= 1000
-        out.train.y *= 1000
-        out.val.y *= 1000
-        out.test.y *= 1000
+    splits = scale_mlsplits(splits, scaling_factor)
 
-    if filter_spectra_anomalies:
-        anamoly_std_cutoff = (
-            cfg.ml_data.anamoly_filter_std_cutoff.get(query.simulation_type)
-            if anomaly_std_cutoff is None
-            else anomaly_std_cutoff
-        )
-        out, removed_spectra = filter_anamolous_spectras(
-            out,
+    if post_split_anomaly_filter:
+        splits = post_split_anomlay_filter(
+            splits,
             std_cutoff=anamoly_std_cutoff,
-            id_site=idSite,
         )
 
-        if save_anomalous_spectras:
-            removed_spectra_file = cfg.paths.cache.removed_spectra.format(
-                **query.__dict__
-            )
-            os.makedirs(os.path.dirname(removed_spectra_file), exist_ok=True)
-            for i in range(len(removed_spectra)):
-                removed_spectra[i]["spectrum"] = [
-                    float(x) / 1000 for x in removed_spectra[i]["spectrum"]
-                ]
-            if os.path.exists(removed_spectra_file):
-                raise ValueError(f"File exists: {removed_spectra_file}")
-            with open(removed_spectra_file, "w") as f:
-                for s in removed_spectra:
-                    f.write(f"{s['id']} {s['site']}\n")
-
-    if save_loaded_data:
-
-        directory = cfg.paths.cache.ml_dir
-        os.makedirs(directory, exist_ok=True)
-        # save train,val, text ids and X and y in text file
-        for split in ["train", "val", "test"]:
-            split_data = getattr(out, split)
-            file_X = os.path.join(
-                directory, f"{query.compound}_{query.simulation_type}_{split}_X.txt"
-            )
-            file_y = os.path.join(
-                directory, f"{query.compound}_{query.simulation_type}_{split}_y.txt"
-            )
-            np.savetxt(file_X, split_data.X / 1000)  # TODO: remove hardcoding
-            np.savetxt(file_y, split_data.y / 1000)  # TODO: remove hardcoding
-            # save id sites
-            id_site_dir = os.path.join(directory, "id_site")
-            os.makedirs(id_site_dir, exist_ok=True)
-            for split, idSite in zip(
-                ["train", "val", "test"],
-                [train_idSites, val_idSites, test_idSites],
-            ):
-                split_data = getattr(out, split)
-                file_name = os.path.join(
-                    id_site_dir,
-                    f"{query.compound}_{query.simulation_type}_{split}.txt",
-                )
-                with open(file_name, "w") as f:
-                    for i in range(len(idSite)):
-                        f.write(f"{idSite[i][0]} {idSite[i][1]}\n")
-
-        # save with id site and spectra
-
-        # save material id, site, and spectra without scaling
-        # di
-        # os.makedirs(os.path.dirname(filtered_data_file), exist_ok=True)
-        # if os.path.exists(filtered_data_file):
-        #     raise ValueError(f"File exists: {filtered_data_file}")
-        # with open(filtered_data_file, "w") as f:
-        #     # use index as
-        #     header = "id site"
-        #     header += " ".join([f"grid_{i}" for i in range(out.train.X.shape[1])])
-
-        # f.write(header + "\n")
-
-    if use_cache:
-        cache_file = cfg.paths.cache.splits.format(**query.__dict__)
-        if not os.path.exists(os.path.dirname(cache_file)):
-            os.makedirs(os.path.dirname(cache_file))
-        np.savez(
-            cache_file,
-            train_X=out.train.X,
-            train_y=out.train.y,
-            val_X=out.val.X,
-            val_y=out.val.y,
-            test_X=out.test.X,
-            test_y=out.test.y,
-        )
-
-    return out
-
-
-class XASPlData(PlDataModule):
-    def __init__(
-        self,
-        query: DataQuery,
-        dtype: torch.dtype = torch.float,
-        split_fractions: Union[List[float], None] = None,
-        **data_loader_kwargs,
-    ):
-        def dataset(split: DataSplit):
-            X, y = split.tensors
-            return TensorDataset(X.type(dtype), y.type(dtype))
-
-        split_fractions = split_fractions or cfg.data_module.split_fractions
-
-        ml_split = load_xas_ml_data(query, split_fractions=split_fractions)
-        super().__init__(
-            train_dataset=dataset(ml_split.train),
-            val_dataset=dataset(ml_split.val),
-            test_dataset=dataset(ml_split.test),
-            **data_loader_kwargs,
-        )
+    return splits
 
 
 def load_all_data(
@@ -377,7 +246,7 @@ def load_all_data(
         )
         for c in compounds:
             data = data_dict[c]
-            data_dict[c] = MLSplits(
+            data_dict[c] = MlSplit(
                 train=DataSplit(
                     data.train.X[: split_sizes[0]], data.train.y[: split_sizes[0]]
                 ),
@@ -393,7 +262,7 @@ def load_all_data(
     val_compounds = [[c] * len(data_dict[c].val.X) for c in compounds]
     test_compounds = [[c] * len(data_dict[c].test.X) for c in compounds]
 
-    data_all = MLSplits(
+    data_all = MlSplit(
         train=DataSplit(
             np.concatenate([data.train.X for data in data_dict.values()]),
             np.concatenate([data.train.y for data in data_dict.values()]),
@@ -417,7 +286,7 @@ def load_all_data(
     val_shuffle = np.random.permutation(len(data_all.val.X))
     test_shuffle = np.random.permutation(len(data_all.test.X))
 
-    data_all = MLSplits(
+    data_all = MlSplit(
         train=DataSplit(
             data_all.train.X[train_shuffle], data_all.train.y[train_shuffle]
         ),
@@ -434,7 +303,18 @@ def load_all_data(
 
 
 if __name__ == "__main__":
-    pass
+    splits = load_xas_ml_data(
+        DataQuery("Cu", "VASP"),
+        post_split_anomaly_filter=False,
+        pre_splits_anomaly_filter=True,
+    )
+    print(splits.train.X.shape[0], splits.val.X.shape[0], splits.test.X.shape[0])
+    total = splits.train.X.shape[0] + splits.val.X.shape[0] + splits.test.X.shape[0]
+    print(
+        splits.train.X.shape[0] / total,
+        splits.val.X.shape[0] / total,
+        splits.test.X.shape[0] / total,
+    )
 
     # # =============================================================================
     # #  anmoly filter test

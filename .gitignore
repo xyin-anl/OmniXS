@@ -2,6 +2,9 @@ logs
 results
 lightning_logs
 *.pdf
+output
+*.zip
+*.sh
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/macos,linux,jupyternotebooks,python
