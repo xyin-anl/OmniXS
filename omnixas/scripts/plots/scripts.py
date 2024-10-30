@@ -20,6 +20,7 @@ from omnixas.model.trained_model import (
     TrainedModelLoader,
     TrainedXASBlock,
 )
+from omnixas.utils import DEFAULTFILEHANDLER
 from omnixas.utils.io import DEFAULTFILEHANDLER, FileHandler
 
 # %%
@@ -66,33 +67,43 @@ def get_universal_model_eta(data_tag: DataTag):
     return expert_element_metric / universal_element_metric
 
 
+def get_model_metrics(
+    model_tag: ModelTag,
+    io_config: DictConfig = DEFAULTFILEHANDLER().config,
+    x_scaler=ThousandScaler,
+    y_scaler=ThousandScaler,
+):
+    file_handler = FileHandler(io_config)
+    ml_splits = file_handler.deserialize_json(MLSplits, model_tag)
+    scaled_ml_splits = ScaledMlSplit.from_splits(ml_splits, x_scaler, y_scaler)
+    model = TrainedXASBlock.load(
+        model_tag,
+        train_x_scaler=x_scaler,
+        train_y_scaler=y_scaler,
+        file_handler=file_handler,
+    )
+    return model.compute_metrics(scaled_ml_splits)
+
+
 def get_expert_tuned_comparision_metric(
     tag: DataTag,
     io_config: DictConfig = DEFAULTFILEHANDLER().config,
     x_scaler=ThousandScaler,
     y_scaler=ThousandScaler,
 ):
-    file_handler = FileHandler(io_config)
-    ml_splits = file_handler.deserialize_json(MLSplits, tag)
-    scaled_ml_splits = ScaledMlSplit.from_splits(ml_splits, x_scaler, y_scaler)
-
-    load_model = partial(
-        TrainedXASBlock.load,
-        **dict(
-            train_x_scaler=x_scaler,
-            train_y_scaler=y_scaler,
-            file_handler=file_handler,
-        ),
+    kwargs = dict(
+        io_config=io_config,
+        x_scaler=x_scaler,
+        y_scaler=y_scaler,
     )
-    expert_tag = ModelTag(name="expertXAS", **tag.dict())
-    tuned_tag = ModelTag(name="tunedUniversalXAS", **tag.dict())
-
-    scaled_ml_splits = TrainedModelLoader.load_scaled_splits(
-        expert_tag, x_scaler, y_scaler, file_handler
+    expert_metric = get_model_metrics(
+        ModelTag(name="expertXAS", **tag.dict()),
+        **kwargs,
     )
-
-    expert_metric = load_model(expert_tag).compute_metrics(scaled_ml_splits)
-    tuned_metric = load_model(tuned_tag).compute_metrics(scaled_ml_splits)
+    tuned_metric = get_model_metrics(
+        ModelTag(name="tunedUniversalXAS", **tag.dict()),
+        **kwargs,
+    )
     return ComparisonMetrics(metric1=expert_metric, metric2=tuned_metric)
 
 
