@@ -91,9 +91,9 @@ def get_expert_tuned_comparision_metric(
         expert_tag, x_scaler, y_scaler, file_handler
     )
 
-    metric1 = load_model(expert_tag).compute_metrics(scaled_ml_splits)
-    metric2 = load_model(tuned_tag).compute_metrics(scaled_ml_splits)
-    return ComparisonMetrics(metric1=metric1, metric2=metric2)
+    expert_metric = load_model(expert_tag).compute_metrics(scaled_ml_splits)
+    tuned_metric = load_model(tuned_tag).compute_metrics(scaled_ml_splits)
+    return ComparisonMetrics(metric1=expert_metric, metric2=tuned_metric)
 
 
 # %%

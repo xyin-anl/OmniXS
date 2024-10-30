@@ -8,24 +8,13 @@ from sklearn.base import BaseEstimator
 from sklearn.metrics import mean_absolute_error
 from sklearn.preprocessing import RobustScaler
 
-from omnixas.scripts.plots.scripts import get_eta
-from omnixas.scripts.plots.scripts import get_universal_model_eta
 from omnixas.data import ElementsFEFF, ElementsVASP, FEFFDataTags, VASPDataTags
 from omnixas.model.trained_model import ModelTag
+from omnixas.scripts.plots.scripts import get_eta, get_universal_model_eta
 from omnixas.utils.io import DEFAULTFILEHANDLER
-
-# %%
 
 
 def plot_performance_comparison(eta_values, figsize=(8, 6), fontsize=20):
-    """
-    Create a performance comparison plot for XAS models with specified element ordering.
-
-    Args:
-        eta_values (dict): Dictionary containing performance metrics for different models
-        figsize (tuple): Figure size (width, height)
-        fontsize (int): Base font size for labels
-    """
     plt.style.use(["default", "science", "tableau-colorblind10"])
     fig, ax = plt.subplots(figsize=figsize)
 
@@ -172,10 +161,10 @@ for set_name, tag_set in zip(
     eta_set = {}
     for model_tag in tag_set:
         file_handler = DEFAULTFILEHANDLER()
-        if set_name == "tunedUniversalXAS":
-            file_handler.config["TrainedXASBlock"]["filename"] = "last{}.ckpt"
-        else:
-            file_handler.config["TrainedXASBlock"]["filename"] = "last{}.ckpt"
+        # if set_name == "tunedUniversalXAS":
+        #     file_handler.config["TrainedXASBlock"]["filename"] = "last{}.ckpt"
+        # else:
+        #     file_handler.config["TrainedXASBlock"]["filename"] = "last{}.ckpt"
         eta = get_eta(model_tag=model_tag, file_handler=file_handler)
         print(f"{model_tag.element}_{model_tag.type}: {eta}")
         eta_set[f"{model_tag.element}_{model_tag.type}"] = eta
@@ -199,3 +188,5 @@ for data_tag in FEFFDataTags():
 # Example usage:
 fig, ax = plot_performance_comparison(eta_values)
 plt.savefig("model_performance.pdf", bbox_inches="tight", dpi=300)
+
+# %%
