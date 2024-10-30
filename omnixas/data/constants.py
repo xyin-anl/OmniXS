@@ -28,3 +28,8 @@ class FEFFDataTags:
         return [
             DataTag(element=element, type=SpectrumType.FEFF) for element in ElementsFEFF
         ]
+
+
+class AllDataTags:
+    def __new__(cls):
+        return FEFFDataTags() + VASPDataTags()

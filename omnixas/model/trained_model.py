@@ -59,11 +59,28 @@ class ModelMetrics(BaseModel):
         return np.array(top_spectra)
 
     @property
+    def residuals(self):
+        return self.targets - self.predictions
+
+    @property
+    def mse_per_spectra(self):
+        return np.mean(self.residuals**2, axis=1)
+
+    @property
     def deciles(self):
         return self.top_predictions(splits=10, drop_last_split=True)
 
     class Config:
         arbitrary_types_allowed = True
+
+
+class ComparisonMetrics(BaseModel):
+    metric1: ModelMetrics = Field(..., description="First metric to compare")
+    metric2: ModelMetrics = Field(..., description="Second metric to compare")
+
+    @property
+    def residual_diff(self):
+        return np.abs(self.metric1.residuals) - np.abs(self.metric2.residuals)
 
 
 class TrainedModel(BaseModel, ABC):
@@ -122,9 +139,9 @@ class TrainedXASBlock(TrainedModel):
         tag: ModelTag,
         train_x_scaler: type = ThousandScaler,
         train_y_scaler: type = ThousandScaler,
-        **kwargs,
+        file_handler: FileHandler = DEFAULTFILEHANDLER(),
     ):
-        model = TrainedModelLoader.load_model(tag, **kwargs)
+        model = TrainedModelLoader.load_model(tag, file_handler)
         model.eval()
         model.freeze()
         instance = cls(
@@ -216,11 +233,17 @@ class TrainedModelLoader:
 
     @staticmethod
     def load_scaled_splits(
-        tag: ModelTag, x_scaler: type = IdentityScaler, y_scaler: type = ThousandScaler
+        tag: ModelTag,
+        x_scaler: type = IdentityScaler,
+        y_scaler: type = ThousandScaler,
+        file_handler: FileHandler = DEFAULTFILEHANDLER(),
     ):
-        splits = TrainedModelLoader.load_ml_splits(tag)
+        splits = TrainedModelLoader.load_ml_splits(tag, file_handler)
         return ScaledMlSplit(
             x_scaler=x_scaler(),
             y_scaler=y_scaler(),
             **splits.dict(),
         )
+
+
+# %%

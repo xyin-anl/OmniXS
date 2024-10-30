@@ -1,4 +1,4 @@
-scripts
+/scripts/
 logs
 results
 lightning_logs

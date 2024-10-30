@@ -191,7 +191,7 @@ for element in eta_values["expertXAS"].keys():
 
 
 universal_metrics = {}
-for data_tag in FEFFDataTags:
+for data_tag in FEFFDataTags():
     eta = get_universal_model_eta(data_tag)
     universal_metrics[data_tag.element + "_" + data_tag.type] = eta
     print(f"{data_tag.element}: {eta}")

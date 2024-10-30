@@ -1,11 +1,28 @@
-from omnixas.data import DataTag, ScaledMlSplit, ThousandScaler
+# %%
+from functools import partial
+
+import matplotlib.pyplot as plt
+from omegaconf import DictConfig, OmegaConf
+
+from omnixas.data import (
+    AllDataTags,
+    DataTag,
+    FEFFDataTags,
+    MLSplits,
+    ScaledMlSplit,
+    ThousandScaler,
+    VASPDataTags,
+)
 from omnixas.model.trained_model import (
+    ComparisonMetrics,
     MeanModel,
     ModelTag,
     TrainedModelLoader,
     TrainedXASBlock,
 )
 from omnixas.utils.io import DEFAULTFILEHANDLER, FileHandler
+
+# %%
 
 
 def get_eta(model_tag: ModelTag, file_handler: FileHandler = DEFAULTFILEHANDLER()):
@@ -47,3 +64,36 @@ def get_universal_model_eta(data_tag: DataTag):
         train_y_scaler=ThousandScaler,
     ).metrics.median_of_mse_per_spectra
     return expert_element_metric / universal_element_metric
+
+
+def get_expert_tuned_comparision_metric(
+    tag: DataTag,
+    io_config: DictConfig = DEFAULTFILEHANDLER().config,
+    x_scaler=ThousandScaler,
+    y_scaler=ThousandScaler,
+):
+    file_handler = FileHandler(io_config)
+    ml_splits = file_handler.deserialize_json(MLSplits, tag)
+    scaled_ml_splits = ScaledMlSplit.from_splits(ml_splits, x_scaler, y_scaler)
+
+    load_model = partial(
+        TrainedXASBlock.load,
+        **dict(
+            train_x_scaler=x_scaler,
+            train_y_scaler=y_scaler,
+            file_handler=file_handler,
+        ),
+    )
+    expert_tag = ModelTag(name="expertXAS", **tag.dict())
+    tuned_tag = ModelTag(name="tunedUniversalXAS", **tag.dict())
+
+    scaled_ml_splits = TrainedModelLoader.load_scaled_splits(
+        expert_tag, x_scaler, y_scaler, file_handler
+    )
+
+    metric1 = load_model(expert_tag).compute_metrics(scaled_ml_splits)
+    metric2 = load_model(tuned_tag).compute_metrics(scaled_ml_splits)
+    return ComparisonMetrics(metric1=metric1, metric2=metric2)
+
+
+# %%

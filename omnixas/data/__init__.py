@@ -12,6 +12,7 @@ from .constants import (
     Cu,
     FEFFDataTags,
     VASPDataTags,
+    AllDataTags
 )
 
 from .ml_data import MLData, DataTag, MLSplits
@@ -80,4 +81,5 @@ __all__ = [
     "UncenteredRobustScaler",
     "ThousandScaler",
     "MultiplicativeScaler",
+    "AllDataTags",
 ]
