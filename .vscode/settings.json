@@ -12,13 +12,13 @@
     "python.analysis.exclude": [
         "**/logs/**",
         "**/results/**",
-        "**/utils/**",
+        // "utils",
         "**/dataset/**",
     ],
     "files.exclude": {
         "**/logs": true,
         "**/results": true,
-        "**/utils": true,
+        // "utils": true,
         "**/dataset": true,
     },
     "[python]": {
