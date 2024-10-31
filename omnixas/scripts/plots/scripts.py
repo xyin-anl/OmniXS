@@ -141,8 +141,11 @@ if __name__ == "__main__":
     )
     print(etas)
 
-    win_rates = ExpertTunedWinRates()
-    for tag, d in win_rates.items():
-        print(f"{tag.element}_{tag.type}:")
-        print(f"Energy win rate: {d['energy']:.2f}%")
-        print(f"Spectra win rate: {d['spectra']:.2f}%")
+    win_rates = ExpertTunedWinRates(
+        x_scaler=ThousandScaler,
+        y_scaler=ThousandScaler,
+        file_handler=DEFAULTFILEHANDLER(),
+    )
+    print(win_rates)
+
+# %%
