@@ -1,6 +1,8 @@
 # %%
 from functools import partial
 
+import numpy as np
+from typing import Dict, Tuple
 from omnixas.data import AllDataTags, DataTag, ScaledMlSplit, ThousandScaler
 from omnixas.model.trained_model import (
     ComparisonMetrics,
@@ -115,6 +117,18 @@ class AllEtas:
         return {**ExpertAndTunedEtas(**kwargs), **UniversalModelEtas(**kwargs)}
 
 
+class ExpertTunedWinRates:
+    def __new__(cls, **kwargs) -> Dict[ModelTag, Tuple[float, float]]:
+        comparison_metrics = CompareAllExpertAndTuned(**kwargs)
+        win_rates = {}
+        for tag, metrics in comparison_metrics.items():
+            differences = metrics.residual_diff
+            energy_rate = float(np.mean(np.mean(differences, axis=0) > 0) * 100)
+            spectra_rate = float(np.mean(np.mean(differences, axis=1) > 0) * 100)
+            win_rates[tag] = dict(energy=energy_rate, spectra=spectra_rate)
+        return win_rates
+
+
 # %%
 
 if __name__ == "__main__":
@@ -127,5 +141,8 @@ if __name__ == "__main__":
     )
     print(etas)
 
-
-# %%
+    win_rates = ExpertTunedWinRates()
+    for tag, d in win_rates.items():
+        print(f"{tag.element}_{tag.type}:")
+        print(f"Energy win rate: {d['energy']:.2f}%")
+        print(f"Spectra win rate: {d['spectra']:.2f}%")
