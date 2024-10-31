@@ -10,6 +10,7 @@ import numpy as np
 from omnixas.data import (
     AllDataTags,
     FEFFDataTags,
+    VASPDataTags,
     ScaledMlSplit,
     ThousandScaler,
 )
@@ -32,6 +33,29 @@ class XASModelsOfCategory:
             )
             for tag in AllDataTags()
         }
+
+
+class SplitsOfCategory:
+    def __new__(
+        cls, data_tags, x_scaler=ThousandScaler, y_scaler=ThousandScaler, **kwargs
+    ):
+        return {
+            tag: ScaledMlSplit.from_splits(
+                TrainedModelLoader.load_ml_splits(tag),
+                x_scaler=x_scaler,
+                y_scaler=y_scaler,
+            )
+            for tag in data_tags
+        }
+
+
+FEFFMlSplits = partial(SplitsOfCategory, data_tags=FEFFDataTags())
+VASPMlSplits = partial(SplitsOfCategory, data_tags=VASPDataTags())
+
+
+class AllMlSplits:
+    def __new__(cls, **kwargs):
+        return {**FEFFMlSplits(**kwargs), **VASPMlSplits(**kwargs)}
 
 
 class AllMlSplits:
@@ -180,3 +204,4 @@ if __name__ == "__main__":
         file_handler=DEFAULTFILEHANDLER(),
     )
     print(etas)
+# %%
