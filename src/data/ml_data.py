@@ -12,7 +12,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 from config.defaults import cfg
-from src.data.material_split import MaterialSplitter
+from omnixas.data.material_split import MaterialSplitter
 
 
 @dataclass

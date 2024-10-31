@@ -1,8 +1,7 @@
-from typing import List
-import numpy as np
-from utils.src.misc import icecream
-from src.data.feff_data_raw import RAWDataFEFF
 import warnings
+from typing import List
+
+import numpy as np
 
 
 class MaterialSplitter:
@@ -69,22 +68,3 @@ class MaterialSplitter:
                     grouped_ids[group_index].append(id_pair)
                     break
         return [np.array(x) for x in grouped_ids.values()]
-        # return grouped_ids[0], grouped_ids[1], grouped_ids[2]
-
-
-if __name__ == "__main__":
-    compound = "Ti"
-    feff_raw_data = RAWDataFEFF(compound=compound)
-
-    out = MaterialSplitter.split(
-        idSite=feff_raw_data.ids,
-        target_fractions=[0.8, 0.1, 0.1],
-    )
-
-    total = sum([len(x) for x in out])
-    fractions = [len(x) / total for x in out]
-    fractions = [round(x, 2) for x in fractions]
-
-    from utils.src.misc.icecream import ic
-
-    ic(fractions)

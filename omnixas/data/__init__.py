@@ -12,7 +12,7 @@ from .constants import (
     Cu,
     FEFFDataTags,
     VASPDataTags,
-    AllDataTags
+    AllDataTags,
 )
 
 from .ml_data import MLData, DataTag, MLSplits
@@ -35,6 +35,8 @@ from .scaler import (
     ThousandScaler,
     MultiplicativeScaler,
 )
+
+from .material_split import MaterialSplitter
 
 # from .merge_ml_splits import (
 #     FEFFSplits,
@@ -82,4 +84,5 @@ __all__ = [
     "ThousandScaler",
     "MultiplicativeScaler",
     "AllDataTags",
+    "MaterialSplitter",
 ]
