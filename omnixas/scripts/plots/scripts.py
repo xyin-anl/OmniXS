@@ -1,18 +1,7 @@
 # %%
 from functools import partial
 
-import matplotlib.pyplot as plt
-from omegaconf import DictConfig, OmegaConf
-
-from omnixas.data import (
-    AllDataTags,
-    DataTag,
-    FEFFDataTags,
-    MLSplits,
-    ScaledMlSplit,
-    ThousandScaler,
-    VASPDataTags,
-)
+from omnixas.data import AllDataTags, DataTag, ScaledMlSplit, ThousandScaler
 from omnixas.model.trained_model import (
     ComparisonMetrics,
     MeanModel,
@@ -20,91 +9,123 @@ from omnixas.model.trained_model import (
     TrainedModelLoader,
     TrainedXASBlock,
 )
-from omnixas.utils import DEFAULTFILEHANDLER
-from omnixas.utils.io import DEFAULTFILEHANDLER, FileHandler
+
+
+class XASModelsOfCategory:
+    def __new__(cls, model_name: str, **kwargs):
+        return {
+            ModelTag(name=model_name, **tag.dict()): TrainedXASBlock.load(
+                ModelTag(name=model_name, **tag.dict()),
+                **kwargs,
+            )
+            for tag in AllDataTags()
+        }
+
+
+class AllMlSplits:
+    def __new__(cls, x_scaler=ThousandScaler, y_scaler=ThousandScaler, **kwargs):
+        return {
+            tag: ScaledMlSplit.from_splits(
+                TrainedModelLoader.load_ml_splits(tag),
+                x_scaler=x_scaler,
+                y_scaler=y_scaler,
+            )
+            for tag in AllDataTags()
+        }
+
+
+class MetricsForModelCategory:
+    def __new__(cls, model_name: str, **kwargs):
+        return {
+            model.tag: model.compute_metrics(splits)
+            for splits, model in zip(
+                AllMlSplits(**kwargs).values(),
+                XASModelsOfCategory(model_name, **kwargs).values(),
+            )
+        }
+
+
+AllExpertModels = partial(XASModelsOfCategory, model_name="expertXAS")
+AllTunedModels = partial(XASModelsOfCategory, model_name="tunedUniversalXAS")
+
+
+class AllXASModels:
+    def __new__(cls, **kwargs):
+        expert_models = AllExpertModels(**kwargs)
+        tuned_models = AllTunedModels(**kwargs)
+        return {**expert_models, **tuned_models}
+
+
+AllExpertMetrics = partial(MetricsForModelCategory, model_name="expertXAS")
+AllTunedMetrics = partial(MetricsForModelCategory, model_name="tunedUniversalXAS")
+
+
+class CompareAllExpertAndTuned:
+    def __new__(cls, **kwargs):  # kwargs can incldue file_handler, x_scaler, y_scaler
+        out = {}
+        for m1, m2 in zip(
+            AllExpertMetrics(**kwargs).items(),
+            AllTunedMetrics(**kwargs).items(),
+        ):
+            out[m1[0]] = ComparisonMetrics(metric1=m1[1], metric2=m2[1])
+        return out
+
+
+class ExpertAndTunedEtas:
+    def __new__(cls, **kwargs) -> dict:
+        all_models = AllXASModels(**kwargs)
+        return {
+            model_tag: (
+                MeanModel(tag=model_tag, **kwargs).metrics.median_of_mse_per_spectra
+                / model.metrics.median_of_mse_per_spectra
+            )
+            for model_tag, model in all_models.items()
+        }
+
+
+class UniversalModelEtas:
+    def __new__(cls, **kwargs):
+        universal_model = TrainedXASBlock.load(
+            tag=ModelTag(
+                name="universalXAS",
+                element="All",
+                type="FEFF",
+            ),
+            **kwargs,
+        )
+        return {
+            ModelTag(name="universalXAS", **tag.dict()): (
+                MeanModel(
+                    tag=ModelTag(name="meanmodel", **tag.dict()), **kwargs
+                ).metrics.median_of_mse_per_spectra
+                / universal_model.compute_metrics(
+                    ScaledMlSplit.from_splits(
+                        TrainedModelLoader.load_ml_splits(tag),
+                        x_scaler=kwargs["x_scaler"],
+                        y_scaler=kwargs["y_scaler"],
+                    )
+                ).median_of_mse_per_spectra
+            )
+            for tag in AllDataTags()
+        }
+
+
+class AllEtas:
+    def __new__(cls, **kwargs):
+        return {**ExpertAndTunedEtas(**kwargs), **UniversalModelEtas(**kwargs)}
+
 
 # %%
 
+if __name__ == "__main__":
+    from omnixas.utils import DEFAULTFILEHANDLER
 
-def get_eta(model_tag: ModelTag, file_handler: FileHandler = DEFAULTFILEHANDLER()):
-    x_scaler = ThousandScaler
-    y_scaler = ThousandScaler
-    scalers = dict(train_x_scaler=x_scaler, train_y_scaler=y_scaler)
-    model = TrainedXASBlock.load(model_tag, file_handler=file_handler, **scalers)
-    mean = MeanModel(tag=model_tag, **scalers)
-
-    model_mse = model.metrics.median_of_mse_per_spectra
-    mean_mse = mean.metrics.median_of_mse_per_spectra
-
-    return mean_mse / model_mse
-
-
-def get_universal_model_eta(data_tag: DataTag):
-    universalXAS = TrainedXASBlock.load(
-        tag=ModelTag(
-            name="universalXAS",
-            element="All",
-            type="FEFF",
-        ),
-        train_x_scaler=ThousandScaler,
-        train_y_scaler=ThousandScaler,
-    )
-    split = TrainedModelLoader.load_ml_splits(data_tag)
-    split = ScaledMlSplit.from_splits(
-        split,
+    etas = AllEtas(
         x_scaler=ThousandScaler,
         y_scaler=ThousandScaler,
+        file_handler=DEFAULTFILEHANDLER(),
     )
-    universal_element_metric = universalXAS.compute_metrics(
-        split
-    ).median_of_mse_per_spectra
-    expert_element_metric = MeanModel(
-        # tag=ModelTag(name="expertXAS", **FEFFDataTags[0].dict()),
-        tag=ModelTag(name="expertXAS", **data_tag.dict()),
-        train_x_scaler=ThousandScaler,
-        train_y_scaler=ThousandScaler,
-    ).metrics.median_of_mse_per_spectra
-    return expert_element_metric / universal_element_metric
-
-
-def get_model_metrics(
-    model_tag: ModelTag,
-    io_config: DictConfig = DEFAULTFILEHANDLER().config,
-    x_scaler=ThousandScaler,
-    y_scaler=ThousandScaler,
-):
-    file_handler = FileHandler(io_config)
-    ml_splits = file_handler.deserialize_json(MLSplits, model_tag)
-    scaled_ml_splits = ScaledMlSplit.from_splits(ml_splits, x_scaler, y_scaler)
-    model = TrainedXASBlock.load(
-        model_tag,
-        train_x_scaler=x_scaler,
-        train_y_scaler=y_scaler,
-        file_handler=file_handler,
-    )
-    return model.compute_metrics(scaled_ml_splits)
-
-
-def get_expert_tuned_comparision_metric(
-    tag: DataTag,
-    io_config: DictConfig = DEFAULTFILEHANDLER().config,
-    x_scaler=ThousandScaler,
-    y_scaler=ThousandScaler,
-):
-    kwargs = dict(
-        io_config=io_config,
-        x_scaler=x_scaler,
-        y_scaler=y_scaler,
-    )
-    expert_metric = get_model_metrics(
-        ModelTag(name="expertXAS", **tag.dict()),
-        **kwargs,
-    )
-    tuned_metric = get_model_metrics(
-        ModelTag(name="tunedUniversalXAS", **tag.dict()),
-        **kwargs,
-    )
-    return ComparisonMetrics(metric1=expert_metric, metric2=tuned_metric)
+    print(etas)
 
 
 # %%

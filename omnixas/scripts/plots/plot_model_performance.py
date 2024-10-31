@@ -1,20 +1,24 @@
 # %%
 
-from typing import List
 
 import numpy as np
 from matplotlib import pyplot as plt
-from sklearn.base import BaseEstimator
-from sklearn.metrics import mean_absolute_error
-from sklearn.preprocessing import RobustScaler
 
-from omnixas.data import ElementsFEFF, ElementsVASP, FEFFDataTags, VASPDataTags
-from omnixas.model.trained_model import ModelTag
-from omnixas.scripts.plots.scripts import get_eta, get_universal_model_eta
-from omnixas.utils.io import DEFAULTFILEHANDLER
+from omnixas.data import ElementsFEFF, ElementsVASP
+from omnixas.scripts.plots.scripts import AllEtas
+
+# %%
 
 
-def plot_performance_comparison(eta_values, figsize=(8, 6), fontsize=20):
+def plot_performance_comparison(etas, figsize=(8, 6), fontsize=20):
+
+    # reformat eta_values to be model_name -> element_type -> eta
+    eta_values = {}
+    for model_tag, eta in etas.items():
+        model_name = model_tag.name
+        element_type = f"{model_tag.element}_{model_tag.type}"
+        eta_values.setdefault(model_name, {})[element_type] = eta
+
     plt.style.use(["default", "science", "tableau-colorblind10"])
     fig, ax = plt.subplots(figsize=figsize)
 
@@ -140,53 +144,20 @@ def plot_performance_comparison(eta_values, figsize=(8, 6), fontsize=20):
     return fig, ax
 
 
-EXPERTFEFFS = [
-    ModelTag(name="expertXAS", **data_tag.dict()) for data_tag in FEFFDataTags()
-]
-EXPERTVASPS = [
-    ModelTag(name="expertXAS", **data_tag.dict()) for data_tag in VASPDataTags()
-]
-EXPERTXASTAGS = EXPERTFEFFS + EXPERTVASPS
-TUNEDUNIVERSALXASTAGS = [
-    ModelTag(name="tunedUniversalXAS", element=tag.element, type=tag.type)
-    for tag in EXPERTXASTAGS
-]
-
-
-eta_values = {}
-for set_name, tag_set in zip(
-    ["expertXAS", "tunedUniversalXAS"],
-    [EXPERTXASTAGS, TUNEDUNIVERSALXASTAGS],
-):
-    eta_set = {}
-    for model_tag in tag_set:
-        file_handler = DEFAULTFILEHANDLER()
-        # if set_name == "tunedUniversalXAS":
-        #     file_handler.config["TrainedXASBlock"]["filename"] = "last{}.ckpt"
-        # else:
-        #     file_handler.config["TrainedXASBlock"]["filename"] = "last{}.ckpt"
-        eta = get_eta(model_tag=model_tag, file_handler=file_handler)
-        print(f"{model_tag.element}_{model_tag.type}: {eta}")
-        eta_set[f"{model_tag.element}_{model_tag.type}"] = eta
-    eta_values[set_name] = eta_set
-
-
-for element in eta_values["expertXAS"].keys():
-    expert = eta_values["expertXAS"][element]
-    tuned = eta_values["tunedUniversalXAS"][element]
-    print(
-        f"{element}: \t{expert:.2f},\t{tuned:.2f} \t({(tuned-expert)/expert*100:.2f}%)"
-    )
-
-
-universal_metrics = {}
-for data_tag in FEFFDataTags():
-    eta = get_universal_model_eta(data_tag)
-    universal_metrics[data_tag.element + "_" + data_tag.type] = eta
-    print(f"{data_tag.element}: {eta}")
-
-# Example usage:
-fig, ax = plot_performance_comparison(eta_values)
-plt.savefig("model_performance.pdf", bbox_inches="tight", dpi=300)
-
 # %%
+
+if __name__ == "__main__":
+
+    from omnixas.data import ThousandScaler
+    from omnixas.utils import DEFAULTFILEHANDLER
+
+    fig, ax = plot_performance_comparison(
+        AllEtas(
+            x_scaler=ThousandScaler,
+            y_scaler=ThousandScaler,
+            file_handler=DEFAULTFILEHANDLER(),
+        )
+    )
+    plt.savefig("model_performance.pdf", bbox_inches="tight", dpi=300)
+
+    # %%

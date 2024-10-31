@@ -1,6 +1,6 @@
 # %%
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any, Optional, Self
 
 import numpy as np
 import torch
@@ -120,6 +120,11 @@ class TrainedModel(BaseModel, ABC):
 
 class MeanModel(TrainedModel):
 
+    @classmethod
+    def from_data_tag(cls, data_tag: DataTag, **kwargs) -> Self:
+        model_tag = ModelTag(name="meanModel", **data_tag.dict())
+        return cls(tag=model_tag, **kwargs)
+
     @computed_field
     def train_mean(self) -> np.ndarray:
         return self.default_split.train.y.mean(axis=0)
@@ -137,8 +142,8 @@ class TrainedXASBlock(TrainedModel):
     def load(
         cls,
         tag: ModelTag,
-        train_x_scaler: type = ThousandScaler,
-        train_y_scaler: type = ThousandScaler,
+        x_scaler: type = ThousandScaler,
+        y_scaler: type = ThousandScaler,
         file_handler: FileHandler = DEFAULTFILEHANDLER(),
     ):
         model = TrainedModelLoader.load_model(tag, file_handler)
@@ -147,8 +152,8 @@ class TrainedXASBlock(TrainedModel):
         instance = cls(
             tag=tag,
             model=model,
-            train_x_scaler=train_x_scaler,
-            train_y_scaler=train_y_scaler,
+            train_x_scaler=x_scaler,
+            train_y_scaler=y_scaler,
         )
         return instance
 

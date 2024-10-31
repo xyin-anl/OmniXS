@@ -4,7 +4,6 @@ import numpy as np
 from matplotlib.patches import Patch
 
 from omnixas.data import ElementsFEFF, ElementsVASP
-from omnixas.scripts.plots.scripts import get_expert_tuned_comparision_metric
 
 
 def plot_residual_difference_histograms(residual_diffs, figsize=(9, 12), fontsize=22):
@@ -147,15 +146,18 @@ def plot_residual_difference_histograms(residual_diffs, figsize=(9, 12), fontsiz
 
 # %%
 if __name__ == "__main__":
-    from functools import partial
 
-    from omnixas.data import AllDataTags
+    from omnixas.data import ThousandScaler
+    from omnixas.scripts.plots.scripts import CompareAllExpertAndTuned
+    from omnixas.utils import DEFAULTFILEHANDLER
 
     residual_diffs = {
-        f"{tag.element}_{tag.type}": get_expert_tuned_comparision_metric(
-            tag
-        ).residual_diff
-        for tag in AllDataTags()
+        f"{t.element}_{t.type}": metric_diff.residual_diff
+        for t, metric_diff in CompareAllExpertAndTuned(
+            file_handler=DEFAULTFILEHANDLER(),
+            x_scaler=ThousandScaler,
+            y_scaler=ThousandScaler,
+        ).items()
     }
 
     fig, axs = plot_residual_difference_histograms(residual_diffs)
