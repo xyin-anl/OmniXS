@@ -1,9 +1,18 @@
 # %%
+from typing import Dict
+import numpy as np
+from omnixas.model.trained_model import ModelMetrics, ModelTag
 from functools import partial
+from typing import Dict, Tuple
 
 import numpy as np
-from typing import Dict, Tuple
-from omnixas.data import AllDataTags, DataTag, ScaledMlSplit, ThousandScaler
+
+from omnixas.data import (
+    AllDataTags,
+    FEFFDataTags,
+    ScaledMlSplit,
+    ThousandScaler,
+)
 from omnixas.model.trained_model import (
     ComparisonMetrics,
     MeanModel,
@@ -11,6 +20,7 @@ from omnixas.model.trained_model import (
     TrainedModelLoader,
     TrainedXASBlock,
 )
+from omnixas.scripts.plots.plot_deciles import DecilePlotter
 
 
 class XASModelsOfCategory:
@@ -73,9 +83,9 @@ class CompareAllExpertAndTuned:
         return out
 
 
-class ExpertAndTunedEtas:
-    def __new__(cls, **kwargs) -> dict:
-        all_models = AllXASModels(**kwargs)
+class EtasOfCategory:
+    def __new__(cls, model_name: str, **kwargs) -> dict:
+        all_models = XASModelsOfCategory(model_name, **kwargs)
         return {
             model_tag: (
                 MeanModel(tag=model_tag, **kwargs).metrics.median_of_mse_per_spectra
@@ -83,6 +93,10 @@ class ExpertAndTunedEtas:
             )
             for model_tag, model in all_models.items()
         }
+
+
+ExpertEtas = partial(EtasOfCategory, model_name="expertXAS")
+TunedEtas = partial(EtasOfCategory, model_name="tunedUniversalXAS")
 
 
 class UniversalModelEtas:
@@ -114,7 +128,11 @@ class UniversalModelEtas:
 
 class AllEtas:
     def __new__(cls, **kwargs):
-        return {**ExpertAndTunedEtas(**kwargs), **UniversalModelEtas(**kwargs)}
+        return {
+            **ExpertEtas(**kwargs),
+            **TunedEtas(**kwargs),
+            **UniversalModelEtas(**kwargs),
+        }
 
 
 class ExpertTunedWinRates:
@@ -129,6 +147,28 @@ class ExpertTunedWinRates:
         return win_rates
 
 
+class AllUniversalMetrics:
+    def __new__(cls, **kwargs) -> Dict[ModelTag, ModelMetrics]:
+        universal_model = TrainedXASBlock.load(
+            tag=ModelTag(
+                name="universalXAS",
+                element="All",
+                type="FEFF",
+            ),
+            **kwargs,
+        )
+        metrics = {}
+        for tag in FEFFDataTags():
+            model_tag = ModelTag(name="universalXAS", element=tag.element, type="FEFF")
+            splits = ScaledMlSplit.from_splits(
+                TrainedModelLoader.load_ml_splits(tag),
+                x_scaler=kwargs.get("x_scaler", ThousandScaler),
+                y_scaler=kwargs.get("y_scaler", ThousandScaler),
+            )
+            metrics[model_tag] = universal_model.compute_metrics(splits)
+        return metrics
+
+
 # %%
 
 if __name__ == "__main__":
@@ -140,12 +180,3 @@ if __name__ == "__main__":
         file_handler=DEFAULTFILEHANDLER(),
     )
     print(etas)
-
-    win_rates = ExpertTunedWinRates(
-        x_scaler=ThousandScaler,
-        y_scaler=ThousandScaler,
-        file_handler=DEFAULTFILEHANDLER(),
-    )
-    print(win_rates)
-
-# %%
