@@ -103,8 +103,8 @@ class UniversalModelEtas:
                 / universal_model.compute_metrics(
                     ScaledMlSplit.from_splits(
                         TrainedModelLoader.load_ml_splits(tag),
-                        x_scaler=kwargs["x_scaler"],
-                        y_scaler=kwargs["y_scaler"],
+                        x_scaler=kwargs.get("x_scaler", ThousandScaler),
+                        y_scaler=kwargs.get("y_scaler", ThousandScaler),
                     )
                 ).median_of_mse_per_spectra
             )
