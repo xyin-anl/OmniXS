@@ -101,8 +101,8 @@ class IntensityValues(RootModel, validate_assignment=True):
 
 @ReadableEnums()
 class Spectrum(BaseModel, validate_assignment=True):
-    intensities: IntensityValues
-    energies: Optional[EnergyGrid]
+    intensities: Optional[IntensityValues] = Field(None)
+    energies: Optional[EnergyGrid] = Field(None)
 
     @model_validator(mode="after")
     def check_length(cls, values):

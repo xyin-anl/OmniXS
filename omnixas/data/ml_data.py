@@ -46,6 +46,9 @@ class MLData(BaseModel):
             )
         return len_X
 
+    def __eq__(self, other):
+        return np.allclose(self.X, other.X) and np.allclose(self.y, other.y)
+
     class Config:
         arbitrary_types_allowed = True
 
@@ -79,6 +82,13 @@ class MLSplits(BaseModel):
     def __len__(self):
         return sum(
             len(getattr(self, split_name)) for split_name in self.__fields__.keys()
+        )
+
+    def __eq__(self, other):
+        return (
+            self.train == other.train
+            and self.val == other.val
+            and self.test == other.test
         )
 
 

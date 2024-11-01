@@ -1,5 +1,6 @@
 # %%
 import warnings
+from omnixas.data import Material, ElementSpectrum, MaterialID
 import re
 from typing import List, Tuple
 
@@ -18,8 +19,8 @@ from omnixas.data import DataTag
 
 class MLSplitGenerator:
 
-    def __init__(self, file_handler: FileHandler = DEFAULTFILEHANDLER()):
-        self.file_handler = file_handler
+    def __init__(self, file_handler: FileHandler = None):
+        self.file_handler = file_handler or DEFAULTFILEHANDLER()
 
     def generate_ml_splits(
         self,
@@ -32,10 +33,7 @@ class MLSplitGenerator:
         file_paths = self.file_handler.serialized_objects_filepaths(
             MLData, element=element, type=type
         )
-        idSites = [
-            self._ml_filename_to_idSite(file_path, element, type)
-            for file_path in file_paths
-        ]
+        idSites = [self._ml_filename_to_idSite(file_path) for file_path in file_paths]
         train_idSites, val_idSites, test_idSites = MaterialSplitter.split(
             idSite=idSites,
             target_fractions=target_fractions,
@@ -47,33 +45,8 @@ class MLSplitGenerator:
         ml_splits = MLSplits(train=train_data, val=val_data, test=test_data)
         return ml_splits
 
-    def _construct_filename(
-        self,
-        material_id: str,
-        site: str,
-        element: Element,
-        spectra_type: SpectrumType,
-    ) -> str:  # TODO: remove hardcoding
-        warnings.warn("Hardcoded path in _construct_filename")
-        return f"dataset/ml_data/{spectra_type.value}/{element.value}/{material_id}_site_{site}_{element.value}_{spectra_type.value}.json"
-
-    def _idSite_to_ml_filename(
-        self,
-        idSite: Tuple[str, str],
-        element: Element,
-        spectra_type: SpectrumType,
-    ) -> str:
-        material_id, site = idSite
-        return self._construct_filename(material_id, site, element, spectra_type)
-
-    def _ml_filename_to_idSite(
-        self,
-        filename: str,
-        element: Element,
-        spectra_type: SpectrumType,
-    ) -> Tuple[str, str]:
-        # TODO: remove hardcoding
-        pattern = f"dataset/ml_data/{spectra_type.value}/{element.value}/(.*)_site_(.+)_(.+)_(.+).json"
+    def _ml_filename_to_idSite(self, filename: str) -> Tuple[str, str]:
+        pattern = f".*/(.*)_site_(.+)_(.+)_(.+).json"
         match = re.search(pattern, filename)
         if not match:
             raise ValueError(f"Invalid filename format: {filename}")
@@ -85,8 +58,14 @@ class MLSplitGenerator:
         element: Element,
         spectra_type: SpectrumType,
     ) -> MLData:
-        filepath = self._idSite_to_ml_filename(idSite, element, spectra_type)
-        return self.file_handler.deserialize_json(MLData, custom_filepath=filepath)
+        dummy = ElementSpectrum(
+            element=element,
+            type=spectra_type,
+            index=int(idSite[1]),
+            material=Material(id=MaterialID(idSite[0])),
+        )
+        dummy = {**dummy.dict(), "index_string": dummy.index_string}
+        return self.file_handler.deserialize_json(MLData, dummy)
 
     def _to_ml_data(
         self,
@@ -94,9 +73,11 @@ class MLSplitGenerator:
         spectra_type: SpectrumType,
         idSites: List[Tuple[str, str]],
     ) -> MLData:
+
         ml_data_list = [
             self._load_ml_data(idSite, element, spectra_type) for idSite in idSites
         ]
+
         X_train = np.stack([d.X for d in ml_data_list])
         y_train = np.stack([d.y for d in ml_data_list])
         return MLData(X=X_train, y=y_train)
@@ -123,8 +104,19 @@ if __name__ == "__main__":
     # main()
 
     split = MLSplitGenerator().generate_ml_splits(
-        DataTag(element=Element.Cu, type=SpectrumType.FEFF),
+        DataTag(element=Element.Cu, type=SpectrumType.VASP),
         target_fractions=[0.8, 0.1, 0.1],
-        seed=42,
     )
-    print(len(split.train.X), split.train.X[0])
+
+    # DEBUG CODE: checking if featurization is giving the same results
+    # config = DEFAULTFILEHANDLER().config
+    # old_config = config.copy()
+    # old_config["MLData"]["directory"] = "dataset/temp/ml_data/{type}/{element}"
+    # old_hander = FileHandler(old_config)
+    # new_config = old_config.copy()
+    # new_config["MLData"]["directory"] = "dataset/ml_data/{type}/{element}"
+    # new_handler = FileHandler(new_config)
+    # tag = DataTag(element=Element.Ti, type=SpectrumType.VASP)
+    # old_split = MLSplitGenerator(old_hander).generate_ml_splits(tag)
+    # new_split = MLSplitGenerator(new_handler).generate_ml_splits(tag)
+    # old_split.train.X[0][:3], new_split.train.X[0][:3], old_split == new_split

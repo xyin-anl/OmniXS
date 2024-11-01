@@ -15,7 +15,7 @@ from matgl.utils.cutoff import polynomial_cutoff
 
 from omnixas.data.constants import ElementsFEFF
 from omnixas.data.data import MaterialStructure
-from omnixas.utils  import DEFAULTFILEHANDLER
+from omnixas.utils import DEFAULTFILEHANDLER
 
 
 class M3GNetFeaturizer:
@@ -91,25 +91,30 @@ if __name__ == "__main__":
         MLData,
         SpectrumType,
     )
-    from omnixas.utils  import DEFAULTFILEHANDLER, FileHandler
+    from omnixas.utils import DEFAULTFILEHANDLER, FileHandler
 
-    elements, spectrum_type = ElementsVASP, SpectrumType.VASP
+    # elements, spectrum_type = ElementsVASP, SpectrumType.VASP
     # elements, spectrum_type = ElementsFEFF, SpectrumType.FEFF
 
     # for element in elements:
-    for element in [Element.Cu]:
 
-        spectra = DEFAULTFILEHANDLER.fetch_serialized_objects(
+    spectrum_type = SpectrumType.VASP
+    for element in [Element.Ti]:
+        spectra = DEFAULTFILEHANDLER().fetch_serialized_objects(
             ElementSpectrum,
             element=element,
             type=spectrum_type,
         )
 
-        def save_ml_data(spectrum):
-            featurizer = M3GNetSiteFeaturizer()
-            features = featurizer.featurize(spectrum.material.structure, spectrum.index)
+        def save_ml_data(
+            spectrum,
+            file_handler=DEFAULTFILEHANDLER(),
+            featurizer=M3GNetSiteFeaturizer(),
+        ):
+            index = 0 if spectrum.type == SpectrumType.VASP else spectrum.index
+            features = featurizer.featurize(spectrum.material.structure, index)
             ml_data = MLData(X=features, y=np.array(spectrum.intensities))
-            DEFAULTFILEHANDLER.serialize_json(
+            file_handler.serialize_json(
                 ml_data,
                 supplemental_info={
                     **spectrum.dict(),
@@ -117,7 +122,7 @@ if __name__ == "__main__":
                 },
             )
 
-        for spectrum in tqdm(spectra):
+        for spectrum in tqdm(list(spectra), desc=f"Featurizing {element}"):
             save_ml_data(spectrum)
 
 # %%
