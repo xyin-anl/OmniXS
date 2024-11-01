@@ -103,10 +103,9 @@ def main():
 if __name__ == "__main__":
     # main()
 
-    split = MLSplitGenerator().generate_ml_splits(
-        DataTag(element=Element.Cu, type=SpectrumType.VASP),
-        target_fractions=[0.8, 0.1, 0.1],
-    )
+    tag = DataTag(element=Element.Ti, type=SpectrumType.VASP)
+    split = MLSplitGenerator().generate_ml_splits(tag)
+    DEFAULTFILEHANDLER().serialize_json(split, tag)
 
     # DEBUG CODE: checking if featurization is giving the same results
     # config = DEFAULTFILEHANDLER().config
@@ -120,3 +119,5 @@ if __name__ == "__main__":
     # old_split = MLSplitGenerator(old_hander).generate_ml_splits(tag)
     # new_split = MLSplitGenerator(new_handler).generate_ml_splits(tag)
     # old_split.train.X[0][:3], new_split.train.X[0][:3], old_split == new_split
+
+# %%
