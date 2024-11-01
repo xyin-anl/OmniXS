@@ -167,6 +167,7 @@ class TrainedModelLoader:
         freeze_first_k_layers: int = 0,
     ) -> PlModule:
         model = TrainedModelLoader.load_model(tag, file_handler)
+
         for m in model.modules():
             if isinstance(m, nn.Dropout):
                 m.p = 0.0
