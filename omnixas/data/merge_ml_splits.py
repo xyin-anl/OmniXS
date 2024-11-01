@@ -12,7 +12,6 @@ from pydantic import Field, field_validator
 from omnixas.data.constants import FEFFDataTags, VASPDataTags
 from omnixas.data.ml_data import DataTag, MLSplits, MLData
 
-# from refactor.data.constants import FEFFDataTags, VASPDataTags
 from omnixas.utils import DEFAULTFILEHANDLER
 from omnixas.utils.io import DEFAULTFILEHANDLER, FileHandler
 

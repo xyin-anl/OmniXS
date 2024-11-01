@@ -172,8 +172,8 @@ class DEFAULTFILEHANDLER:
 
 if __name__ == "__main__":
 
-    from refactor.data import Element, ElementSpectrum, SpectrumType
-    from refactor.utils import DEFAULTFILEHANDLER
+    from omnixas.data import Element, ElementSpectrum, SpectrumType
+    from omnixas.utils import DEFAULTFILEHANDLER
 
     objects = DEFAULTFILEHANDLER.fetch_serialized_objects(
         ElementSpectrum, element=Element.Cu, type=SpectrumType.FEFF

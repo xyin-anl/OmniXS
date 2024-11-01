@@ -2,7 +2,7 @@
 from typing import List
 import numpy as np
 from pydantic import Field, validate_call, BaseModel
-from refactor.data.data import Spectrum
+from omnixas.data.data import Spectrum
 
 
 class OutlierDetector:

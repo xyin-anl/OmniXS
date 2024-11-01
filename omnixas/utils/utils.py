@@ -1,5 +1,5 @@
-from refactor.data.ml_data import MLSplits, DataTag
-from refactor.utils import DEFAULTFILEHANDLER
+from omnixas.data.ml_data import MLSplits, DataTag
+from omnixas.utils import DEFAULTFILEHANDLER
 from typing import Dict, Union
 
 

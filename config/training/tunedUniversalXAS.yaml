@@ -8,9 +8,9 @@ type: ??? # FEFF, VASP ..
 feature: m3gnet # m3gnet, ACSF...
 
 module:
-  _target_: refactor.model.trained_model.TrainedModelLoader.load_model
+  _target_: omnixas.model.trained_model.TrainedModelLoader.load_model
   tag:
-    _target_: refactor.model.trained_model.ModelTag
+    _target_: omnixas.model.trained_model.ModelTag
     name: universalXAS
     element: All
     type: FEFF

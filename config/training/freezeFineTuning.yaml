@@ -3,9 +3,9 @@ defaults:
   - _self_
 
 module:
-  _target_: refactor.model.trained_model.TrainedModelLoader.load_model_for_finetuning
+  _target_: omnixas.model.trained_model.TrainedModelLoader.load_model_for_finetuning
   tag:
-    _target_: refactor.model.trained_model.ModelTag
+    _target_: omnixas.model.trained_model.ModelTag
     name: universalXAS
     element: All
     type: FEFF

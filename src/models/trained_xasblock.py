@@ -1,6 +1,6 @@
 from config.defaults import cfg
 from src.models.trained_model import TrainedModel
-from refactor.model.xasblock import XASBlock
+from omnixas.model.xasblock import XASBlock
 
 
 import optuna

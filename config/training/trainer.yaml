@@ -33,7 +33,7 @@ callbacks:
     auto_insert_metric_name: True
     save_last: True
   train_val_loss:
-    _target_: refactor.utils.lightning_callbacks.TensorboardLogTestTrainLoss
+    _target_: omnixas.utils.lightning_callbacks.TensorboardLogTestTrainLoss
   early_stopping:
     _target_: lightning.pytorch.callbacks.early_stopping.EarlyStopping
     monitor: val_loss

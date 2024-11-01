@@ -137,15 +137,3 @@ def trainModel(cfg: DictConfig):
 if __name__ == "__main__":
 
     trainModel()
-
-    # from refactor.data import FEFF, Cu
-    # from refactor.model.xasblock import XASBlock
-    # tag = DataTag(element=Cu, type=FEFF)
-    # datamodule = LightningXASData(tag, 128).setup()
-    # print(f"Train: {len(datamodule.train_dataloader())}")
-    # print(f"Val: {len(datamodule.val_dataloader())}")
-    # print(f"Test: {len(datamodule.test_dataloader())}")
-    # pl_model = LightningXASBlock(dims=[64, 100, 141])
-    # print("PL Model: ", pl_model)
-    # trainer = lightning.Trainer(max_epochs=1)
-    # trainer.fit(pl_model, datamodule)

@@ -8,5 +8,5 @@ type: ??? # FEFF, VASP ..
 feature: m3gnet # m3gnet, ACSF...
 
 module:
-  _target_: refactor.model.training.PlModule
+  _target_: omnixas.model.training.PlModule
   model: ${model}

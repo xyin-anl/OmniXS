@@ -7,7 +7,6 @@ from matplotlib.colors import NoNorm, PowerNorm
 
 from config.defaults import cfg
 
-# from refactor.data.constants import Element, ElementsFEFF, ElementsVASP, FEFF, VASP
 from omnixas.data import Element, MLData, SpectrumType
 from omnixas.scripts.plots.constants import FEFFSplits, VASPSplits
 from omnixas.utils import DEFAULTFILEHANDLER, FileHandler

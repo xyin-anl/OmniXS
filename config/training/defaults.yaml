@@ -8,31 +8,31 @@ hydra:
     dir: output/training/${name}/${element}_${type}
 
 data_tag:
-  _target_: refactor.data.DataTag
+  _target_: omnixas.data.DataTag
   element: ${element}
   type: ${type}
   feature: ${feature}
 
 ml_splits:
-  _target_: refactor.utils.utils.load_ml_splits
+  _target_: omnixas.utils.utils.load_ml_splits
   data_tag: ${data_tag}
 
 data_module:
-  _target_: refactor.model.training.LightningXASData
+  _target_: omnixas.model.training.LightningXASData
   ml_splits: ${ml_splits}
   batch_size: ${hparams.${name}.${type}.${element}.batch_size}
   x_scaler:
     _target_: hydra.utils.get_class
-    path: refactor.data.ThousandScaler
+    path: omnixas.data.ThousandScaler
   y_scaler:
     _target_: hydra.utils.get_class
-    path: refactor.data.ThousandScaler
+    path: omnixas.data.ThousandScaler
   num_workers: 11
   persistent_workers: True
   shuffle: True
 
 model:
-  _target_: refactor.model.xasblock.XASBlock
+  _target_: omnixas.model.xasblock.XASBlock
   input_dim: 64
   hidden_dims: ${hparams.${name}.${type}.${element}.widths}
   output_dim: 141 # TODO: remove hardcoding
