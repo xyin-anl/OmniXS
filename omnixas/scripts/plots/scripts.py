@@ -10,6 +10,7 @@ import numpy as np
 from omnixas.data import (
     AllDataTags,
     FEFFDataTags,
+    FEFFDataTags,
     VASPDataTags,
     ScaledMlSplit,
     ThousandScaler,
@@ -146,7 +147,7 @@ class UniversalModelEtas:
                     )
                 ).median_of_mse_per_spectra
             )
-            for tag in AllDataTags()
+            for tag in FEFFDataTags()
         }
 
 

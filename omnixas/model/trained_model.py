@@ -34,10 +34,6 @@ class ModelMetrics(BaseModel):
     def mse(self) -> float:
         return mean_squared_error(self.targets, self.predictions)
 
-    @computed_field
-    def mse_per_spectra(self) -> np.ndarray:
-        return np.mean((self.targets - self.predictions) ** 2, axis=1)
-
     @property
     def median_of_mse_per_spectra(self) -> float:
         return np.median(self.mse_per_spectra)
@@ -179,10 +175,8 @@ class TrainedModelLoader:
                     m.bias.requires_grad = False
                 elif isinstance(m, nn.BatchNorm1d):
                     m.reset_running_stats()
-
                 if isinstance(m, nn.Linear):
                     layer_count += 1
-
         return model
 
     @staticmethod
