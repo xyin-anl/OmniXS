@@ -4,7 +4,7 @@ defaults:
 
 hydra:
   run:
-    dir: output/training/${name}/v2/${element}_${type}
+    dir: output/training/${name}/v1.1/${element}_${type}
 
 module:
   _target_: omnixas.model.trained_model.TrainedModelLoader.load_model_for_finetuning
