@@ -157,26 +157,44 @@ class TrainedXASBlock(TrainedModel):
 class TrainedModelLoader:
 
     @staticmethod
+    def _disable_dropout(model):
+        for m in model.modules():
+            if isinstance(m, nn.Dropout):
+                m.p = 0.0
+        return model
+
+    @staticmethod
+    def _reset_batchnorm(self, model):
+        for m in model.modules():
+            if isinstance(m, nn.BatchNorm1d):
+                m.reset_running_stats()
+        return model
+
+    @staticmethod
+    def _freeze_layers(model, freeze_first_k_layers):
+        layer_count = 0
+        for m in model.modules():
+            if isinstance(m, nn.Linear):
+                if layer_count < freeze_first_k_layers:
+                    m.weight.requires_grad = False
+                    m.bias.requires_grad = False
+                layer_count += 1
+        return model
+
+    @staticmethod
     def load_model_for_finetuning(
         tag: ModelTag,
         file_handler: FileHandler = DEFAULTFILEHANDLER(),
         freeze_first_k_layers: int = 0,
+        disable_dropout: bool = True,
+        reset_batchnorm: bool = False,
     ) -> PlModule:
         model = TrainedModelLoader.load_model(tag, file_handler)
-
-        for m in model.modules():
-            if isinstance(m, nn.Dropout):
-                m.p = 0.0
-        layer_count = 0
-        for m in model.modules():
-            if isinstance(m, (nn.Linear, nn.BatchNorm1d)):
-                if layer_count < freeze_first_k_layers:
-                    m.weight.requires_grad = False
-                    m.bias.requires_grad = False
-                elif isinstance(m, nn.BatchNorm1d):
-                    m.reset_running_stats()
-                if isinstance(m, nn.Linear):
-                    layer_count += 1
+        if disable_dropout:
+            model = TrainedModelLoader._disable_dropout(model)
+        if reset_batchnorm:
+            model = TrainedModelLoader._reset_batchnorm(model)
+        model = TrainedModelLoader._freeze_layers(model, freeze_first_k_layers)
         return model
 
     @staticmethod

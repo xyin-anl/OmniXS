@@ -12,8 +12,5 @@ serialization:
     filename: "{element}_{type}_m3gnet.json"
 
   TrainedXASBlock:
-    # directory: output/training/{name}/{element}_{type}/checkpoints
-    # directory: output/io/training/{name}/{element}_{type}/checkpoints
-    # directory: output/io/training/uncenteredRoboustScaler/{name}/{element}_{type}/checkpoints
-    directory: output/io/training/multiScale/{name}/{element}_{type}/checkpoints
-    filename: "{}.ckpt"
+    directory: output/training/{name}/{element}_{type}/checkpoints # perf test
+    filename: "best{}.ckpt" # best/last{}.ckpt

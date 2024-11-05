@@ -21,4 +21,4 @@ trainer:
     - ${callbacks.lr_monitor}
     - ${callbacks.model_checkpoint}
     - ${callbacks.train_val_loss}
-    # - ${callbacks.early_stopping}
+    # - ${callbacks.early_stopping} # early stopping can be triggered prematurely in fine-tuning

@@ -7,8 +7,6 @@ from matplotlib import pyplot as plt
 from omnixas.data import ElementsFEFF, ElementsVASP
 from omnixas.scripts.plots.scripts import AllEtas
 
-# %%
-
 
 def plot_performance_comparison(etas, figsize=(8, 6), fontsize=20):
 

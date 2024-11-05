@@ -2,11 +2,9 @@ defaults:
   - tunedUniversalXAS
   - _self_
 
-freeze: ??
-
 hydra:
   run:
-    dir: output/training/${name}/freeze_${freeze}/${element}_${type}
+    dir: output/training/${name}/v2/${element}_${type}
 
 module:
   _target_: omnixas.model.trained_model.TrainedModelLoader.load_model_for_finetuning
@@ -15,4 +13,6 @@ module:
     name: universalXAS
     element: All
     type: FEFF
-  freeze_first_k_layers: ${freeze} # 0-3 (for xasblocks)
+  disable_dropout: true
+  freeze_first_k_layers: 0 # 0-3 (for xasblocks)
+  reset_batchnorm: false
