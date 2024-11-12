@@ -141,8 +141,9 @@ class TrainedXASBlock(TrainedModel):
         x_scaler: type = ThousandScaler,
         y_scaler: type = ThousandScaler,
         file_handler: FileHandler = DEFAULTFILEHANDLER(),
+        **kwargs,
     ):
-        model = TrainedModelLoader.load_model(tag, file_handler)
+        model = TrainedModelLoader.load_model(tag, file_handler, **kwargs)
         model.eval()
         model.freeze()
         instance = cls(
@@ -201,20 +202,20 @@ class TrainedModelLoader:
     def load_model(
         tag: ModelTag,
         file_handler: FileHandler = DEFAULTFILEHANDLER(),
+        **kwargs,
     ) -> PlModule:
         ckpt_path = TrainedModelLoader.get_ckpt_path(tag, file_handler)
         print(f"Loading model from {ckpt_path}")
         return PlModule.load_from_checkpoint(
             checkpoint_path=ckpt_path,
-            model=XASBlock(**TrainedModelLoader.get_layer_widths(tag)),
+            model=XASBlock(**TrainedModelLoader.get_layer_widths(tag, **kwargs)),
         )
 
     @staticmethod
     def get_layer_widths(
         tag: ModelTag,
         hparams: dict = OmegaConf.load("config/training/hparams.yaml").hparams,
-        input_dim: int = 64,
-        output_dim: int = 141,
+        **kwargs,
     ):
         if tag.name != "tunedUniversalXAS":
             hidden_widths = hparams[tag.name][tag.type][tag.element].widths
@@ -222,9 +223,9 @@ class TrainedModelLoader:
             hidden_widths = hparams["universalXAS"]["FEFF"]["All"].widths  # TODO: hacky
 
         return dict(
-            input_dim=input_dim,
+            input_dim=kwargs.get("input_dim", 64),
             hidden_dims=hidden_widths,
-            output_dim=output_dim,
+            output_dim=kwargs.get("output_dim", 141),
         )
 
     @staticmethod
@@ -246,7 +247,7 @@ class TrainedModelLoader:
     ):
         return file_handler.deserialize_json(
             MLSplits,
-            DataTag(element=tag.element, type=tag.type),
+            DataTag(element=tag.element, type=tag.type, feature=tag.feature),
         )
 
     @staticmethod
