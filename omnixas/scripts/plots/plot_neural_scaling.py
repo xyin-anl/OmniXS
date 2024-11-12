@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import patches as mpatches
 from matplotlib.legend_handler import HandlerPatch
-from matplotlib.patches import Rectangle
+from matplotlib.patches import Rectangle, Circle, FancyBboxPatch
 
 from omnixas.data import DataTag
 from omnixas.model.trained_model import ModelTag
@@ -54,34 +54,53 @@ class PlotNeuralScaling:
             eta = etas[tag]
             color = colors[f"{tag.element}_{tag.type}"]
 
-            # Add text label with proper styling
-            ax.text(
+            ax.scatter(
                 size,
                 eta,
-                tag.element,
-                fontsize=FONTSIZE,
-                ha="center",
-                va="center",
-                color="black",
-                bbox=dict(
-                    boxstyle="square,pad=0.3",
-                    facecolor=color,
-                    alpha=0.4,
-                    edgecolor="black",
-                    hatch="///" if tag.type == "VASP" else None,
+                s=300,
+                # color=color,
+                # edgecolor="black",
+                edgecolor=color,
+                zorder=2,
+                marker="s" if tag.type == "FEFF" else "o",
+                # alpha=0.5,
+                # no fill
+                facecolors="none",
+                hatch="///////" if tag.type == "VASP" else None,
+                label=(
+                    f"{tag.element}" if tag.type == "FEFF" else f"{tag.element} VASP"
                 ),
-                zorder=3,
             )
+
+            # # Add text label with proper styling
+            # ax.text(
+            #     size,
+            #     eta,
+            #     tag.element,
+            #     fontsize=FONTSIZE,
+            #     ha="center",
+            #     va="center",
+            #     color="black",
+            #     bbox=dict(
+            #         boxstyle="square,pad=0.3",
+            #         facecolor=color,
+            #         alpha=0.4,
+            #         edgecolor="black",
+            #         hatch="///" if tag.type == "VASP" else None,
+            #     ),
+            #     zorder=3,
+            # )
 
         # Style the plot
         ax.set_xlabel("Data size", fontsize=FONTSIZE)
         ax.set_ylabel(r"Performance ($\eta$)", fontsize=FONTSIZE)
 
-        xticks = np.arange(0, x_max + 2000, 3000)  # Steps of 2000
+        xticks = np.arange(
+            ax.get_xlim()[0], ax.get_xlim()[1] + 2000, 3000
+        )  # Steps of 2000
         warnings.warn("Hardcoded xticks")
         ax.set_xticks(xticks)
         ax.set_xticklabels([f"{int(x):,.0f}" for x in xticks], fontsize=0.8 * FONTSIZE)
-
         ax.set_yticks(np.arange(4, y_max, 4))
         ax.get_yaxis().set_major_formatter(
             plt.FuncFormatter(lambda x, loc: "{:.0f}".format(x))
@@ -91,54 +110,73 @@ class PlotNeuralScaling:
         # Grid and ticks
         ax.minorticks_off()
         ax.grid(axis="y", alpha=0.4, linestyle="--")
-
-        # Custom legend
-        legend_elements = [
-            Rectangle(
-                (0, 0), 1, 1, facecolor="lightgray", edgecolor="gray", label="FEFF"
-            ),
-            Rectangle(
-                (0, 0),
-                1,
-                1,
-                facecolor="white",
-                edgecolor="gray",
-                label="VASP",
-                hatch="///",
-            ),
-        ]
-
-        class HandlerSquare(HandlerPatch):
-            def create_artists(
-                self,
-                legend,
-                orig_handle,
-                xdescent,
-                ydescent,
-                width,
-                height,
-                fontsize,
-                trans,
-            ):
-                center = 0.5 * width - 0.5 * xdescent, 0.5 * height - 0.5 * ydescent
-                p = mpatches.Rectangle(
-                    xy=(center[0] - width / 2, center[1] - height / 2),
-                    width=width,
-                    height=height,
-                )
-                self.update_prop(p, orig_handle, legend)
-                p.set_transform(trans)
-                return [p]
-
-        # Add legend
+        # single row
         ax.legend(
-            handles=legend_elements,
+            fontsize=FONTSIZE * 0.8,
             loc="best",
-            handler_map={mpatches.Rectangle: HandlerSquare()},
-            handlelength=3,
-            handleheight=3,
+            title="Element",
+            # location outside of figure on right
+            bbox_to_anchor=(1, 1),
         )
-        plt.setp(ax.get_legend().get_texts(), fontsize=FONTSIZE * 0.8)
+
+        # ax.legend(
+        #     handles=legend_elements,
+        #     loc="upper center",
+        #     bbox_to_anchor=(0.5, 1.15),
+        #     ncol=len(legend_elements),  # Single row
+        #     fontsize=FONTSIZE * 0.8,
+        #     handletextpad=1,
+        #     title="Element",
+        #     frameon=False
+        # )
+
+        # # Custom legend
+        # legend_elements = [
+        #     Rectangle(
+        #         (0, 0), 1, 1, facecolor="lightgray", edgecolor="gray", label="FEFF"
+        #     ),
+        #     Circle(
+        #         (0, 0),
+        #         1,
+        #         facecolor="white",
+        #         edgecolor="gray",
+        #         label="VASP",
+        #         hatch="///",
+        #     ),
+        # ]
+
+        # class HandlerSquare(HandlerPatch):
+        #     def create_artists(
+        #         self,
+        #         legend,
+        #         orig_handle,
+        #         xdescent,
+        #         ydescent,
+        #         width,
+        #         height,
+        #         fontsize,
+        #         trans,
+        #     ):
+        #         center = 0.5 * width - 0.5 * xdescent, 0.5 * height - 0.5 * ydescent
+        #         p = mpatches.Rectangle(
+        #             xy=(center[0] - width / 2, center[1] - height / 2),
+        #             width=width,
+        #             height=height,
+        #         )
+        #         self.update_prop(p, orig_handle, legend)
+        #         p.set_transform(trans)
+        #         return [p]
+        # Add legend
+        # ax.legend(
+        #     handles=legend_elements,
+        #     loc="upper left",
+        #     # handler_map={mpatches.Rectangle: HandlerSquare()},
+        #     handlelength=3,
+        #     handleheight=3,
+        # )
+        # plt.setp(ax.get_legend().get_texts(), fontsize=FONTSIZE * 0.8)
+        # fig.tight_layout()
+        # fig.savefig("performance_vs_size.pdf", dpi=300, bbox_inches="tight")
 
         return fig, ax
 
@@ -146,17 +184,14 @@ class PlotNeuralScaling:
 def main():
     etas = ExpertEtas()  # pass kwargs here
     splits = AllMlSplits()  # pass kwargs here
-
     data_sizes = {
         ModelTag(name="expertXAS", **data_tag.dict()): len(split.train)
         for data_tag, split in splits.items()
     }
     fig, ax = PlotNeuralScaling.plot_performance_vs_size(etas, data_sizes)
-    fig.savefig("performance_vs_size.pdf", dpi=300, bbox_inches="tight")
+    fig.show()
+    # fig.savefig("performance_vs_size.pdf", dpi=300, bbox_inches="tight")
 
 
-# %%
 if __name__ == "__main__":
     main()
-
-# %%
