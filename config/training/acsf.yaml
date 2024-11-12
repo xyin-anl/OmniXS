@@ -1,0 +1,25 @@
+defaults:
+  - expertXAS
+  - _self_
+
+name: ACSFNet
+element: ???
+type: ??? # FEFF, VASP ..
+feature: ACSF # m3gnet, ACSF...
+
+ACSF:
+  dim:
+    Ti: 27
+    V: 29
+    Cr: 33
+    Mn: 37
+    Fe: 40
+    Co: 39
+    Ni: 40
+    Cu: 42
+
+model:
+  _target_: omnixas.model.xasblock.XASBlock
+  input_dim: ${ACSF.dim.${element}}
+  hidden_dims: ${hparams.${name}.${type}.${element}.widths}
+  output_dim: 141 # TODO: remove hardcoding

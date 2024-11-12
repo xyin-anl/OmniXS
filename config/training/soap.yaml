@@ -1,0 +1,25 @@
+defaults:
+  - expertXAS
+  - _self_
+
+name: SOAPNet
+element: ???
+type: ??? # FEFF, VASP ..
+feature: SOAP # m3gnet, ACSF...
+
+SOAP:
+  dim:
+    Ti: 43
+    V: 55
+    Cr: 58
+    Mn: 70
+    Fe: 82
+    Co: 77
+    Ni: 87
+    Cu: 85
+
+model:
+  _target_: omnixas.model.xasblock.XASBlock
+  input_dim: ${SOAP.dim.${element}}
+  hidden_dims: ${hparams.${name}.${type}.${element}.widths}
+  output_dim: 141 # TODO: remove hardcoding

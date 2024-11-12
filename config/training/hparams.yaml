@@ -32,6 +32,8 @@ hparams:
       Cu:
         batch_size: 64
         widths: [550, 600, 450]
+  ACSFNet: ${hparams.expertXAS}
+  SOAPNet: ${hparams.expertXAS}
   universalXAS:
     FEFF:
       All: # placeholder for hparams
