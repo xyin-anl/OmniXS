@@ -125,7 +125,7 @@ class MSEHistogramPlotter:
             yticks = [0.3, 0.6, 0.9, 1.2]
             ax.set_yticks(yticks)
             ax.set_yticklabels(yticks, fontsize=FONTSIZE * 0.7)
-            ax.set_ylim(None, 1.3)
+            ax.set_ylim(None, 1.32)
 
             ax.tick_params(
                 axis="both", which="both", direction="in", top=False, right=False

@@ -4,7 +4,16 @@ from typing import Dict
 import matplotlib.pyplot as plt
 import numpy as np
 
+from omnixas.data import SpectrumType
 from omnixas.model.trained_model import ModelMetrics, ModelTag
+from omnixas.scripts.plots.scripts import (
+    AllExpertMetrics,
+    AllTunedMetrics,
+    AllUniversalMetrics,
+    ExpertEtas,
+    TunedEtas,
+    UniversalModelEtas,
+)
 
 
 class DecilePlotter:
@@ -151,8 +160,41 @@ def main(**kwargs):
     fig.savefig("deciles_universal.pdf", dpi=300, bbox_inches="tight")
 
 
+def plot_three():
+    metrics = AllTunedMetrics()
+    etas = TunedEtas()
+    min_element, median_element, max_element = "Mn", "V", "Cu"
+    metrics = {
+        k: v
+        for k, v in metrics.items()
+        if k.element in [min_element, median_element, max_element]
+        and k.type == SpectrumType.FEFF
+    }
+    etas = {
+        k: v
+        for k, v in etas.items()
+        if k.element in [min_element, median_element, max_element]
+        and k.type == SpectrumType.FEFF
+    }
+    # sort by etas
+    sort_order = sorted(etas, key=etas.get, reverse=True)
+    metrics = {k: metrics[k] for k in sort_order}
+    etas = {k: etas[k] for k in sort_order}
+    fig, axs = plt.subplots(
+        9,
+        3,
+        figsize=(3 * 2.5, 9 * 1),
+        sharex=True,
+        gridspec_kw={"hspace": 0, "wspace": 0},
+        dpi=300,
+    )
+    fig, ax = DecilePlotter.plot(metrics, etas, fig, axs, fontsize=12)
+    fig.savefig("three_deciles_tuned.pdf", dpi=300, bbox_inches="tight")
+
+
 # %%
 if __name__ == "__main__":
     main()
+    # plot_three()
 
 # %%
