@@ -57,7 +57,7 @@ class MLData(BaseModel):
 class DataTag(BaseModel):
     element: Element
     type: SpectrumType
-    feature: Optional[str] = None
+    feature: Optional[str] = "m3gnet"
 
     def __hash__(self) -> int:  # store as dict key
         return hash((self.element, self.type))
@@ -81,7 +81,7 @@ class MLSplits(BaseModel):
 
     def __len__(self):
         return sum(
-            len(getattr(self, split_name)) for split_name in self.__fields__.keys()
+            len(getattr(self, split_name)) for split_name in  ["train", "val", "test"]
         )
 
     def __eq__(self, other):
