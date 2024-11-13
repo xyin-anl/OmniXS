@@ -1,4 +1,5 @@
 # %%
+import warnings
 from typing import Dict, List, Optional, Self, Union, Literal
 from pathlib import Path
 
@@ -180,14 +181,19 @@ class ElementSpectrum(SiteSpectrum, validate_assignment=True):
     @model_validator(mode="after")
     def validate_element(self) -> Self:
         asked_element = self.element
-        if self.type != SpectrumType.VASP:  # TODO: remove in deployment
-            # coz vasp sims were done this way
-            site_element = Element(ElementSpectrum.extract_element(self.site))
-            site_element = Element(site_element)
-            if asked_element != site_element:
-                raise ValueError(
-                    f"Element {asked_element} does not match site element {site_element}"
-                )
+        if (
+            self.type != SpectrumType.VASP
+        ):  # TODO: remove in deployment # coz vasp sims were done this way
+            try:
+                site_element = Element(ElementSpectrum.extract_element(self.site))
+                site_element = Element(site_element)
+                if asked_element != site_element:
+                    msg = f"Element {asked_element} does not match site element {site_element}"
+                    warnings.warn(msg)
+            except Exception:
+                msg = f"Could not validate if element {asked_element}"
+                msg += f" is same as site element for {self.material.id}"
+                warnings.warn(msg)
         return self
 
     @staticmethod
