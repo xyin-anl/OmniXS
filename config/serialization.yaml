@@ -9,7 +9,7 @@ serialization:
 
   MLSplits:
     directory: dataset/ml_data/splits
-    filename: "{element}_{type}_m3gnet.json"
+    filename: "{element}_{type}_{feature}.json"
 
   TrainedXASBlock:
     directory: output/training/{name}/{element}_{type}/checkpoints # perf test
