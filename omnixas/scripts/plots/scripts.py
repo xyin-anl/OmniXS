@@ -22,8 +22,6 @@ from omnixas.model.trained_model import (
     TrainedModelLoader,
     TrainedXASBlock,
 )
-from omnixas.scripts.plots.plot_deciles import DecilePlotter
-
 
 class XASModelsOfCategory:
     def __new__(cls, model_name: str, **kwargs):
