@@ -9,9 +9,9 @@ from xgboost import XGBRegressor
 
 from omnixas.data import (
     DataTag,
-    ElementsFEFF,
     MLSplits,
 )
+from omnixas.core.constants import ElementsFEFF
 from omnixas.model.trained_model import (
     MeanModel,
     ModelMetrics,

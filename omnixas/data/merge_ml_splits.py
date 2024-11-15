@@ -9,7 +9,7 @@ from pydantic import model_serializer
 import numpy as np
 from pydantic import Field, field_validator
 
-from omnixas.data.constants import FEFFDataTags, VASPDataTags
+from omnixas.core.constants import FEFFDataTags, VASPDataTags
 from omnixas.data.ml_data import DataTag, MLSplits, MLData
 
 from omnixas.utils import DEFAULTFILEHANDLER

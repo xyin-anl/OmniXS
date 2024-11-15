@@ -4,7 +4,8 @@ from typing import Dict
 import matplotlib.pyplot as plt
 import numpy as np
 
-from omnixas.data import DataTag, ElementsFEFF, ElementsVASP, SpectrumType
+from omnixas.data import DataTag
+from omnixas.core.constants import ElementsFEFF, ElementsVASP, SpectrumType
 from omnixas.model.trained_model import ComparisonMetrics, MeanModel, ModelTag
 from omnixas.scripts.plots.scripts import CompareAllExpertAndTuned
 

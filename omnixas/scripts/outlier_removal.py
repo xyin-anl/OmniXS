@@ -5,9 +5,10 @@ from loguru import logger
 import numpy as np
 
 from config.defaults import cfg
-from omnixas.data import Element, ElementsVASP, SpectrumType
-from omnixas.data.constants import ElementsFEFF
-from omnixas.data.data import ElementSpectrum
+from omnixas.core.constants import SpectrumType
+from omnixas.core.constants import ElementsFEFF, ElementsVASP
+from omnixas.data.xas import ElementSpectrum
+from omnixas.core.constants import Element
 from omnixas.data.ml_data import MLData
 from omnixas.utils import DEFAULTFILEHANDLER, FileHandler
 from omnixas.utils.spectra_outliers import OutlierDetector

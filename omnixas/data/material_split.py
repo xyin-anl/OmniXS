@@ -5,8 +5,47 @@ import numpy as np
 
 
 class MaterialSplitter:
+
     @staticmethod
-    def split(idSite, target_fractions, seed=42):
+    def split(
+        idSite: List[tuple],
+        target_fractions: List[float],
+        seed: int = 42,
+    ):
+        """Split the dataset into multiple partitions based on target fractions.
+
+        Args:
+            idSite: List of tuples where each tuple contains a material ID as the first
+                element and associated data as subsequent elements.
+            target_fractions: List of float values representing the desired fraction of
+                data in each partition. Must sum to 1.0 (e.g., [0.8, 0.1, 0.1] for
+                train/val/test split).
+            seed: Integer seed for random number generation to ensure reproducibility.
+                Defaults to 42.
+
+        Returns:
+            List[np.ndarray]: List of numpy arrays, where each array contains the
+                tuples for one partition. The length of the list matches the length
+                of target_fractions.
+
+        Raises:
+            ValueError: If there is any overlap between splits (same material ID
+                appears in multiple partitions).
+
+        Warns:
+            UserWarning: If any IDs are not assigned to any partition.
+
+
+        Example:
+            >>> splitter = MaterialSplitter()
+            # >>> data = [
+            # ... ("mp" + str(np.random.randint(0, 20)), int(np.random.randint(0, 10)))
+            # ... for _ in range(20) ]
+            >>> splits = splitter.split(data, [0.8, 0.1, 0.1])
+            >>> print([len(split) for split in splits])
+            [16, 2, 2]
+        """
+
         target_sums = [int(x * len(idSite)) for x in target_fractions]
 
         splits = MaterialSplitter.greedy_multiway_partition(idSite, target_sums, seed)
@@ -29,7 +68,9 @@ class MaterialSplitter:
 
     @staticmethod
     def greedy_multiway_partition(
-        id_pairs: List[tuple], target_sums: List[int], seed=42
+        id_pairs: List[tuple],
+        target_sums: List[int],
+        seed=42,
     ):
         np.random.seed(seed)
         np.random.shuffle(id_pairs)

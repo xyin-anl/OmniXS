@@ -1,11 +1,11 @@
 # %%
 from typing import Optional
-from omnixas.utils import FileHandler
 
 import numpy as np
 from pydantic import BaseModel, field_validator, model_serializer
 
-from omnixas.data import Element, SpectrumType
+from omnixas.core.constants import SpectrumType
+from omnixas.core.constants import Element
 from omnixas.utils.readable_enums import ReadableEnums
 
 

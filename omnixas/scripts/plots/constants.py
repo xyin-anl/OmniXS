@@ -1,6 +1,6 @@
 # %%
 from omnixas.utils import DEFAULTFILEHANDLER
-from omnixas.data.constants import FEFFDataTags, VASPDataTags
+from omnixas.core.constants import FEFFDataTags, VASPDataTags
 from omnixas.data.ml_data import MLSplits
 
 

@@ -8,15 +8,15 @@ from p_tqdm import p_map
 
 from config.defaults import cfg
 from omnixas.data import (
-    Element,
     ElementSpectrum,
     EnergyGrid,
     IntensityValues,
     Material,
     MaterialID,
     MaterialStructure,
-    SpectrumType,
 )
+from omnixas.core.constants import SpectrumType
+from omnixas.core.constants import Element
 from omnixas.utils import DEFAULTFILEHANDLER
 from omnixas.utils._legacy.ml_data_generator import (
     MLDataGenerator,

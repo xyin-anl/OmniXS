@@ -1,7 +1,11 @@
-from .enums import MaterialIDPrefix, Element, ElementsVASP, SpectrumType, ElementsFEFF
-from .constants import (
+from ..core.constants import Element
+from ...build.lib.omnixas.data.data import MaterialIDPrefix
+from ..core.constants import SpectrumType
+from ..core.constants import (
     FEFF,
     VASP,
+    ElementsFEFF,
+    ElementsVASP,
     Ti,
     V,
     Cr,
@@ -16,7 +20,7 @@ from .constants import (
 )
 
 from .ml_data import MLData, DataTag, MLSplits
-from .data import (
+from .xas import (
     MaterialID,
     MaterialStructure,
     Material,
