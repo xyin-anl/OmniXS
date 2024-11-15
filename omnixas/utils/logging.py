@@ -28,6 +28,7 @@ def setup_logger(
     log_level: str = "INFO",
     capture_prints: bool = False,
     file_logging: bool = False,
+    capture_warnings: bool = False,
 ) -> None:
     # Get the root logger
     root = logging.getLogger()
@@ -64,8 +65,13 @@ def setup_logger(
     # Set log level
     root.setLevel(log_level)
 
+    if capture_warnings:
+        logging.captureWarnings(True)
+        warnings_logger = logging.getLogger("py.warnings")
+        warnings_logger.addHandler(handler)
+
     # Configure print capture if requested
     if capture_prints:
         sys.stdout = StreamToLogger(root, logging.INFO)
         sys.stderr = StreamToLogger(root, logging.ERROR)
-        root.info("Logging has been configured to capture print statements.")
+        root.warn("Logging has been configured to capture print statements.")
