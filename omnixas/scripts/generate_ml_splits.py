@@ -11,8 +11,8 @@ from omnixas.data import (
     MLData,
     MLSplits,
 )
-from omnixas.core.constants import SpectrumType
-from omnixas.core.constants import Element
+from omnixas.utils.constants import SpectrumType
+from omnixas.utils.constants import Element
 from omnixas.utils import DEFAULTFILEHANDLER, FileHandler
 from omnixas.data import DataTag
 

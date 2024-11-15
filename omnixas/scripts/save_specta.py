@@ -15,8 +15,8 @@ from omnixas.data import (
     MaterialID,
     MaterialStructure,
 )
-from omnixas.core.constants import SpectrumType
-from omnixas.core.constants import Element
+from omnixas.utils.constants import SpectrumType
+from omnixas.utils.constants import Element
 from omnixas.utils import DEFAULTFILEHANDLER
 from omnixas.utils._legacy.ml_data_generator import (
     MLDataGenerator,

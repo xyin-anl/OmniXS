@@ -4,8 +4,8 @@ from typing import Optional
 import numpy as np
 from pydantic import BaseModel, field_validator, model_serializer
 
-from omnixas.core.constants import SpectrumType
-from omnixas.core.constants import Element
+from omnixas.utils.constants import SpectrumType
+from omnixas.utils.constants import Element
 from omnixas.utils.readable_enums import ReadableEnums
 
 

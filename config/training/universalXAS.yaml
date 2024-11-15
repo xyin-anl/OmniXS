@@ -8,7 +8,7 @@ type: FEFF # FEFF, VASP ..
 feature: m3gnet # m3gnet, ACSF...
 
 ml_splits:
-  _target_: omnixas.data.merge_ml_splits.FEFFSplits
+  _target_: omnixas.utils.constants.FEFFSplits
 
 module:
   _target_: omnixas.model.training.PlModule

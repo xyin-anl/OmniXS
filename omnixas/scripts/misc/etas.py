@@ -11,7 +11,7 @@ from omnixas.data import (
     DataTag,
     MLSplits,
 )
-from omnixas.core.constants import ElementsFEFF
+from omnixas.utils.constants import ElementsFEFF
 from omnixas.model.trained_model import (
     MeanModel,
     ModelMetrics,

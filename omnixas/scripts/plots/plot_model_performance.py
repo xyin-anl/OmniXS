@@ -4,8 +4,8 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from omnixas.core.constants import ElementsVASP
-from omnixas.core.constants import ElementsFEFF
+from omnixas.utils.constants import ElementsVASP
+from omnixas.utils.constants import ElementsFEFF
 from omnixas.scripts.plots.scripts import AllEtas
 
 

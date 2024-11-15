@@ -1,7 +1,7 @@
-from ..core.constants import Element
-from ...build.lib.omnixas.data.data import MaterialIDPrefix
-from ..core.constants import SpectrumType
-from ..core.constants import (
+# TODO: remove from release
+from ..utils.constants import Element
+from ..utils.constants import SpectrumType
+from ..utils.constants import (
     FEFF,
     VASP,
     ElementsFEFF,
@@ -50,7 +50,6 @@ from .material_split import MaterialSplitter
 
 
 __all__ = [
-    "MaterialIDPrefix",
     "Element",
     "ElementsVASP",
     "SpectrumType",

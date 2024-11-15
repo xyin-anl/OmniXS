@@ -105,7 +105,7 @@ if __name__ == "__main__":
     import numpy as np
     from matplotlib import pyplot as plt
 
-    from omnixas.data.merge_ml_splits import FEFFSplits
+    from omnixas.utils.constants import FEFFSplits
 
     split = FEFFSplits
 

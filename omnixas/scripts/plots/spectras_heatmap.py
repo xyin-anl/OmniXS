@@ -8,8 +8,8 @@ from matplotlib.colors import NoNorm, PowerNorm
 from config.defaults import cfg
 
 from omnixas.data import MLData
-from omnixas.core.constants import SpectrumType
-from omnixas.core.constants import Element
+from omnixas.utils.constants import SpectrumType
+from omnixas.utils.constants import Element
 from omnixas.scripts.plots.constants import FEFFSplits, VASPSplits
 from omnixas.utils import DEFAULTFILEHANDLER, FileHandler
 from omnixas.utils.plots import plot_line_heatmap

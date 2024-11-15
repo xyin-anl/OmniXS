@@ -10,8 +10,8 @@ import yaml
 from omegaconf import OmegaConf
 from pydantic import BaseModel
 
-from omnixas.core.constants import SpectrumType
-from omnixas.core.constants import Element
+from omnixas.utils.constants import SpectrumType
+from omnixas.utils.constants import Element
 
 # %%
 

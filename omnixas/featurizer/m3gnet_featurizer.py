@@ -14,9 +14,9 @@ from matgl.graph.compute import (
 )
 from matgl.utils.cutoff import polynomial_cutoff
 
-from omnixas.core.constants import ElementsFEFF, ElementsVASP, SpectrumType
+from omnixas.utils.constants import ElementsFEFF, ElementsVASP, SpectrumType
 from omnixas.data.xas import MaterialStructure
-from omnixas.core.constants import Element
+from omnixas.utils.constants import Element
 from omnixas.utils import DEFAULTFILEHANDLER
 
 

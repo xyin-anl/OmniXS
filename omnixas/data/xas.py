@@ -19,7 +19,7 @@ from pydantic import (
 from pymatgen.core import Structure as PymatgenStructure
 from pymatgen.core.sites import PeriodicSite
 
-from omnixas.core.constants import Element, SpectrumType
+from omnixas.utils.constants import Element, SpectrumType
 from omnixas.utils.readable_enums import ReadableEnums
 
 

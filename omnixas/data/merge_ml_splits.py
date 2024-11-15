@@ -1,6 +1,6 @@
 # %%
 from pydantic import BaseModel, Field, field_serializer
-from typing import Any, ClassVar, Dict, List, Optional
+from typing import Any, List, Optional
 
 # skip splits serilziation
 from pydantic import model_serializer
@@ -9,11 +9,9 @@ from pydantic import model_serializer
 import numpy as np
 from pydantic import Field, field_validator
 
-from omnixas.core.constants import FEFFDataTags, VASPDataTags
-from omnixas.data.ml_data import DataTag, MLSplits, MLData
+from omnixas.data.ml_data import DataTag, MLSplits
 
-from omnixas.utils import DEFAULTFILEHANDLER
-from omnixas.utils.io import DEFAULTFILEHANDLER, FileHandler
+from omnixas.utils.io import FileHandler
 
 
 class MergedSplits(MLSplits):
@@ -62,26 +60,3 @@ class MergedSplits(MLSplits):
             else:
                 existing_data.X = np.concatenate([existing_data.X, new_data.X])
                 existing_data.y = np.concatenate([existing_data.y, new_data.y])
-
-
-class FEFFSplits(MergedSplits):
-    balanced: ClassVar[bool] = False
-
-    def __new__(cls, *args, **kwargs):
-        merged = MergedSplits.load(
-            FEFFDataTags(),
-            DEFAULTFILEHANDLER(),  # TODO: pass file handler
-            balanced=cls.balanced,
-            **kwargs,
-        )
-        ml_split = MLSplits(
-            train=merged.train,
-            val=merged.val,
-            test=merged.test,
-        )
-        # return ml_split.shuffled_view()
-        return ml_split
-
-
-class BALANCEDFEFFSplits(FEFFSplits):
-    balanced: ClassVar[bool] = True

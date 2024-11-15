@@ -2,6 +2,11 @@
 # from .enums import ElementsVASP, SpectrumType, ElementsFEFF
 from enum import StrEnum
 
+from omnixas.data.merge_ml_splits import MergedSplits
+from omnixas.data.ml_data import MLSplits
+from omnixas.utils import DEFAULTFILEHANDLER
+from typing import ClassVar
+
 from ..data.ml_data import DataTag
 
 
@@ -68,5 +73,29 @@ Cu = Element.Cu
 
 FEFF = SpectrumType.FEFF
 VASP = SpectrumType.VASP
+
+
+class FEFFSplits(MergedSplits):
+    balanced: ClassVar[bool] = False
+
+    def __new__(cls, *args, **kwargs):
+        merged = MergedSplits.load(
+            FEFFDataTags(),
+            DEFAULTFILEHANDLER(),  # TODO: pass file handler
+            balanced=cls.balanced,
+            **kwargs,
+        )
+        ml_split = MLSplits(
+            train=merged.train,
+            val=merged.val,
+            test=merged.test,
+        )
+        # return ml_split.shuffled_view()
+        return ml_split
+
+
+class BALANCEDFEFFSplits(FEFFSplits):
+    balanced: ClassVar[bool] = True
+
 
 # %%

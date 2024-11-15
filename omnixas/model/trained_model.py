@@ -17,7 +17,7 @@ from omnixas.data import (
     ScaledMlSplit,
     ThousandScaler,
 )
-from omnixas.data.merge_ml_splits import FEFFSplits
+from omnixas.utils.constants import FEFFSplits
 from omnixas.model.training import PlModule
 from omnixas.model.xasblock import XASBlock
 from omnixas.utils.io import DEFAULTFILEHANDLER, FileHandler
