@@ -1,4 +1,5 @@
 # %%
+from loguru import logger
 from functools import cache
 from pathlib import Path
 
@@ -67,7 +68,7 @@ class M3GNetFeaturizer:
     @staticmethod
     def _load_default_featurizer():
         path = Path(__file__).resolve().parent / "cached_models/M3GNet-MP-2021.2.8-PES"
-        print(f"Loading default featurizer from {path}")
+        logger.info(f"Loading default featurizer from {path}") 
         model = load_model(path).model
         model.eval()
         return model

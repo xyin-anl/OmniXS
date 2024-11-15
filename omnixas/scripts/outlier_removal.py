@@ -1,5 +1,6 @@
 # %%
 import os
+from loguru import logger
 
 import numpy as np
 
@@ -30,8 +31,8 @@ def remove_outliers_in_ml_data(element, spectra_type):
     outliers = OutlierDetector().outliers(spectras, std_factor)
 
     files_to_remove = [fp for fp, o in zip(ml_file_paths, outliers) if o]
-    print(f"{len(files_to_remove)} outliers for {element} {spectra_type}")
-    print("Uncomment to remove")
+    logger.info(f"{len(files_to_remove)} outliers for {element} {spectra_type}")
+    logger.info("Uncomment to remove")
 
     # print(f"Removing {len(files_to_remove)} outliers for {element} {spectra_type}")
     # for fp in files_to_remove:

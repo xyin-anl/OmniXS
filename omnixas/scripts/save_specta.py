@@ -1,4 +1,5 @@
 # %%
+from loguru import logger
 import os
 from typing import List, Optional
 
@@ -101,7 +102,7 @@ def save_spectrum(spectra_type, element, id_and_site, poscar_path):
         DEFAULTFILEHANDLER.serialize_json(element_spectrum, custom_filepath=save_path)
 
     except Exception as e:  # there are missing data/files. Ignore them.
-        print(f"Error: {e}")
+        logger.warning(f"Error: {e}")
     return output
 
 

@@ -1,4 +1,5 @@
 # %%
+from loguru import logger
 from abc import ABC, abstractmethod
 from typing import Any, Optional, Self
 
@@ -205,7 +206,7 @@ class TrainedModelLoader:
         **kwargs,
     ) -> PlModule:
         ckpt_path = TrainedModelLoader.get_ckpt_path(tag, file_handler)
-        print(f"Loading model from {ckpt_path}")
+        logger.info(f"Loading model from {ckpt_path}")
         return PlModule.load_from_checkpoint(
             checkpoint_path=ckpt_path,
             model=XASBlock(**TrainedModelLoader.get_layer_widths(tag, **kwargs)),

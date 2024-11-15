@@ -1,5 +1,5 @@
 # %%
-
+from loguru import logger
 import matplotlib.pyplot as plt
 import numpy as np
 import scienceplots
@@ -54,7 +54,7 @@ axs = [fig.add_subplot(grid[i, j]) for i in range(ROWS) for j in range(COLS)]
 # axs = [ax for i, ax in enumerate(axs) if i not in remove_idx]
 
 for ax, (c, data) in zip(axs, all_data.items()):
-    print(f"Plotting {c}...")
+    logger.info(f"Plotting {c}...")
     spectras = np.concatenate([data.train.y, data.val.y, data.test.y])
 
     plot_line_heatmap(

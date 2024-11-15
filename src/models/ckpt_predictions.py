@@ -1,6 +1,7 @@
 # %%
 # %load_ext autoreload
 # %autoreload 2
+from loguru import logger
 import numpy as np
 from typing import Tuple
 from src.data.ml_data import XASPlData
@@ -72,7 +73,7 @@ def fc_ckpt_predictions(
     ckpt_path = find_ckpt_paths(query, base_dir)
 
     if not ckpt_path:
-        print(f"No checkpoint found for query {query}")
+        logger.warning(f"No checkpoint found for query {query}")
         return str(), np.ndarray([]), np.ndarray([])
 
     # Load the model
