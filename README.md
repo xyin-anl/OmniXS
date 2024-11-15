@@ -7,11 +7,11 @@ This project is currently under construction. Stay tuned for updates!
 ## Installation
 
 ```bash
-pip install git+https://github.com/yourusername/omnixas.git
+pip install -v "git+https://github.com/AI-multimodal/OmniXAS.git@setup"
 ```
 
 ### For developers
 
 ```bash
-pip install -e git+https://github.com/yourusername/omnixas.git#egg=omnixas[dev]
+pip install -v "git+https://github.com/AI-multimodal/OmniXAS.git@setup#egg=omnixas[dev]"
 ```

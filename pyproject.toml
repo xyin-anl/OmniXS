@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "omnixas"
-version = "2.0.0"
+version = "3.0.0"
 description = "Machine learning-based X-ray Absorption Spectroscopy (XAS) prediction"
 requires-python = ">=3.11"
 authors = [{ name = "Shubha Raj Kharel", email = "your.email@example.com" }]
@@ -35,6 +35,9 @@ dependencies = [
     "python-box==7.2.0",
     "pydantic==2.9.2",
 ]
+
+[project.optional-dependencies]
+dev = ["pytest", "black", "flake8"]
 
 # Keep your existing tool configurations
 [tool.black]
@@ -88,7 +91,3 @@ omnixas = "omnixas.predict:predict_cli"
 [project.urls]
 "Homepage" = "https://github.com/yourusername/omnixas"
 "Bug Tracker" = "https://github.com/yourusername/omnixas/issues"
-
-# Optional: Add development dependencies
-[project.optional-dependencies]
-dev = ["black", "ruff", "pytest>=7.0", "pytest-cov"]
