@@ -19,10 +19,10 @@ dependencies = [
     "optuna==3.6.1",
     "scikit-learn==1.5.0",
     "pandas==2.2.2",
-    "numpy==1.26.4",
+    "numpy>=1.22,<=1.24.3",    # Fixed for tensorflow-macos
     "matplotlib==3.9.0",
     "seaborn==0.13.2",
-    "tensorboard==2.16.2",
+    "tensorboard>=2.13,<2.14", # Fixed for tensorflow-macos
     "plotly==5.23.0",
     "pillow==10.4.0",
     "tqdm==4.66.4",
@@ -34,7 +34,9 @@ dependencies = [
     "torchsummary==1.5.1",
     "python-box==7.2.0",
     "pydantic==2.9.2",
+    "ply>=3.6",                # Added for calmjs-parse
 ]
+
 
 [project.optional-dependencies]
 dev = ["pytest", "black", "flake8"]
