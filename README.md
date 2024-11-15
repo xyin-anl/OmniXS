@@ -13,5 +13,5 @@ pip install -v "git+https://github.com/AI-multimodal/OmniXAS.git@setup"
 ### For developers
 
 ```bash
-pip install -v "git+https://github.com/AI-multimodal/OmniXAS.git@setup#egg=omnixas[dev]"
+pip install -v -e "git+https://github.com/AI-multimodal/OmniXAS.git@setup#egg=omnixas[dev]"
 ```

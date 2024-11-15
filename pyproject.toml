@@ -6,35 +6,37 @@ build-backend = "setuptools.build_meta"
 name = "omnixas"
 version = "3.0.0"
 description = "Machine learning-based X-ray Absorption Spectroscopy (XAS) prediction"
-requires-python = ">=3.11.9"
+requires-python = ">=3.12.4"
 authors = [{ name = "Shubha Raj Kharel", email = "your.email@example.com" }]
 dependencies = [
-    "torch==2.2.0",
+    "pip>=24.3",
+    "ply>=3.6",
+    "torch>=2.2.0",
     "torchvision",
     "torchaudio",
     "lightning",
     "hydra-core==1.3.2",
-    "hydra-colorlog==1.2.0",
-    "omegaconf==2.3.0",
-    "optuna==3.6.1",
-    "scikit-learn==1.5.0",
-    "pandas==2.2.2",
-    "numpy>=1.22,<=1.24.3",    # Fixed for tensorflow-macos
-    "matplotlib==3.9.0",
+    "hydra-colorlog>=1.2.0",
+    "omegaconf>=2.3.0",
+    "optuna>=3.6.1",
+    "scikit-learn>=1.5.0",
+    "pandas>=2.2.2",
+    "numpy>=1.22",
+    "matplotlib>=3.9.0",
     "seaborn==0.13.2",
-    "tensorboard>=2.13,<2.14", # Fixed for tensorflow-macos
-    "plotly==5.23.0",
-    "pillow==10.4.0",
-    "tqdm==4.66.4",
-    "python-dotenv==1.0.1",
+    "tensorboard>=2.13",
+    "plotly>=5.23.0",
+    "pillow>=10.4.0",
+    "tqdm>=4.66.4",
+    "python-dotenv>=1.0.1",
     "dgl",
-    "pymatgen==2023.11.12",
+    "pymatgen>=2023.11.12",
     "matgl==0.8.5",
-    "torchmetrics==1.4.2",
-    "torchsummary==1.5.1",
-    "python-box==7.2.0",
-    "pydantic==2.9.2",
-    "ply>=3.6",                # Added for calmjs-parse
+    "torchmetrics>=1.4.2",
+    "torchsummary>=1.5.1",
+    "python-box>=7.2.0",
+    "pydantic>=2.9.2",
+    "pyyaml",
 ]
 
 
