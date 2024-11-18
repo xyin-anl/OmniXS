@@ -48,7 +48,7 @@ class MaterialSplitter:
 
         target_sums = [int(x * len(idSite)) for x in target_fractions]
 
-        splits = MaterialSplitter.greedy_multiway_partition(idSite, target_sums, seed)
+        splits = MaterialSplitter._greedy_multiway_partition(idSite, target_sums, seed)
 
         # sanity check
         # overlap between splits
@@ -67,7 +67,7 @@ class MaterialSplitter:
         return splits
 
     @staticmethod
-    def greedy_multiway_partition(
+    def _greedy_multiway_partition(
         id_pairs: List[tuple],
         target_sums: List[int],
         seed=42,
