@@ -1,10 +1,10 @@
 # %%
-from loguru import logger
 from functools import cache
-from pathlib import Path
 
 import numpy as np
 import torch
+import yaml
+from loguru import logger
 from matgl import load_model
 from matgl.ext.pymatgen import Structure2Graph
 from matgl.graph.compute import (
@@ -13,8 +13,8 @@ from matgl.graph.compute import (
     create_line_graph,
 )
 from matgl.utils.cutoff import polynomial_cutoff
+from omegaconf import DictConfig
 
-from omnixas.data.constants import ElementsFEFF
 from omnixas.data.data import MaterialStructure
 from omnixas.utils import DEFAULTFILEHANDLER
 
@@ -67,8 +67,6 @@ class M3GNetFeaturizer:
     @cache
     @staticmethod
     def _load_default_featurizer():
-        import yaml
-        from omegaconf import DictConfig
 
         with open("config/paths.yaml") as f:
             paths = yaml.safe_load(f)
