@@ -1,4 +1,5 @@
 # %%
+from loguru import logger
 from functools import cache
 from pathlib import Path
 
@@ -66,8 +67,13 @@ class M3GNetFeaturizer:
     @cache
     @staticmethod
     def _load_default_featurizer():
-        path = Path(__file__).resolve().parent / "cached_models/M3GNet-MP-2021.2.8-PES"
-        print(f"Loading default featurizer from {path}")
+        import yaml
+        from omegaconf import DictConfig
+
+        with open("config/paths.yaml") as f:
+            paths = yaml.safe_load(f)
+            path = DictConfig(paths).models.m3gnet
+        logger.info(f"Loading m3gnet model from {path}")
         model = load_model(path).model
         model.eval()
         return model
