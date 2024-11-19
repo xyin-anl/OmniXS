@@ -50,11 +50,15 @@ class XASBlockModule(LightningModule):
         cls,
         element: str,
         type: str,
-        pattern="models/xasblock/v1.1.1/{element}_{type}.ckpt",
+        pattern="models/xasblock/v1.1.1/{element}_{type}.ckpt",  # TODO: hardcoded path
     ):
         path = pattern.format(element=element, type=type)
         logger.info(f"Loading XASBlock model from {path}")
-        model = XASBlock(input_dim=64, hidden_dims=[500, 500, 550], output_dim=141)
+        model = XASBlock(
+            input_dim=64,
+            hidden_dims=[500, 500, 550],  # TODO: hardcoded dims for version v1.1.1
+            output_dim=141,
+        )
         module = cls.load_from_checkpoint(checkpoint_path=path, model=model)
         module.eval()
         module.freeze()
@@ -111,7 +115,7 @@ class M3GNetFeaturizer:
 
     @cache
     @staticmethod
-    def _load_m3gnet(path="models/M3GNet-MP-2021.2.8-PES"):
+    def _load_m3gnet(path="models/M3GNet-MP-2021.2.8-PES"):  # TODO: hardcoded path
         logger.info(f"Loading m3gnet model from {path}")
         model = load_model(path).model
         model.eval()
@@ -149,7 +153,9 @@ class XASModel:
 
 
 if __name__ == "__main__":
-    material_structure_file = "examples/material/mp-1005792/POSCAR"
+    material_structure_file = (
+        "examples/material/mp-1005792/POSCAR"  # TODO: hardcoded path
+    )
     strucutre = PymatgenStructure.from_file(material_structure_file)
     spectrum = XASModel(element="Cu", type="FEFF").predict(strucutre, 8)
     plt.plot(spectrum)
