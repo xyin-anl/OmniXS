@@ -21,9 +21,6 @@
         // "utils": true,
         "**/dataset": true,
     },
-    "[python]": {
-        "editor.defaultFormatter": "ms-python.black-formatter",
-    },
     "python.envFile": "${workspaceFolder}/.vscode/.env",
     "tensorBoard.logDirectory": "${workspaceFolder}/outputs/logs",
     "jupyter.notebookFileRoot": "${workspaceFolder}",
