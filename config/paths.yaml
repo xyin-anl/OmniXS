@@ -1,0 +1,2 @@
+models:
+  m3gnet: models/M3GNet-MP-2021.2.8-PES

@@ -116,7 +116,6 @@ class TrainedModel(BaseModel, ABC):
 
 
 class MeanModel(TrainedModel):
-
     @classmethod
     def from_data_tag(cls, data_tag: DataTag, **kwargs) -> Self:
         model_tag = ModelTag(name="meanModel", **data_tag.dict())
@@ -157,7 +156,6 @@ class TrainedXASBlock(TrainedModel):
 
 
 class TrainedModelLoader:
-
     @staticmethod
     def _disable_dropout(model):
         for m in model.modules():
