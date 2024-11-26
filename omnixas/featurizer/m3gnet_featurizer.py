@@ -1,10 +1,10 @@
 # %%
-from loguru import logger
 from functools import cache
-from pathlib import Path
 
 import numpy as np
 import torch
+import yaml
+from loguru import logger
 from matgl import load_model
 from matgl.ext.pymatgen import Structure2Graph
 from matgl.graph.compute import (
@@ -13,11 +13,11 @@ from matgl.graph.compute import (
     create_line_graph,
 )
 from matgl.utils.cutoff import polynomial_cutoff
+from omegaconf import DictConfig
 
-from omnixas.utils.constants import ElementsFEFF, ElementsVASP, SpectrumType
 from omnixas.data.xas import MaterialStructure
-from omnixas.utils.constants import Element
 from omnixas.utils import DEFAULTFILEHANDLER
+from omnixas.utils.constants import Element, SpectrumType
 
 
 class M3GNetFeaturizer:
@@ -68,8 +68,10 @@ class M3GNetFeaturizer:
     @cache
     @staticmethod
     def _load_default_featurizer():
-        path = Path(__file__).resolve().parent / "cached_models/M3GNet-MP-2021.2.8-PES"
-        logger.info(f"Loading default featurizer from {path}") 
+        with open("config/paths.yaml") as f:
+            paths = yaml.safe_load(f)
+            path = DictConfig(paths).models.m3gnet
+        logger.info(f"Loading m3gnet model from {path}")
         model = load_model(path).model
         model.eval()
         return model

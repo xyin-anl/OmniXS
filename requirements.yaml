@@ -1,4 +1,3 @@
-name: aimm
 channels:
   - pytorch
   - conda-forge
@@ -427,6 +426,7 @@ dependencies:
       - imagesize==1.4.1
       - lightning==2.4.0
       - lightning-utilities==0.11.7
+      - loguru==0.7.2
       - matgl==0.8.5
       - multidict==6.1.0
       - multipledispatch==1.0.0
@@ -458,4 +458,3 @@ dependencies:
       - torchmetrics==1.4.2
       - torchsummary==1.5.1
       - yarl==1.13.1
-prefix: /Users/bnl/mambaforge/envs/aimm
