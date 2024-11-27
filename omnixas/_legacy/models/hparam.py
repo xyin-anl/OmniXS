@@ -1,17 +1,14 @@
-from loguru import logger
 import logging
 import sys
+
 import hydra
 import optuna
 from hydra.utils import instantiate
+from loguru import logger
 from omegaconf import DictConfig
-
-
-# TODO: move belows to config file
 from optuna_integration.pytorch_lightning import PyTorchLightningPruningCallback
-from utils.src.lightning.loggers.tb.log_train_val_loss import (
-    TensorboardLogTestTrainLoss,
-)
+
+from omnixas.utils.callbacks import TensorboardLogTestTrainLoss
 
 
 class Optimizer:
@@ -19,7 +16,6 @@ class Optimizer:
         self.cfg = hydra_configs
 
     def optimize(self, trial):
-
         depth = trial.suggest_int(
             "depth",
             self.cfg.optuna.params.min_depth,
