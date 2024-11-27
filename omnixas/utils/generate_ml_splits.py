@@ -1,23 +1,23 @@
 # %%
-from omnixas.data import Material, ElementSpectrum, MaterialID
 import re
 from typing import List, Tuple
 
 import numpy as np
 
+from omnixas.core.periodic_table import Element, SpectrumType
 from omnixas.data import (
+    DataTag,
+    ElementSpectrum,
+    Material,
+    MaterialID,
     MaterialSplitter,
     MLData,
     MLSplits,
 )
-from omnixas.utils.constants import SpectrumType
-from omnixas.utils.constants import Element
 from omnixas.utils import DEFAULTFILEHANDLER, FileHandler
-from omnixas.data import DataTag
 
 
 class MLSplitGenerator:
-
     def __init__(self, file_handler: FileHandler = None):
         self.file_handler = file_handler or DEFAULTFILEHANDLER()
 
@@ -72,7 +72,6 @@ class MLSplitGenerator:
         spectra_type: SpectrumType,
         idSites: List[Tuple[str, str]],
     ) -> MLData:
-
         ml_data_list = [
             self._load_ml_data(idSite, element, spectra_type) for idSite in idSites
         ]
@@ -84,6 +83,7 @@ class MLSplitGenerator:
 
 def main():
     import tqdm
+
     from omnixas.data import AllDataTags
 
     for tag in tqdm.tqdm(AllDataTags()):
@@ -105,18 +105,3 @@ if __name__ == "__main__":
     tag = DataTag(element=Element.Ti, type=SpectrumType.VASP)
     split = MLSplitGenerator().generate_ml_splits(tag)
     DEFAULTFILEHANDLER().serialize_json(split, tag)
-
-    # DEBUG CODE: checking if featurization is giving the same results
-    # config = DEFAULTFILEHANDLER().config
-    # old_config = config.copy()
-    # old_config["MLData"]["directory"] = "dataset/temp/ml_data/{type}/{element}"
-    # old_hander = FileHandler(old_config)
-    # new_config = old_config.copy()
-    # new_config["MLData"]["directory"] = "dataset/ml_data/{type}/{element}"
-    # new_handler = FileHandler(new_config)
-    # tag = DataTag(element=Element.Ti, type=SpectrumType.VASP)
-    # old_split = MLSplitGenerator(old_hander).generate_ml_splits(tag)
-    # new_split = MLSplitGenerator(new_handler).generate_ml_splits(tag)
-    # old_split.train.X[0][:3], new_split.train.X[0][:3], old_split == new_split
-
-# %%

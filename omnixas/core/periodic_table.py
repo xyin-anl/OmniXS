@@ -1,6 +1,10 @@
 from enum import StrEnum
 
 
+class SpectrumType(StrEnum):
+    pass
+
+
 class Element(StrEnum):
     """Enum representing an element in the periodic table."""
 

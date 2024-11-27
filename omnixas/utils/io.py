@@ -10,9 +10,6 @@ import yaml
 from omegaconf import OmegaConf
 from pydantic import BaseModel
 
-from omnixas.utils.constants import SpectrumType
-from omnixas.utils.constants import Element
-
 # %%
 
 
@@ -176,7 +173,7 @@ if __name__ == "__main__":
     from omnixas.data import ElementSpectrum
 
     objects = DEFAULTFILEHANDLER.fetch_serialized_objects(
-        ElementSpectrum, element=Element.Cu, type=SpectrumType.FEFF
+        ElementSpectrum, element="Cu", type="FEFF"
     )
     objects = list(objects)
     print("Length:", len(objects))
