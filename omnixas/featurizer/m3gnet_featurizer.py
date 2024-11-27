@@ -15,8 +15,9 @@ from matgl.graph.compute import (
 from matgl.utils.cutoff import polynomial_cutoff
 from omegaconf import DictConfig
 
-from omnixas.data.data import MaterialStructure
+from omnixas.data.xas import MaterialStructure
 from omnixas.utils import DEFAULTFILEHANDLER
+from omnixas.utils.constants import Element, SpectrumType
 
 
 class M3GNetFeaturizer:
@@ -67,7 +68,6 @@ class M3GNetFeaturizer:
     @cache
     @staticmethod
     def _load_default_featurizer():
-
         with open("config/paths.yaml") as f:
             paths = yaml.safe_load(f)
             path = DictConfig(paths).models.m3gnet
@@ -89,11 +89,8 @@ if __name__ == "__main__":
     from tqdm import tqdm
 
     from omnixas.data import (
-        Element,
         ElementSpectrum,
-        ElementsVASP,
         MLData,
-        SpectrumType,
     )
     from omnixas.utils import DEFAULTFILEHANDLER, FileHandler
 

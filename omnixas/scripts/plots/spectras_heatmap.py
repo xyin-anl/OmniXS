@@ -1,5 +1,5 @@
 # %%
-
+from loguru import logger
 import matplotlib.pyplot as plt
 import numpy as np
 import scienceplots
@@ -7,7 +7,9 @@ from matplotlib.colors import NoNorm, PowerNorm
 
 from config.defaults import cfg
 
-from omnixas.data import Element, MLData, SpectrumType
+from omnixas.data import MLData
+from omnixas.utils.constants import SpectrumType
+from omnixas.utils.constants import Element
 from omnixas.scripts.plots.constants import FEFFSplits, VASPSplits
 from omnixas.utils import DEFAULTFILEHANDLER, FileHandler
 from omnixas.utils.plots import plot_line_heatmap
@@ -54,7 +56,7 @@ axs = [fig.add_subplot(grid[i, j]) for i in range(ROWS) for j in range(COLS)]
 # axs = [ax for i, ax in enumerate(axs) if i not in remove_idx]
 
 for ax, (c, data) in zip(axs, all_data.items()):
-    print(f"Plotting {c}...")
+    logger.info(f"Plotting {c}...")
     spectras = np.concatenate([data.train.y, data.val.y, data.test.y])
 
     plot_line_heatmap(

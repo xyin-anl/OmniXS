@@ -1,12 +1,14 @@
 # %%
 import os
+from loguru import logger
 
 import numpy as np
 
 from config.defaults import cfg
-from omnixas.data import Element, ElementsVASP, SpectrumType
-from omnixas.data.constants import ElementsFEFF
-from omnixas.data.data import ElementSpectrum
+from omnixas.utils.constants import SpectrumType
+from omnixas.utils.constants import ElementsFEFF, ElementsVASP
+from omnixas.data.xas import ElementSpectrum
+from omnixas.utils.constants import Element
 from omnixas.data.ml_data import MLData
 from omnixas.utils import DEFAULTFILEHANDLER, FileHandler
 from omnixas.utils.spectra_outliers import OutlierDetector
@@ -30,8 +32,8 @@ def remove_outliers_in_ml_data(element, spectra_type):
     outliers = OutlierDetector().outliers(spectras, std_factor)
 
     files_to_remove = [fp for fp, o in zip(ml_file_paths, outliers) if o]
-    print(f"{len(files_to_remove)} outliers for {element} {spectra_type}")
-    print("Uncomment to remove")
+    logger.info(f"{len(files_to_remove)} outliers for {element} {spectra_type}")
+    logger.info("Uncomment to remove")
 
     # print(f"Removing {len(files_to_remove)} outliers for {element} {spectra_type}")
     # for fp in files_to_remove:

@@ -17,7 +17,7 @@ from omnixas.data import (
     ScaledMlSplit,
     ThousandScaler,
 )
-from omnixas.data.merge_ml_splits import FEFFSplits
+from omnixas.utils.constants import FEFFSplits
 from omnixas.model.training import PlModule
 from omnixas.model.xasblock import XASBlock
 from omnixas.utils.io import DEFAULTFILEHANDLER, FileHandler
@@ -116,7 +116,6 @@ class TrainedModel(BaseModel, ABC):
 
 
 class MeanModel(TrainedModel):
-
     @classmethod
     def from_data_tag(cls, data_tag: DataTag, **kwargs) -> Self:
         model_tag = ModelTag(name="meanModel", **data_tag.dict())
@@ -157,7 +156,6 @@ class TrainedXASBlock(TrainedModel):
 
 
 class TrainedModelLoader:
-
     @staticmethod
     def _disable_dropout(model):
         for m in model.modules():
@@ -206,7 +204,7 @@ class TrainedModelLoader:
         **kwargs,
     ) -> PlModule:
         ckpt_path = TrainedModelLoader.get_ckpt_path(tag, file_handler)
-        logger.log(f"Loading model from {ckpt_path}")
+        logger.info(f"Loading model from {ckpt_path}")
         return PlModule.load_from_checkpoint(
             checkpoint_path=ckpt_path,
             model=XASBlock(**TrainedModelLoader.get_layer_widths(tag, **kwargs)),

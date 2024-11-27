@@ -1,3 +1,4 @@
+from loguru import logger
 import logging
 import sys
 import hydra
@@ -80,9 +81,9 @@ def run_optmization(cfg: DictConfig):
         n_trials=cfg.optuna.n_trials,
         n_jobs=cfg.optuna.n_jobs,
     )
-    print("Best params: ", study.best_params)
-    print("Best value: ", study.best_value)
-    print("Best Trial: ", study.best_trial)
+    logger.info("Best params: ", study.best_params)
+    logger.info("Best value: ", study.best_value)
+    logger.info("Best Trial: ", study.best_trial)
 
 
 if __name__ == "__main__":

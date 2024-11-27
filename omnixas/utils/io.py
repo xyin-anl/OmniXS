@@ -10,6 +10,9 @@ import yaml
 from omegaconf import OmegaConf
 from pydantic import BaseModel
 
+from omnixas.utils.constants import SpectrumType
+from omnixas.utils.constants import Element
+
 # %%
 
 
@@ -172,7 +175,7 @@ class DEFAULTFILEHANDLER:
 
 if __name__ == "__main__":
 
-    from omnixas.data import Element, ElementSpectrum, SpectrumType
+    from omnixas.data import ElementSpectrum
     from omnixas.utils import DEFAULTFILEHANDLER
 
     objects = DEFAULTFILEHANDLER.fetch_serialized_objects(

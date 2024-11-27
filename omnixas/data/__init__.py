@@ -1,7 +1,11 @@
-from .enums import MaterialIDPrefix, Element, ElementsVASP, SpectrumType, ElementsFEFF
-from .constants import (
+# TODO: remove from release
+from ..utils.constants import Element
+from ..utils.constants import SpectrumType
+from ..utils.constants import (
     FEFF,
     VASP,
+    ElementsFEFF,
+    ElementsVASP,
     Ti,
     V,
     Cr,
@@ -16,7 +20,7 @@ from .constants import (
 )
 
 from .ml_data import MLData, DataTag, MLSplits
-from .data import (
+from .xas import (
     MaterialID,
     MaterialStructure,
     Material,
@@ -46,7 +50,6 @@ from .material_split import MaterialSplitter
 
 
 __all__ = [
-    "MaterialIDPrefix",
     "Element",
     "ElementsVASP",
     "SpectrumType",

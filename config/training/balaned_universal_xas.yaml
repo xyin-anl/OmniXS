@@ -6,4 +6,4 @@ hydra:
     dir: output/training/${name}/balanced/${element}_${type}
 
 ml_splits:
-  _target_: omnixas.data.merge_ml_splits.BALANCEDFEFFSplits
+  _target_: omnixas.utils.constants.BALANCEDFEFFSplits

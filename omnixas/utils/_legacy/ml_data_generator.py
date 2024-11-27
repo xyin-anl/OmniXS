@@ -1,3 +1,4 @@
+from loguru import logger
 import os
 import re
 from functools import cached_property
@@ -116,11 +117,11 @@ class MLDataGenerator:
                         seed=seed,
                     )
                 except PoscarNotFound as e:
-                    print(e)
+                    logger.warning(e)
                     poscar_not_found.append((id, site))
                     return None
                 except SiteInvalidError as e:
-                    print(e)
+                    logger.warning(e)
                     site_invalid.append((id, site))
                     return None
                 data = MLDataGenerator.load_processed_data(

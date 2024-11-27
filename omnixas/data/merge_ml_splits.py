@@ -1,23 +1,41 @@
 # %%
-from pydantic import BaseModel, Field, field_serializer
-from typing import Any, ClassVar, Dict, List, Optional
-
-# skip splits serilziation
-from pydantic import model_serializer
-
+from typing import List
 
 import numpy as np
-from pydantic import Field, field_validator
 
-from omnixas.data.constants import FEFFDataTags, VASPDataTags
-from omnixas.data.ml_data import DataTag, MLSplits, MLData
-
-from omnixas.utils import DEFAULTFILEHANDLER
-from omnixas.utils.io import DEFAULTFILEHANDLER, FileHandler
+from omnixas.data.ml_data import DataTag, MLSplits
+from omnixas.utils.io import FileHandler
 
 
 class MergedSplits(MLSplits):
-    splits: Dict[DataTag, MLSplits] = Field(default_factory=dict)
+    """A class for merging multiple MLSplits objects with their associated tags.
+
+    This class extends MLSplits to handle the combination of multiple datasets,
+    with options for balanced or unbalanced merging. It's particularly useful
+    when working with multiple spectrum types or elements that need to be
+    combined into a single dataset.
+
+    Examples:
+        >>> from omnixas.utils.constants import Element, SpectrumType
+        >>> # Create sample tags
+        >>> tags = [
+        ...     DataTag(element=Element.Fe, type=SpectrumType.XANES),
+        ...     DataTag(element=Element.Ni, type=SpectrumType.XANES)
+        ... ]
+        >>>
+        >>> # Load and merge splits with balanced datasets
+        >>> file_handler = FileHandler("path/to/data")
+        >>> merged = MergedSplits.load(
+        ...     tags=tags,
+        ...     file_handler=file_handler,
+        ...     balanced=True
+        ... )
+        >>>
+        >>> # Append additional data
+        >>> new_split = MLSplits(...)
+        >>> new_tag = DataTag(element=Element.Cu, type=SpectrumType.XANES)
+        >>> merged.append(new_tag, new_split)
+    """
 
     @classmethod
     def load(
@@ -27,6 +45,40 @@ class MergedSplits(MLSplits):
         balanced: bool = False,
         **kwargs,
     ) -> "MergedSplits":
+        """Loads and merges multiple MLSplits objects from files.
+
+        This method loads multiple datasets using their tags and optionally
+        balances them by reducing each split to the size of the smallest
+        corresponding split across all datasets.
+
+        Args:
+            tags (List[DataTag]): List of tags identifying the datasets to load
+            file_handler (FileHandler): Handler for loading the data files
+            balanced (bool, optional): If True, ensures all splits have the same
+                size by reducing larger splits. Defaults to False.
+            **kwargs: Additional arguments passed to file_handler
+
+        Returns:
+            MergedSplits: A new instance containing the merged datasets
+
+        Examples:
+            >>> # Load with balanced datasets (equal sizes)
+            >>> merged = MergedSplits.load(
+            ...     tags=[
+            ...         DataTag(element=Element.Fe, type=SpectrumType.XANES),
+            ...         DataTag(element=Element.Ni, type=SpectrumType.XANES)
+            ...     ],
+            ...     file_handler=FileHandler(...),
+            ...     balanced=True
+            ... )
+            >>>
+            >>> # Load without balancing (keeps original sizes)
+            >>> merged_unbalanced = MergedSplits.load(
+            ...     tags=tags,
+            ...     file_handler=file_handler,
+            ...     balanced=False
+            ... )
+        """
         splits = [
             file_handler.deserialize_json(MLSplits, supplemental_info=tag)
             for tag in tags
@@ -52,38 +104,32 @@ class MergedSplits(MLSplits):
             merged.append(tag, split)
         return merged
 
-    def append(self, tag: DataTag, split: MLSplits):
+    def append(self, split: MLSplits):
+        """Appends a new MLSplits object to the existing merged splits.
+
+        This method concatenates the feature matrices (X) and labels (y) from
+        the new split with the existing data for each split type (train/val/test).
+
+        Args:
+            split (MLSplits): The splits to append
+
+        Examples:
+            >>> merged = MergedSplits()
+            >>> # Append new data
+            >>> new_split = MLSplits(
+            ...     train=MLData(X=np.array([[1, 2]]), y=np.array([0])),
+            ...     val=MLData(X=np.array([[3, 4]]), y=np.array([1]))
+            ... )
+            >>> merged.append(new_split)
+        """
         for attr in MLSplits.__fields__.keys():
             new_data = getattr(split, attr)
             if new_data is None:
                 continue
+
             existing_data = getattr(self, attr)
             if existing_data is None:
                 setattr(self, attr, new_data)
             else:
                 existing_data.X = np.concatenate([existing_data.X, new_data.X])
                 existing_data.y = np.concatenate([existing_data.y, new_data.y])
-            self.splits[tag] = split
-
-
-class FEFFSplits(MergedSplits):
-    balanced: ClassVar[bool] = False
-
-    def __new__(cls, *args, **kwargs):
-        merged = MergedSplits.load(
-            FEFFDataTags(),
-            DEFAULTFILEHANDLER(),  # TODO: pass file handler
-            balanced=cls.balanced,
-            **kwargs,
-        )
-        ml_split = MLSplits(
-            train=merged.train,
-            val=merged.val,
-            test=merged.test,
-        )
-        # return ml_split.shuffled_view()
-        return ml_split
-
-
-class BALANCEDFEFFSplits(FEFFSplits):
-    balanced: ClassVar[bool] = True

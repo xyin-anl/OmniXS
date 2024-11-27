@@ -1,3 +1,4 @@
+from loguru import logger
 import yaml
 from scipy.constants import physical_constants
 import os
@@ -122,7 +123,7 @@ class RAWDataVASP(RAWData):
         with open(mu_avg_file_path, "w") as f:
             for row in mu_avg:
                 f.write(f"{row[0]} {row[1]}\n")
-            print(f"Generated {mu_avg_file_path}")
+            logger.info(f"Generated {mu_avg_file_path}")
 
     def mu(self, id, site):
         dir_path = os.path.join(

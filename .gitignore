@@ -5,7 +5,7 @@ lightning_logs
 *.pdf
 output
 *.zip
-*.sh
+/*.sh
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/macos,linux,jupyternotebooks,python

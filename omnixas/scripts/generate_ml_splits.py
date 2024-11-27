@@ -7,12 +7,12 @@ from typing import List, Tuple
 import numpy as np
 
 from omnixas.data import (
-    Element,
     MaterialSplitter,
     MLData,
     MLSplits,
-    SpectrumType,
 )
+from omnixas.utils.constants import SpectrumType
+from omnixas.utils.constants import Element
 from omnixas.utils import DEFAULTFILEHANDLER, FileHandler
 from omnixas.data import DataTag
 

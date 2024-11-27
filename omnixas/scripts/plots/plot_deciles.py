@@ -4,7 +4,7 @@ from typing import Dict
 import matplotlib.pyplot as plt
 import numpy as np
 
-from omnixas.data import SpectrumType
+from omnixas.utils.constants import SpectrumType
 from omnixas.model.trained_model import ModelMetrics, ModelTag
 from omnixas.scripts.plots.scripts import (
     AllExpertMetrics,

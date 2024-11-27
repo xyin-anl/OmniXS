@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Patch
 
-from omnixas.data import ElementsFEFF, ElementsVASP
+from omnixas.utils.constants import ElementsVASP
+from omnixas.utils.constants import ElementsFEFF
 
 
 def plot_residual_difference_histograms(residual_diffs, figsize=(9, 12), fontsize=22):
