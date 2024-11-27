@@ -4,13 +4,11 @@ from utils.src.optuna.dynamic_fc import PlDynamicFC
 
 # import pytorch_lightning as pl
 import lightning as pl
-import lightning
-import torch
 import yaml
 
 
 if __name__ == "__main__":
-    raise NotImplementedError(f"Only Valid for VASP Prelims in the past.")
+    raise NotImplementedError("Only Valid for VASP Prelims in the past.")
     from utils.src.lightning.loggers.tb.log_train_val_loss import (
         TensorboardLogTestTrainLoss,
     )

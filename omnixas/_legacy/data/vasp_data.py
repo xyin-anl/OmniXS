@@ -1,11 +1,8 @@
 from typing import Optional
 from _legacy.data.raw_data import RAWData
-import yaml
 from scipy.constants import physical_constants
-import warnings
 import numpy as np
 from scipy.stats import cauchy
-from _legacy.data.vasp_data_raw import RAWDataVASP
 from _legacy.data.data import ProcessedData
 
 

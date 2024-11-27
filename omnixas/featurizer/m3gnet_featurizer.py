@@ -85,14 +85,13 @@ class M3GNetSiteFeaturizer(M3GNetFeaturizer):
 # %%
 
 if __name__ == "__main__":
-    from p_tqdm import p_map
     from tqdm import tqdm
 
     from omnixas.data import (
         ElementSpectrum,
         MLData,
     )
-    from omnixas.utils import DEFAULTFILEHANDLER, FileHandler
+    from omnixas.utils import DEFAULTFILEHANDLER
 
     # elements, spectrum_type = ElementsVASP, SpectrumType.VASP
     # elements, spectrum_type = ElementsFEFF, SpectrumType.FEFF

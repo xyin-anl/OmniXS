@@ -10,7 +10,6 @@ import os
 
 import ast
 import re
-import scienceplots
 import torch
 from utils.src.optuna.dynamic_fc import PlDynamicFC
 import yaml

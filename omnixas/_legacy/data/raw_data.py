@@ -1,6 +1,4 @@
 from typing import List
-import numpy as np
-import yaml
 import os
 import re
 import warnings
@@ -74,7 +72,7 @@ class RAWData(ABC):
 
     @staticmethod
     def configs(cfg_path="cfg/transformations.yaml"):
-        from omegaconf import OmegaConf, DictConfig
+        from omegaconf import OmegaConf
 
         return OmegaConf.load(cfg_path)
 

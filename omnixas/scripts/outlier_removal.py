@@ -1,5 +1,4 @@
 # %%
-import os
 from loguru import logger
 
 import numpy as np
@@ -8,9 +7,8 @@ from config.defaults import cfg
 from omnixas.utils.constants import SpectrumType
 from omnixas.utils.constants import ElementsFEFF, ElementsVASP
 from omnixas.data.xas import ElementSpectrum
-from omnixas.utils.constants import Element
 from omnixas.data.ml_data import MLData
-from omnixas.utils import DEFAULTFILEHANDLER, FileHandler
+from omnixas.utils import DEFAULTFILEHANDLER
 from omnixas.utils.spectra_outliers import OutlierDetector
 
 

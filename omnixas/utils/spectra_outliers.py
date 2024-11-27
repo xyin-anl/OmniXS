@@ -1,8 +1,5 @@
 # %%
-from typing import List
 import numpy as np
-from pydantic import Field, validate_call, BaseModel
-from omnixas.data.xas import Spectrum
 
 
 class OutlierDetector:

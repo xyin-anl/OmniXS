@@ -17,7 +17,6 @@ if __name__ == "__main__":
             config_name="defaults", overrides=[f"model_name={model_name}"]
         )
         model = hydra.utils.instantiate(cfg.model)
-        trainer = hydra.utils.instantiate(cfg.trainer)
         print(model)
 
     main()

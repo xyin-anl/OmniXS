@@ -2,10 +2,9 @@ import os
 import warnings
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import Literal, Optional, Set
+from typing import Literal
 
 import numpy as np
-from scipy.stats import cauchy
 
 from _legacy.data.raw_data import RAWData
 

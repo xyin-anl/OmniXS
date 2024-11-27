@@ -4,9 +4,6 @@ from typing import Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib import patches as mpatches
-from matplotlib.legend_handler import HandlerPatch
-from matplotlib.patches import Rectangle, Circle, FancyBboxPatch
 
 from omnixas.data import DataTag
 from omnixas.model.trained_model import ModelTag

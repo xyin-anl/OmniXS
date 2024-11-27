@@ -21,7 +21,7 @@ from _legacy.data.vasp_data_raw import RAWDataVASP
 # %%
 
 # make cfg dictconfig with compounds given by cfg.compounds from ElementsFEFF
-from omegaconf import OmegaConf, DictConfig
+from omegaconf import DictConfig
 
 compounds = [str(e) for e in ElementsFEFF]
 cfg = DictConfig(

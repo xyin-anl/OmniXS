@@ -52,7 +52,8 @@ class SpectraTable:
         if self._data is not None:
             return self._data
         data_class = FEFFData if self.simulation_type == "FEFF" else VASPData
-        map_fn = lambda id: data_class(self.compound, self.parameters[id], id)
+        def map_fn(id):
+            return data_class(self.compound, self.parameters[id], id)
         return p_map(map_fn, self.ids)
 
     @property

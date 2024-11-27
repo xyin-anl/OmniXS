@@ -4,7 +4,6 @@ from typing import List
 
 import numpy as np
 import torch
-import yaml
 from lightning import LightningModule
 from loguru import logger
 from matgl import load_model

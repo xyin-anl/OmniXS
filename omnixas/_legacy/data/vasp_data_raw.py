@@ -1,5 +1,4 @@
 from loguru import logger
-import yaml
 from scipy.constants import physical_constants
 import os
 import re
@@ -7,7 +6,7 @@ import warnings
 from collections import deque
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import Literal, Optional
+from typing import Literal
 
 import numpy as np
 
@@ -60,13 +59,8 @@ class RAWDataVASP(RAWData):
 
     @property
     def poscar_paths(self):
-        fn = lambda i, s: os.path.join(
-            self.base_dir or "",
-            i,
-            self.simulation_type,
-            s,
-            "POSCAR",
-        )
+        def fn(i, s):
+            return os.path.join(self.base_dir or "", i, self.simulation_type, s, "POSCAR")
         paths = {
             (i, s): fn(i, s) for i in self._material_ids for s in self._sites.get(i, [])
         }

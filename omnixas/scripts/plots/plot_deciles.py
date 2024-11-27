@@ -7,12 +7,8 @@ import numpy as np
 from omnixas.utils.constants import SpectrumType
 from omnixas.model.trained_model import ModelMetrics, ModelTag
 from omnixas.scripts.plots.scripts import (
-    AllExpertMetrics,
     AllTunedMetrics,
-    AllUniversalMetrics,
-    ExpertEtas,
     TunedEtas,
-    UniversalModelEtas,
 )
 
 

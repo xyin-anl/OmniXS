@@ -7,15 +7,14 @@ import hydra
 import lightning
 import torch
 from hydra.utils import instantiate
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 from torch import tensor
 from torch.utils.data import DataLoader, TensorDataset
 
-from omnixas.data import DataTag, MLData, MLSplits
+from omnixas.data import MLData, MLSplits
 from omnixas.data.scaler import ScaledMlSplit
 from omnixas.utils.callbacks import TensorboardLogTestTrainLoss
-from omnixas.utils.io import DEFAULTFILEHANDLER, FileHandler
-from omnixas.data.scaler import ThousandScaler, IdentityScaler, UncenteredRobustScaler
+from omnixas.data.scaler import ThousandScaler, IdentityScaler
 
 # %%
 

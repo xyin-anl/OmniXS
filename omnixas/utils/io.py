@@ -4,7 +4,7 @@ import os
 import re
 import warnings
 from glob import glob
-from typing import Any, Dict, Iterator, List, Optional, Set, Type, TypeVar, Union
+from typing import Any, Dict, Iterator, List, Optional, Type, TypeVar, Union
 
 import yaml
 from omegaconf import OmegaConf

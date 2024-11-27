@@ -9,7 +9,6 @@ from p_tqdm import p_map
 
 from config.defaults import cfg
 from _legacy.data.ml_data import DataQuery
-from typing import Literal
 
 
 class DscribeFeaturizer:
@@ -130,7 +129,7 @@ class DscribeFeaturizer:
 # %%
 
 if __name__ == "__main__":
-    from dscribe.descriptors import ACSF, SOAP, LMBTR
+    from dscribe.descriptors import ACSF, SOAP
 
     top_n = 40
     simulation_type = f"ACSF{top_n}"

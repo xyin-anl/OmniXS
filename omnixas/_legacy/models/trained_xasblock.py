@@ -46,7 +46,6 @@ class TrainedXASBlock(TrainedModel):
 
         input_sz = weight_shapes[0][1]
         hidden_sz = [w[0] for w in weight_shapes[:]]
-        output_sz = weight_shapes[-1][0]
         widths = [input_sz] + hidden_sz  # output is already included
 
         model = XASBlock(widths=widths, input_dims=None, output_dim=None)

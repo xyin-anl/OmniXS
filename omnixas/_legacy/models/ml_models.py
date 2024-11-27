@@ -2,7 +2,6 @@ from functools import cached_property
 
 import numpy as np
 import torch
-from hydra.utils import instantiate
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import ElasticNet, LinearRegression, Ridge
 

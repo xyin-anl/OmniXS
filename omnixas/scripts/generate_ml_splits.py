@@ -1,5 +1,4 @@
 # %%
-import warnings
 from omnixas.data import Material, ElementSpectrum, MaterialID
 import re
 from typing import List, Tuple
@@ -46,7 +45,7 @@ class MLSplitGenerator:
         return ml_splits
 
     def _ml_filename_to_idSite(self, filename: str) -> Tuple[str, str]:
-        pattern = f".*/(.*)_site_(.+)_(.+)_(.+).json"
+        pattern = ".*/(.*)_site_(.+)_(.+)_(.+).json"
         match = re.search(pattern, filename)
         if not match:
             raise ValueError(f"Invalid filename format: {filename}")

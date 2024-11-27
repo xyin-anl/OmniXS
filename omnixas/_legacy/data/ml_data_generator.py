@@ -5,8 +5,6 @@ from functools import cached_property
 
 import numpy as np
 import torch
-import torch.nn as nn
-from p_tqdm import p_map
 from pymatgen.core.structure import Structure
 from tqdm import tqdm
 

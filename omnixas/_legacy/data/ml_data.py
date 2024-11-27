@@ -4,7 +4,7 @@ import os
 import pickle
 import warnings
 from functools import cached_property
-from typing import Any, List, Literal, Union
+from typing import List, Literal, Union
 
 import numpy as np
 from omegaconf import OmegaConf
