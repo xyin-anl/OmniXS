@@ -90,7 +90,8 @@ class EnergyGrid(RootModel, validate_assignment=True):
         root (List[float]): List of non-negative energy values
 
     Raises:
-        ValueError: If the values are not monotonically increasing or contain negative values
+        ValueError: If the values are not monotonically increasing or contain
+        negative values
 
     Examples:
         >>> grid = EnergyGrid(root=[0.0, 1.0, 2.0, 3.0])
@@ -166,7 +167,8 @@ class IntensityValues(RootModel, validate_assignment=True):
 class Spectrum(BaseModel, validate_assignment=True):
     """A class representing spectral data with corresponding energies and intensities.
 
-    The spectrum must have matching lengths for energies and intensities if both are provided.
+    The spectrum must have matching lengths for energies and intensities if
+    both are provided.
 
     Args:
         intensities (IntensityValues, optional): The intensity values of the spectrum
@@ -220,7 +222,8 @@ class MaterialStructure(RootModel, validate_assignment=True):
         """Create a MaterialStructure from a structure file.
 
         Args:
-            path (Path): Path to the structure file (supported formats include CIF, POSCAR, etc.)
+            path (Path): Path to the structure file (supported formats include
+            CIF, POSCAR, etc.)
 
         Returns:
             MaterialStructure: A new MaterialStructure instance
@@ -333,7 +336,8 @@ class SiteSpectrum(Spectrum):
 class ElementSpectrum(SiteSpectrum, validate_assignment=True):
     """A class representing spectral data for a specific element at a site.
 
-    This class extends SiteSpectrum to include element-specific validation and information.
+    This class extends SiteSpectrum to include element-specific validation and
+    information.
 
     Args:
         element (Element): The element for which the spectrum is calculated

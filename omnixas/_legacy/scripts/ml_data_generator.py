@@ -4,12 +4,13 @@ from functools import cached_property
 
 import numpy as np
 import torch
+from _legacy.data.vasp_data_raw import RAWDataVASP
 from loguru import logger
 from pymatgen.core.structure import Structure
 from tqdm import tqdm
 
 from config.defaults import cfg
-from _legacy.data.vasp_data_raw import RAWDataVASP
+from omnixas.featurizer.m3gnet_featurizer import M3GNetFeaturizer
 
 
 class PoscarNotFound(FileNotFoundError):
@@ -27,7 +28,7 @@ class MLDataGenerator:
         self.compound = compound
         self.simulation_type = simulation_type
 
-    m3gnet = _load_default_featurizer()
+    m3gnet = M3GNetFeaturizer().model
 
     @cached_property
     def vasp_poscar_paths(self):
@@ -161,18 +162,10 @@ class MLDataGenerator:
         self,
         id: str,
         site: str,
-        n_blocks=None,
-        randomize_weights=False,
-        seed=42,
     ):
         structure = self.get_structure(id, site)  # reads from POSCAR
-        features_all = featurize_material(
-            structure=structure,
-            model=self.m3gnet,
-            n_blocks=n_blocks,
-            randomize_weights=randomize_weights,
-            seed=seed,
-        )
+
+        features_all = M3GNetFeaturizer().featurize(structure=structure)
 
         site = int(site) if self.simulation_type == "FEFF" else 0
         # check if site infor from folder is valid for structure derived from POSCAR

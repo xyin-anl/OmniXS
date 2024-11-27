@@ -4,7 +4,6 @@ import os
 import pickle
 import warnings
 from functools import cached_property
-from typing import List, Literal, Union
 
 import numpy as np
 from omegaconf import OmegaConf
@@ -117,7 +116,6 @@ def post_split_anomlay_filter(
     ml_splits: MlSplit,
     std_cutoff: float,
 ) -> MlSplit:
-
     def bounds(spectras, std_factor):
         mean = np.mean(spectras, axis=0)
         std = np.std(spectras, axis=0)
@@ -149,7 +147,6 @@ def load_xas_ml_data(
     pre_splits_anomaly_filter: bool = False,
     anomaly_std_cutoff: float = None,  # default loaded from config if None
 ) -> MlSplit:
-
     assert not (
         post_split_anomaly_filter and pre_splits_anomaly_filter
     ), "Only one of post and pre should be valid"
@@ -227,7 +224,6 @@ def load_all_data(
         "same_size", "all", "stratified"
     ] = "all",  # TODO: revert to default
 ):
-
     if compounds is None:
         compounds = ["Cu", "Ti"] if sim_type == "VASP" else cfg.compounds
 
@@ -315,50 +311,3 @@ if __name__ == "__main__":
         splits.val.X.shape[0] / total,
         splits.test.X.shape[0] / total,
     )
-
-    # # =============================================================================
-    # #  anmoly filter test
-    # # =============================================================================
-    # from utils.src.plots.heatmap_of_lines import heatmap_of_lines
-    # import matplotlib.pyplot as plt
-    # data = load_xas_ml_data(DataQuery("Cu", "VASP"), filter_anamolies=False)
-    # heatmap_of_lines(data.train.y)
-    # plt.show()
-    # data = load_xas_ml_data(DataQuery("Cu", "VASP"), filter_anamolies=True)
-    # heatmap_of_lines(data.train.y)
-    # plt.show
-    # # ==============================================================================
-
-    # # %%
-
-    # # =============================================================================
-    # # tests if pca and scaler are cached
-    # # =============================================================================
-    # from p_tqdm import p_map
-
-    # load_xas_ml_data(DataQuery("Cu", "SOAP"))
-
-    # # # should cache pca and scaler
-    # # p_map(
-    # #     lambda q: load_xas_ml_data(q),
-    # #     [DataQuery(c, "SOAP") for c in cfg.compounds[-1]],
-    # #     num_cpus=1,
-    # # )
-
-    # # for compound in cfg.compounds:
-    # #     query = DataQuery(compound=compound, simulation_type="SOAP")
-    # #     # caching pca
-    # #     ml_split = load_xas_ml_data(query)
-    # #     pca = FeatureProcessor(query).pca  # should load from cache
-    # #     print(f"PCA components: {pca.n_components_} for {query}")
-
-    # # =============================================================================
-    # print("dummy")
-
-    # # pl_data = XASPlData(query=DataQuery(compound="Cu", simulation_type="FEFF"))
-    # # def print_fractions(xas_data):
-    # #     dataset = [xas_data.train_dataset, xas_data.val_dataset, xas_data.test_dataset]
-    # #     sizes = np.array([len(x) for x in dataset])
-    # #     sizes = sizes / sizes.sum()
-    # #     print(sizes)
-    # # print_fractions(pl_data)  # [0.8 0.1 0.1]

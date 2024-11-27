@@ -23,7 +23,6 @@ class VASPData(ProcessedData):
         )
 
     def transform(self, include_emperical_truncation=True):
-        # self.truncate().scale().broaden().align() # truncate ssems to source of problem
         self.scale().broaden().align()
         if include_emperical_truncation:
             self.truncate_emperically()

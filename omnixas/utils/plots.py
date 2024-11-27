@@ -1,11 +1,9 @@
+from typing import Literal, Union
+
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import LogNorm
-from typing import Union, Literal
-
-
-from typing import Literal
 
 
 def plot_line_heatmap(
@@ -30,7 +28,6 @@ def plot_line_heatmap(
         ax = plt.gca()
 
     if interpolate is not None:
-
         from scipy.interpolate import interp1d
 
         x = np.arange(data.shape[1])
@@ -45,8 +42,8 @@ def plot_line_heatmap(
     heatmap = np.zeros((width, height))
     max_val = data.max()
     max_val *= 1.1  # add some padding
-    for l in data:
-        for x_idx, y_val in enumerate(l):
+    for line in data:
+        for x_idx, y_val in enumerate(line):
             y_idx = y_val / max_val * height
             y_idx = y_idx.astype(int)
             y_idx = np.clip(y_idx, 0, height - 1)

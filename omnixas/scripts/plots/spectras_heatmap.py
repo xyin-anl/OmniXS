@@ -39,7 +39,6 @@ ROWS = 1 if PLOT == "VASP" else 2
 fig = plt.figure(figsize=(COLS * 4, ROWS * 3.5))
 grid = plt.GridSpec(ROWS, COLS, hspace=0.015, wspace=0.02, figure=fig)
 axs = [fig.add_subplot(grid[i, j]) for i in range(ROWS) for j in range(COLS)]
-# axs = [fig.add_subplot(grid[i, j]) for i in range(len(all_data) // 2) for j in range(2)]
 
 # # remove_idx = [2, 3]
 # remove_idx = [0, 3]

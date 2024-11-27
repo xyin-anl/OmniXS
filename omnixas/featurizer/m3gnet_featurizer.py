@@ -16,7 +16,6 @@ from matgl.utils.cutoff import polynomial_cutoff
 from omegaconf import DictConfig
 
 from omnixas.data.xas import MaterialStructure
-from omnixas.utils import DEFAULTFILEHANDLER
 from omnixas.utils.constants import Element, SpectrumType
 
 

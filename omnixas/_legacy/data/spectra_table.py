@@ -1,21 +1,17 @@
-import warnings
-from typing import Union
 import os
 import pickle
+import warnings
 from functools import cached_property
-from typing import List
+from typing import List, Union
+
+import appdirs
 
 # import appdirs
-import matplotlib.pyplot as plt
-import numpy as np
-from matplotlib import pyplot as plt
-from p_tqdm import p_map
-
 from _legacy.data.feff_data import FEFFData
 from _legacy.data.feff_data_raw import RAWDataFEFF
 from _legacy.data.vasp_data import VASPData
 from _legacy.data.vasp_data_raw import RAWDataVASP
-from utils.src.plots.heatmap_of_lines import heatmap_of_lines
+from p_tqdm import p_map
 
 
 class SpectraTable:
@@ -52,8 +48,10 @@ class SpectraTable:
         if self._data is not None:
             return self._data
         data_class = FEFFData if self.simulation_type == "FEFF" else VASPData
+
         def map_fn(id):
             return data_class(self.compound, self.parameters[id], id)
+
         return p_map(map_fn, self.ids)
 
     @property
@@ -104,10 +102,6 @@ class SpectraTable:
     def save(self, file_path: str = "./"):
         for spectra in self.data:
             spectra.save(file_path)
-        return self
-
-    def plot(self, ax: plt.Axes = None):
-        heatmap_of_lines(np.array([x.spectra for x in self.data]), ax=ax)
         return self
 
 

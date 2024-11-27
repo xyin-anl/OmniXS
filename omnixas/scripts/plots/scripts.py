@@ -1,7 +1,4 @@
 # %%
-from typing import Dict
-import numpy as np
-from omnixas.model.trained_model import ModelMetrics, ModelTag
 from functools import partial
 from typing import Dict, Tuple
 
@@ -10,18 +7,19 @@ import numpy as np
 from omnixas.data import (
     AllDataTags,
     FEFFDataTags,
-    FEFFDataTags,
-    VASPDataTags,
     ScaledMlSplit,
     ThousandScaler,
+    VASPDataTags,
 )
 from omnixas.model.trained_model import (
     ComparisonMetrics,
     MeanModel,
+    ModelMetrics,
     ModelTag,
     TrainedModelLoader,
     TrainedXASBlock,
 )
+
 
 class XASModelsOfCategory:
     def __new__(cls, model_name: str, **kwargs):
@@ -50,11 +48,6 @@ class SplitsOfCategory:
 
 FEFFMlSplits = partial(SplitsOfCategory, data_tags=FEFFDataTags())
 VASPMlSplits = partial(SplitsOfCategory, data_tags=VASPDataTags())
-
-
-class AllMlSplits:
-    def __new__(cls, **kwargs):
-        return {**FEFFMlSplits(**kwargs), **VASPMlSplits(**kwargs)}
 
 
 class AllMlSplits:

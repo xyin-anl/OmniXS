@@ -129,14 +129,5 @@ class PreTrainedFCXASModel(XASBlock):
     ):
         trained_model = TrainedXASBlock(query=query, name=name).model
 
-        # # TODO: skipped as fc_xas attributes were later changed
-        # for k, v in model_kwargs.items():
-        #     if not hasattr(trained_model, k):
-        #         raise ValueError(f"model does not have attribute {k}")
-        #     if getattr(trained_model, k) != v:
-        #         raise ValueError(
-        #             f"model attribute {k} is not equal to {v} instead {getattr(trained_model, k)}"
-        #         )
-
         super().__init__(**model_kwargs)
         self.load_state_dict(trained_model.state_dict())

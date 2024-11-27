@@ -5,8 +5,6 @@ import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib import colors as mcolors
-from matplotlib import pyplot as plt
 
 # %%
 

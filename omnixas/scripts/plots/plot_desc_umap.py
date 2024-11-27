@@ -1,5 +1,4 @@
 # %%
-import torch
 import datamapplot
 import glasbey
 
@@ -10,9 +9,7 @@ import umap.umap_ as umap
 from matplotlib import colors as mcolors
 from sklearn.preprocessing import StandardScaler
 from matplotlib import pyplot as plt
-from matplotlib.colors import PowerNorm, SymLogNorm
 from config.defaults import cfg
-from _legacy.data.ml_data import DataQuery
 
 # from omnixas.model.trained_xasblock import TrainedXASBlock
 
@@ -209,8 +206,6 @@ if DESC in ["OS", "CN", "OCN"]:
             else:
                 color_dict[label] = pallete[i - 1]
 
-        # datamapplot_kwargs["add_glow"] = False  # Gives error otherwise for some reason
-
     else:
         pallete = glasbey.create_palette(
             palette_size=len(labels.unique()),
@@ -328,203 +323,3 @@ if ADD_LEGEND:
 fig.tight_layout()
 # fig.savefig(f"umap_{DESC}_{DATA}.png", bbox_inches="tight", dpi=300)
 fig.savefig(f"umap_{DESC}_{DATA}.pdf", bbox_inches="tight", dpi=300)
-
-
-# %%
-
-# compound = "Cu"
-# simulation_type = "FEFF"
-# ml_data = np.load(
-#     cfg.paths.ml_data.format(compound=compound, simulation_type=simulation_type)
-# )
-# ml_data.keys()
-# df_ml = pd.DataFrame(
-#     {
-#         "ids": ml_data["ids"],
-#         "sites": ml_data["sites"],
-#         "features": ml_data["features"].tolist(),
-#         "spectras": ml_data["spectras"].tolist(),
-#     }
-# )
-# # merge plot_df with df_ml based on ids and sites
-# df_ml.sites = df_ml.sites.astype("int64")
-# df_mse = pd.merge(df, df_ml, on=["ids", "sites"])
-
-# %%
-
-plot_df = plot_df.copy()
-
-simulation_type = "FEFF"
-model_name = "per_compound_tl"
-compound = "Cu"
-
-# models = {
-#     compound: Trained_FCModel(
-#         DataQuery(compound, simulation_type), name=model_name
-#     ).model.to("mps")
-#     for compound in cfg.compounds
-# }
-# # model = Trained_FCModel(DataQuery(compound, simulation_type), name=model_name).model
-
-models = {
-    model_name: {
-        compound: TrainedXASBlock(
-            DataQuery(compound, simulation_type), name=model_name
-        ).model.to("mps")
-        for compound in cfg.compounds
-    }
-    for model_name in ["per_compound_tl", "ft_tl"]
-}
-
-
-# %%
-
-for compound in cfg.compounds:
-    features = plot_df[plot_df.compound == compound]["features"]
-    features = features.apply(lambda x: np.array(x) * 1000).tolist()
-    features = torch.tensor(features).float().to("mps")
-    # features = torch.tensor(features.tolist()).float().to("mps")
-    predictions = models[compound](features).cpu().detach().numpy()
-    truth = plot_df[plot_df.compound == compound]["spectras"].tolist()
-    truth = np.array(truth) * 1000
-    mse = np.mean((predictions - truth) ** 2, axis=1)
-    plot_df.loc[plot_df.compound == compound, "mse"] = mse
-
-    # plt.hist(np.log(mse), bins=100, alpha=0.5)
-    # plt.title(compound)
-    # plt.show()
-
-# %%
-
-# mse_diff based on "per_compound_tl" model and "ft_tl" model
-for compound in cfg.compounds:
-    for model_name in ["per_compound_tl", "ft_tl"]:
-        features = plot_df[plot_df.compound == compound]["features"]
-        features = features.apply(lambda x: np.array(x) * 1000).tolist()
-        features = torch.tensor(features).float().to("mps")
-        predictions = models[model_name][compound](features).cpu().detach().numpy()
-        truth = plot_df[plot_df.compound == compound]["spectras"].tolist()
-        truth = np.array(truth) * 1000
-        mse = np.mean((predictions - truth) ** 2, axis=1)
-        plot_df.loc[plot_df.compound == compound, f"mse_{model_name}"] = mse
-
-# add one for universal_tl
-features = plot_df["features"]
-features = features.apply(lambda x: np.array(x) * 1000).tolist()
-features = torch.tensor(features).float().to("mps")
-model = TrainedXASBlock(DataQuery("ALL", "FEFF"), name="universal_tl").model.to("mps")
-predictions = model(features).cpu().detach().numpy()
-truth = plot_df["spectras"].tolist()
-truth = np.array(truth) * 1000
-mse = np.mean((predictions - truth) ** 2, axis=1)
-plot_df["mse_universal_tl"] = mse
-
-# %%
-
-# add mse diff between per_compound_tl and ft_tl
-plot_df["mse_diff"] = +plot_df["mse_ft_tl"] - plot_df["mse_per_compound_tl"]
-
-# %%
-
-
-color_groups = [
-    "OS",
-    "CN",
-    "OCN",
-    "mse_per_compound_tl",
-    "mse_universal_tl",
-    "mse_ft_tl",
-    "mse_diff",
-]
-# color_groups = ["OS", "CN", "OCN", "NNRS", "mse"]
-fig = plt.figure(figsize=(4 * len(color_groups), 4 * len(cfg.compounds)))
-gs = fig.add_gridspec(len(cfg.compounds), len(color_groups), hspace=0, wspace=0)
-for i, compound in enumerate(cfg.compounds):
-    plot_group = plot_df[plot_df.compound == compound]
-    for j, color_group in enumerate(color_groups):
-        ax = fig.add_subplot(gs[i, j])
-
-        if "mse" in color_group and color_group != "mse_diff":
-            color_normalizer = PowerNorm(
-                gamma=0.2,
-                vmin=plot_group[color_group].min(),
-                vmax=plot_group[color_group].max(),
-            )
-            colors = color_normalizer(plot_group[color_group])
-        elif color_group in ["mse_diff"]:
-            # it has negative values
-            color_normalizer = SymLogNorm(
-                linthresh=0.00001,
-                linscale=0.1,
-                vmin=plot_group[color_group].min(),
-                vmax=plot_group[color_group].max(),
-            )
-            colors = color_normalizer(plot_group[color_group])
-        else:
-            # colors = plt.get_cmap("tab10")(plot_group[color_group].astype("int"))
-            # handle nan
-            colors = plot_group[color_group].replace("nan", np.nan)
-            colors = colors.fillna(9999).astype("int")
-            colors = plt.get_cmap("tab10")(colors)
-
-        ax.scatter(
-            plot_group.umap_s0,
-            plot_group.umap_s1,
-            # plot_group.umap_f0,
-            # plot_group.umap_f1,
-            c=colors,
-            s=1,
-            cmap="jet",
-        )
-        ax.set_title(f"{compound} {color_group}")
-        ax.axis("off")
-        ax.set_aspect("equal")
-
-fig.tight_layout()
-plt.savefig("mse_umap.png", dpi=300)
-
-# %%
-
-fig = plt.figure(figsize=(4 * len(color_groups), 4))
-gs = fig.add_gridspec(1, len(color_groups), hspace=0, wspace=0)
-for j, color_group in enumerate(color_groups):
-    ax = fig.add_subplot(gs[0, j])
-    if "mse" in color_group and color_group != "mse_diff":
-        color_normalizer = PowerNorm(
-            gamma=0.2,
-            vmin=plot_df[color_group].min(),
-            vmax=plot_df[color_group].max(),
-        )
-        colors = color_normalizer(plot_df[color_group])
-    elif color_group in ["mse_diff"]:
-        # it has negative values
-        color_normalizer = SymLogNorm(
-            linthresh=0.00001,
-            linscale=0.1,
-            vmin=plot_df[color_group].min(),
-            vmax=plot_df[color_group].max(),
-        )
-        colors = color_normalizer(plot_df[color_group])
-    else:
-        # colors = plt.get_cmap("tab10")(plot_group[color_group].astype("int"))
-        # handle nan
-        colors = plot_df[color_group].replace("nan", np.nan)
-        colors = colors.fillna(9999).astype("int")
-        colors = plt.get_cmap("tab10")(colors)
-
-    ax.scatter(
-        plot_df.umap_s0,
-        plot_df.umap_s1,
-        # plot_df.umap_f0,
-        # plot_df.umap_f1,
-        c=colors,
-        s=1,
-        cmap="jet",
-    )
-    ax.set_title(f"{color_group}")
-    ax.axis("off")
-    ax.set_aspect("equal")
-fig.tight_layout()
-plt.savefig("mse_umap_all.png", dpi=300)
-
-# %%

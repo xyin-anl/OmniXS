@@ -37,7 +37,7 @@ class MLData(BaseModel):
     y: Optional[np.ndarray] = None
 
     def shuffled_view(self, seed: Optional[int] = 42) -> "MLData":
-        """Creates a shuffled view of the dataset with consistent indexing between X and y.
+        """Creates a shuffled view of the dataset with consistent indexing.
 
         Args:
             seed (Optional[int]): Random seed for reproducibility. Defaults to 42.
@@ -179,7 +179,7 @@ class MLSplits(BaseModel):
 
     def __len__(self):
         return sum(
-            len(getattr(self, split_name)) for split_name in  ["train", "val", "test"]
+            len(getattr(self, split_name)) for split_name in ["train", "val", "test"]
         )
 
     def __eq__(self, other):

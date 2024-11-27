@@ -1,12 +1,18 @@
 # %%
-from loguru import logger
 import os
 from typing import List, Optional
 
 import numpy as np
+
+# TODO: Depricate this, use fn in MLSplitGenerator
+from _legacy.data.vasp_data_raw import RAWDataVASP
+from loguru import logger
 from p_tqdm import p_map
 
 from config.defaults import cfg
+from omnixas._legacy.scripts.ml_data_generator import (
+    MLDataGenerator,
+)
 from omnixas.data import (
     ElementSpectrum,
     EnergyGrid,
@@ -15,13 +21,8 @@ from omnixas.data import (
     MaterialID,
     MaterialStructure,
 )
-from omnixas.utils.constants import SpectrumType
-from omnixas.utils.constants import Element
 from omnixas.utils import DEFAULTFILEHANDLER
-from omnixas._legacy.scripts.ml_data_generator import (
-    MLDataGenerator,
-)  # TODO: Depricate this, use fn in MLSplitGenerator
-from _legacy.data.vasp_data_raw import RAWDataVASP
+from omnixas.utils.constants import Element, SpectrumType
 
 # %%
 
@@ -91,11 +92,12 @@ def save_spectrum(spectra_type, element, id_and_site, poscar_path):
                 {"index": site_index}
             )  # TODO: remove in deployment
 
-        save_path = (
-            None
-            if spectra_type == SpectrumType.FEFF
-            else f"dataset/spectra/VASP/{element}/{id_string}_site_{site_string}_{element}_VASP.json"
-        )  # hardcoded because of the way the data was saved TODO: fix this
+        # hardcoded because of the way the data was saved TODO: fix this
+        vasp_dir = f"dataset/spectra/VASP/{element}"
+        vasp_filename = f"{id_string}_site_{site_string}_{element}_VASP.json"
+        vasp_path = os.path.join(vasp_dir, vasp_filename)
+
+        save_path = None if spectra_type == SpectrumType.FEFF else vasp_path
 
         output.append(material)
 
