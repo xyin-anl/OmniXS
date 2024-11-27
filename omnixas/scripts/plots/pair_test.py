@@ -1,34 +1,24 @@
 # %%
-from typing import Literal, Union
+from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-import scienceplots
 import scipy.stats as stats
-from scipy import stats
 
 from omnixas.scripts.plots.scripts import (
-    AllDataTags,
-    AllExpertMetrics,
-    AllExpertModels,
-    AllTunedMetrics,
     CompareAllExpertAndTuned,
-    XASModelsOfCategory,
 )
-from src.data.ml_data import DataQuery
 
 # %%
 
+
 # NOTE: THE MSES DO NOT SATISFY THE NORMALITY ASSUMPTIONS OF THE PAIRED T-TEST
-
-
 def compare_mses(
     mse_model1,
     mse_model2,
     alpha=0.05,
     test_method: Union[stats.wilcoxon, stats.ttest_rel] = stats.wilcoxon,
 ):
-
     assert len(mse_model1) == len(mse_model2), "The two lists must have the same length"
 
     # Convert lists to numpy arrays

@@ -11,10 +11,10 @@ import numpy as np
 from matplotlib import pyplot as plt
 from p_tqdm import p_map
 
-from src.data.feff_data import FEFFData
-from src.data.feff_data_raw import RAWDataFEFF
-from src.data.vasp_data import VASPData
-from src.data.vasp_data_raw import RAWDataVASP
+from _legacy.data.feff_data import FEFFData
+from _legacy.data.feff_data_raw import RAWDataFEFF
+from _legacy.data.vasp_data import VASPData
+from _legacy.data.vasp_data_raw import RAWDataVASP
 from utils.src.plots.heatmap_of_lines import heatmap_of_lines
 
 
@@ -28,7 +28,6 @@ class SpectraTable:
         use_cache: bool = False,
         data: Union[Union[List[FEFFData], List[VASPData]], None] = None,
     ):
-
         self._check_input_validity(compound, simulation_type, data)
         self.compound = compound
         self.simulation_type = simulation_type

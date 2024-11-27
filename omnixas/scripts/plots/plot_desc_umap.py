@@ -5,23 +5,16 @@ import glasbey
 
 import numpy as np
 import pandas as pd
-import scienceplots
 import umap.umap_ as umap
 
 from matplotlib import colors as mcolors
-from copy import deepcopy
 from sklearn.preprocessing import StandardScaler
 from matplotlib import pyplot as plt
-from matplotlib.colors import LogNorm, Normalize, PowerNorm, SymLogNorm
-from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
+from matplotlib.colors import PowerNorm, SymLogNorm
 from config.defaults import cfg
-from src.data.ml_data import load_all_data, load_xas_ml_data
-from src.data.ml_data import DataQuery
+from _legacy.data.ml_data import DataQuery
 
 # from omnixas.model.trained_xasblock import TrainedXASBlock
-import pandas as pd
 
 # %%
 
@@ -205,7 +198,6 @@ if DESC == "OCN":
 
 
 if DESC in ["OS", "CN", "OCN"]:
-
     if DESC == "OCN":
         # sort by labels and then use jet
         pallete = plt.get_cmap("Spectral")(np.linspace(0, 1, len(labels.unique())))
@@ -302,7 +294,6 @@ if ADD_YLABEL:
 
 
 if ADD_LEGEND:
-
     i = 0
     color_dict = dict(sorted(color_dict.items(), key=lambda item: item[0]))
     count = len(color_dict) - 1  # remove nan
@@ -470,7 +461,6 @@ for i, compound in enumerate(cfg.compounds):
             )
             colors = color_normalizer(plot_group[color_group])
         else:
-
             # colors = plt.get_cmap("tab10")(plot_group[color_group].astype("int"))
             # handle nan
             colors = plot_group[color_group].replace("nan", np.nan)

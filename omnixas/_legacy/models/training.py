@@ -1,5 +1,5 @@
-from src.data.ml_data import DataQuery
-from src.data.ml_data import XASPlData
+from _legacy.data.ml_data import DataQuery
+from _legacy.data.ml_data import XASPlData
 from utils.src.optuna.dynamic_fc import PlDynamicFC
 
 # import pytorch_lightning as pl

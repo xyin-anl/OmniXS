@@ -10,8 +10,8 @@ import torch
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from config.defaults import cfg
-from src.data.ml_data import DataQuery, load_xas_ml_data
-from src.models.ml_models import MeanModel
+from _legacy.data.ml_data import DataQuery, load_xas_ml_data
+from _legacy.models.ml_models import MeanModel
 
 
 class TrainedModel(ABC):  #

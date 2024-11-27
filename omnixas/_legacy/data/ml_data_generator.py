@@ -15,7 +15,7 @@ from DigitalBeamline.digitalbeamline.extern.m3gnet.featurizer import (
     _load_default_featurizer,
     featurize_material,
 )
-from src.data.vasp_data_raw import RAWDataVASP
+from _legacy.data.vasp_data_raw import RAWDataVASP
 
 
 class PoscarNotFound(FileNotFoundError):
@@ -99,9 +99,7 @@ class MLDataGenerator:
             simulation_type=self.simulation_type,
         )
         ids_and_sites = MLDataGenerator.parse_ids_and_site(self.compound, data_dir)
-        ids_and_sites = ids_and_sites[:10]  # for testing
         if not return_graph:
-
             # USED FOR DEBUGGING
             poscar_not_found = []
             site_invalid = []
@@ -133,8 +131,26 @@ class MLDataGenerator:
             np.savetxt("poscar_not_found.txt", poscar_not_found)
             np.savetxt("site_invalid.txt", site_invalid)
 
-        else:
+            # ml_data = p_map(
+            #     lambda x: (
+            #         x[0],
+            #         x[1],
+            #         self.featurize(
+            #             compound,
+            #             x[0],
+            #             x[1],
+            #             n_blocks,
+            #             randomize_weights,
+            #             seed,
+            #         ),
+            #         *MLDataGenerator.load_processed_data(
+            #             compound, x[0], x[1], simulation_type
+            #         ).T,
+            #     ),
+            #     ids_and_sites[:],
+            # )
 
+        else:
             ml_data = []
             for id, site in tqdm(
                 ids_and_sites
@@ -172,11 +188,12 @@ class MLDataGenerator:
         n_blocks=None,
         randomize_weights=False,
         seed=42,
+        # simulation_type="FEFF",
     ):
+        # structure = MLDataGenerator.get_structure(
         structure = self.get_structure(id, site)  # reads from POSCAR
         features_all = featurize_material(
-            structure=structure,
-            model=self.m3gnet,
+            structure,
             n_blocks=n_blocks,
             randomize_weights=randomize_weights,
             seed=seed,
@@ -241,23 +258,43 @@ class MLDataGenerator:
 
 
 if __name__ == "__main__":
+    pass
+    # MLDataGenerator("Cu", "VASP").save()
+    MLDataGenerator("Ti", "VASP").save()
 
-    MLDataGenerator("Cu", "VASP").prepare()
+    # ml_data_generator.save(compound, simulation_type)
 
-    # import cProfile
-    # cProfile.run("MLDataGenerator('Cr', 'FEFF').save(file_name='test.npz')")
+    # # # use for quick validation
+    # # from scripts.plots.plot_all_spectras import MLDATAPlotter
+    # # from matplotlib import pyplot as plt
 
-    # data = MLDataGenerator("Cr", "FEFF").save(file_name="test.npz")
-# # =========================================
-# # GRAPH BASED FEATURE FOR M3GNET FINETUNING
-# # =========================================
-# simulation_type = "FEFF"
-# for compound in cfg.compounds:
-#     print(f"Preparing data for {compound}")
-#     MLDataGenerator.save(
-#         compound,
-#         simulation_type,
-#         return_graph=True,
-#         file_name=f"{compound}_{simulation_type}_GRAPH",
-#     )
-# # =========================================
+    # # plotter = MLDATAPlotter(compound, simulation_type)
+    # # plotter.plot_spectra_heatmap()
+    # # plt.show()
+
+    # from config.defaults import cfg
+    # simulation_type = "FEFF"
+    # for compound in cfg.compounds:
+    #     for n_blocks in [1, 2]:
+    #         print(f"Preparing data for {compound} with {n_blocks} blocks")
+    #         MLDataGenerator.save(
+    #             compound=compound,
+    #             simulation_type=simulation_type,
+    #             n_blocks=n_blocks,
+    #         )
+
+    # features_rnd = MLDataGenerator.prepare("Cu", "FEFF", return_graph=True)
+
+    # # =========================================
+    # # GRAPH BASED FEATURE FOR M3GNET FINETUNING
+    # # =========================================
+    # simulation_type = "FEFF"
+    # for compound in cfg.compounds:
+    #     print(f"Preparing data for {compound}")
+    #     MLDataGenerator.save(
+    #         compound,
+    #         simulation_type,
+    #         return_graph=True,
+    #         file_name=f"{compound}_{simulation_type}_GRAPH",
+    #     )
+    # # =========================================

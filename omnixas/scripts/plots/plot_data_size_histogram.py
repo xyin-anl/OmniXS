@@ -14,10 +14,8 @@ from omnixas.data import (
 from omnixas.utils.constants import ElementsFEFF, ElementsVASP, SpectrumType
 from omnixas.utils.constants import Element
 from omnixas.utils import DEFAULTFILEHANDLER, FileHandler
-from src.data.feff_data_raw import RAWDataFEFF
-from src.data.vasp_data_raw import RAWDataVASP
-from utils.src.plots.heatmap_of_lines import heatmap_of_lines
-from omnixas.utils.constants import ElementsFEFF
+from _legacy.data.feff_data_raw import RAWDataFEFF
+from _legacy.data.vasp_data_raw import RAWDataVASP
 
 
 # %%

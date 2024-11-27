@@ -11,7 +11,7 @@ from typing import Literal, Optional
 
 import numpy as np
 
-from src.data.raw_data import RAWData
+from _legacy.data.raw_data import RAWData
 
 
 @dataclass

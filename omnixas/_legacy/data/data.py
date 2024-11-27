@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from typing import Union, Tuple
-from src.data.raw_data import RAWData
+from _legacy.data.raw_data import RAWData
 import yaml
 import numpy as np
 from dtw import dtw

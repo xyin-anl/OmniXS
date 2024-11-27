@@ -7,7 +7,7 @@ from typing import Literal, Optional, Set
 import numpy as np
 from scipy.stats import cauchy
 
-from src.data.raw_data import RAWData
+from _legacy.data.raw_data import RAWData
 
 
 @dataclass

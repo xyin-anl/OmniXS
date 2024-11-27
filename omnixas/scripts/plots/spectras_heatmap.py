@@ -2,19 +2,11 @@
 from loguru import logger
 import matplotlib.pyplot as plt
 import numpy as np
-import scienceplots
-from matplotlib.colors import NoNorm, PowerNorm
 
 from config.defaults import cfg
 
-from omnixas.data import MLData
-from omnixas.utils.constants import SpectrumType
-from omnixas.utils.constants import Element
 from omnixas.scripts.plots.constants import FEFFSplits, VASPSplits
-from omnixas.utils import DEFAULTFILEHANDLER, FileHandler
 from omnixas.utils.plots import plot_line_heatmap
-from scripts.plots.plot_all_spectras import MLDATAPlotter
-from src.data.ml_data import DataQuery, load_xas_ml_data
 
 # %%
 

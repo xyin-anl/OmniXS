@@ -1,12 +1,12 @@
 from typing import Optional
-from src.data.raw_data import RAWData
+from _legacy.data.raw_data import RAWData
 import yaml
 from scipy.constants import physical_constants
 import warnings
 import numpy as np
 from scipy.stats import cauchy
-from src.data.vasp_data_raw import RAWDataVASP
-from src.data.data import ProcessedData
+from _legacy.data.vasp_data_raw import RAWDataVASP
+from _legacy.data.data import ProcessedData
 
 
 class VASPData(ProcessedData):

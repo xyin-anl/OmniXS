@@ -18,10 +18,10 @@ from omnixas.data import (
 from omnixas.utils.constants import SpectrumType
 from omnixas.utils.constants import Element
 from omnixas.utils import DEFAULTFILEHANDLER
-from omnixas.utils._legacy.ml_data_generator import (
+from omnixas._legacy.scripts.ml_data_generator import (
     MLDataGenerator,
 )  # TODO: Depricate this, use fn in MLSplitGenerator
-from src.data.vasp_data_raw import RAWDataVASP
+from _legacy.data.vasp_data_raw import RAWDataVASP
 
 # %%
 

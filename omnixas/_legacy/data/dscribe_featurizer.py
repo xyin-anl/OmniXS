@@ -8,7 +8,7 @@ from ase.io import read
 from p_tqdm import p_map
 
 from config.defaults import cfg
-from src.data.ml_data import DataQuery
+from _legacy.data.ml_data import DataQuery
 from typing import Literal
 
 

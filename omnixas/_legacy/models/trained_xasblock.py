@@ -1,5 +1,5 @@
 from config.defaults import cfg
-from src.models.trained_model import TrainedModel
+from _legacy.models.trained_model import TrainedModel
 from omnixas.model.xasblock import XASBlock
 
 
@@ -10,11 +10,10 @@ import torch
 import os
 from functools import cached_property
 
-from src.data.ml_data import DataQuery
+from _legacy.data.ml_data import DataQuery
 
 
 class TrainedXASBlock(TrainedModel):
-
     def __init__(self, query, name, date_time=None, version=None, ckpt_name=None):
         super().__init__(query)
         self._name = name

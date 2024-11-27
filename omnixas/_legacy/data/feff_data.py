@@ -1,5 +1,5 @@
 import numpy as np
-from src.data.data import ProcessedData
+from _legacy.data.data import ProcessedData
 from DigitalBeamline.digitalbeamline.extern.lightshow.compare_utils import (
     compare_between_spectra,
 )
@@ -44,7 +44,7 @@ class FEFFData(ProcessedData):
 
 
 if __name__ == "__main__":
-    from src.data.feff_data_raw import RAWDataFEFF
+    from _legacy.data.feff_data_raw import RAWDataFEFF
 
     feff_raw = RAWDataFEFF(compound="Ti")
     feff_transformed = FEFFData(feff_raw.parameters[("mp-390", "000_Ti")])

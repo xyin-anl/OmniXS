@@ -11,8 +11,8 @@ from sklearn.multioutput import MultiOutputRegressor
 from sklearn.svm import SVR
 from xgboost import XGBRegressor
 
-from src.models.trained_model import TrainedModel
-from src.data.ml_data import DataQuery
+from _legacy.models.trained_model import TrainedModel
+from _legacy.data.ml_data import DataQuery
 
 
 class MedianModel(TrainedModel):
@@ -132,7 +132,6 @@ class XGBReg(TrainedModel):
 
 
 class ElastNet(TrainedModel):
-
     def __init__(self, query: DataQuery, name="ElasticNet"):
         super().__init__(query)
         self._name = name

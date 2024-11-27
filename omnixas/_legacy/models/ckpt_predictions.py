@@ -4,7 +4,7 @@
 from loguru import logger
 import numpy as np
 from typing import Tuple
-from src.data.ml_data import XASPlData
+from _legacy.data.ml_data import XASPlData
 import glob
 import os
 
