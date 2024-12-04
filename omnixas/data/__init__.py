@@ -1,24 +1,4 @@
 # TODO: remove from release
-from ..utils.constants import Element
-from ..utils.constants import SpectrumType
-from ..utils.constants import (
-    FEFF,
-    VASP,
-    ElementsFEFF,
-    ElementsVASP,
-    Ti,
-    V,
-    Cr,
-    Mn,
-    Fe,
-    Co,
-    Ni,
-    Cu,
-    FEFFDataTags,
-    VASPDataTags,
-    AllDataTags,
-)
-
 from .ml_data import MLData, DataTag, MLSplits
 from .xas import (
     MaterialID,

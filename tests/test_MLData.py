@@ -4,7 +4,6 @@ from omnixas.data.ml_data import MLData
 import numpy as np
 
 
-import json
 import unittest
 from tempfile import NamedTemporaryFile
 

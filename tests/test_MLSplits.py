@@ -27,8 +27,6 @@ class TestMLSplits(unittest.TestCase):
             f.write(splits.json())
 
         with open(temp_file.name, "r") as f:
-            import json
-
             data_loaded = json.loads(f.read())
             data_loaded = MLSplits(**data_loaded)
             self.assertIsInstance(data_loaded.train, MLData)

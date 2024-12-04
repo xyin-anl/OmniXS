@@ -43,7 +43,6 @@
             material= Material( id = ..., structure = ...),
             intensities=IntensityValues(...)
             energies=EnergyGrid(...),
-
         )
 
         # featurize material structure correspoinding to the spectrum_1
@@ -62,11 +61,8 @@
 
 ```python
 
-    # omnixas.scripts.generate_ml_splits
-    MLSplitGenerator().generate_ml_splits(
-        DataTag(element=Element.Cu, type=SpectrumType.VASP),
-        target_fractions=[0.8, 0.1, 0.1],
-    )
+    # Material split
+    # ML SPlit
 
 ```
 

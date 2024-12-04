@@ -17,7 +17,6 @@ from omnixas.data import (
     ScaledMlSplit,
     ThousandScaler,
 )
-from omnixas.utils.constants import FEFFSplits
 from omnixas.model.training import PlModule
 from omnixas.model.xasblock import XASBlock
 from omnixas.utils.io import DEFAULTFILEHANDLER, FileHandler
@@ -96,8 +95,6 @@ class TrainedModel(BaseModel, ABC):
 
     @property
     def default_split(self) -> ScaledMlSplit:
-        if self.tag.element == "All":
-            return FEFFSplits()
         return TrainedModelLoader.load_scaled_splits(
             self.tag,
             self.train_x_scaler,
