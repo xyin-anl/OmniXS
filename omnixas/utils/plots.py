@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import LogNorm
 
-from omnixas.model.trained_model import MeanModel, ModelMetrics, ModelTag
+from omnixas.model.metrics import ModelMetrics, ModelTag
+from omnixas.model.trained_model import MeanModel
 
 
 def plot_line_heatmap(
