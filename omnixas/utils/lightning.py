@@ -1,3 +1,4 @@
+import logging
 from lightning import Callback
 
 
@@ -21,3 +22,26 @@ class TensorboardLogTestTrainLoss(Callback):
         pl_module.logger.experiment.add_scalars(
             "losses", {"val_loss": val_loss}, trainer.global_step
         )
+
+
+class SuppressLightningLogs:
+    """Context manager to suppress all pytorch lightning logs"""
+
+    class IgnorePLFilter(logging.Filter):
+        def filter(self, record):
+            return "available:" not in record.getMessage()
+
+    def __init__(self, logger_name="pytorch_lightning.utilities.rank_zero"):
+        self.logger_name = logger_name
+        self.previous_level = None
+
+    def __enter__(self):
+        self.logger = logging.getLogger(self.logger_name)
+        self.previous_level = self.logger.level
+        self.logger.setLevel(0)
+        self.logger.addFilter(SuppressLightningLogs.IgnorePLFilter())
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.logger.setLevel(self.previous_level)
+        self.logger.removeFilter(SuppressLightningLogs.IgnorePLFilter())

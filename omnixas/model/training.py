@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from omnixas.data import MLData, MLSplits
 from omnixas.data.scaler import ScaledMlSplit
 from omnixas.utils.callbacks import TensorboardLogTestTrainLoss
-from omnixas.data.scaler import ThousandScaler, IdentityScaler
+from omnixas.data.scaler import IdentityScaler
 
 # %%
 
@@ -25,7 +25,7 @@ class LightningXASData(lightning.LightningDataModule):
         ml_splits: MLSplits,
         batch_size: int,
         x_scaler: type = IdentityScaler,
-        y_scaler: type = ThousandScaler,
+        y_scaler: type = IdentityScaler,
         **kwargs,
     ):
         super().__init__()
@@ -134,5 +134,4 @@ def trainModel(cfg: DictConfig):
 
 
 if __name__ == "__main__":
-
     trainModel()
