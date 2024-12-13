@@ -147,9 +147,12 @@ class XASModel:
         site_index: int,
     ):
         feature = self._get_feature(structure, site_index)
+        feature *= 1e3  # used in mode training # TODO: hardcoded value
         spectrum = self.model(torch.tensor(feature).unsqueeze(0))
         return spectrum.detach().numpy().squeeze()
 
+
+# %%
 
 if __name__ == "__main__":
     material_structure_file = (
@@ -159,5 +162,3 @@ if __name__ == "__main__":
     spectrum = XASModel(element="Cu", type="FEFF").predict(strucutre, 8)
     plt.plot(spectrum)
     plt.show()
-
-# %%
