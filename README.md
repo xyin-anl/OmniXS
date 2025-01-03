@@ -32,7 +32,9 @@ pip install -v "git+https://github.com/AI-multimodal/OmniXAS.git"
 ### Development
 
 ```bash
-pip install -v -e "git+https://github.com/AI-multimodal/OmniXAS.git"
+git clone https://github.com/AI-multimodal/OmniXAS.git
+cd OmniXAS
+pip install -v -e .
 ```
 Environment also available at [install.sh](install/install.sh).
 
