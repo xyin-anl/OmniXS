@@ -8,6 +8,7 @@ OmniXAS is a library designed to predict X-ray Absorption Spectra from material 
 
 
 - [Installation](#installation)
+  - [Development](#development)
   - [Docker](#docker)
 - [Usage](#usage)
   - [Featurization](#featurization)
@@ -25,10 +26,16 @@ OmniXAS is a library designed to predict X-ray Absorption Spectra from material 
 ## Installation
 
 ```bash
-pip install -v "git+https://github.com/AI-multimodal/OmniXAS.git@setup"
+pip install -v "git+https://github.com/AI-multimodal/OmniXAS.git"
 ```
 
-For developers environment available at [install.sh](install/install.sh).
+### Development
+
+```bash
+pip install -v -e "git+https://github.com/AI-multimodal/OmniXAS.git"
+```
+Environment also available at [install.sh](install/install.sh).
+
 
 ### Docker
 
