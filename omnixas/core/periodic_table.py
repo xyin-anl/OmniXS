@@ -2,7 +2,8 @@ from enum import StrEnum
 
 
 class SpectrumType(StrEnum):
-    pass
+    FEFF = "FEFF"
+    VASP = "VASP"
 
 
 class Element(StrEnum):

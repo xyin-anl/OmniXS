@@ -57,7 +57,7 @@ class MaterialID(RootModel, validate_assignment=True):
             logger.error(msg)
             raise ValueError(msg)
         prefix, id_str = v.split("-")
-        if not MaterialIDPrefix.has_value(prefix):
+        if prefix not in [m.value for m in MaterialIDPrefix]:
             msg = f"Unexpected prefix {prefix} in material ID {v}"
             msg += f" Must be one of {[m.value for m in MaterialIDPrefix]}"
             logger.warning(msg)
