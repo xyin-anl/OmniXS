@@ -36,5 +36,4 @@ uv pip install --system \
     pymatgen \
     python-box \
     pydantic \
-    pyyaml \ 
-    dscribe
+    pyyaml

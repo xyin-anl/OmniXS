@@ -26,8 +26,6 @@ RUN chmod +x /workspace/install.sh && \
 RUN useradd -m -s /bin/bash user
 USER user
 
-# Set Python path
-ENV PYTHONPATH "${PYTHONPATH}:/workspace"
 
 # Default command
 CMD ["bash"]
