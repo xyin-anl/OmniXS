@@ -34,6 +34,8 @@ pip install -v "git+https://github.com/AI-multimodal/OmniXAS.git"
 ```bash
 git clone https://github.com/AI-multimodal/OmniXAS.git
 cd OmniXAS
+conda env create --name omnixas python=3.11.0
+conda activate omnixas
 pip install -v -e .
 ```
 Environment also available at [install.sh](install/install.sh).
