@@ -40,8 +40,9 @@ import numpy as np
 import torch
 import yaml
 from loguru import logger
+from pymatgen.core import Molecule, Structure
 from matgl import load_model
-from matgl.ext.pymatgen import Structure2Graph
+from matgl.ext.pymatgen import Molecule2Graph, Structure2Graph
 from matgl.graph.compute import (
     compute_pair_vector_and_distance,
     compute_theta_and_phi,
@@ -62,7 +63,16 @@ class M3GNetFeaturizer:
         self.n_blocks = n_blocks or self.model.n_blocks
 
     def featurize(self, structure):
-        graph_converter = Structure2Graph(self.model.element_types, self.model.cutoff)
+        # Check structure type and use appropriate converter
+        if isinstance(structure, Structure):
+            # It's a pymatgen Structure
+            graph_converter = Structure2Graph(self.model.element_types, self.model.cutoff)
+        elif isinstance(structure, Molecule):
+            # It's a pymatgen Molecule
+            graph_converter = Molecule2Graph(self.model.element_types, self.model.cutoff)
+        else:
+            raise ValueError(f"Unsupported structure type: {type(structure)}")
+        
         g, state_attr = graph_converter.get_graph(structure)
 
         node_types = g.ndata["node_type"]
@@ -115,7 +125,10 @@ class M3GNetFeaturizer:
 
 class M3GNetSiteFeaturizer(M3GNetFeaturizer):
     def featurize(self, structure: MaterialStructure, site_index: int):
-        return super().featurize(structure.root)[site_index]
+        if hasattr(structure, "root"):
+            return super().featurize(structure.root)[site_index]
+        else:
+            return super().featurize(structure)[site_index]
 
 
 # %%

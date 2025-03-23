@@ -1,6 +1,12 @@
-<div align="center">
+# OmniXS
 
-<h1>Omnixas</h1>
+This repository is adapted from the original [OmniXAS](https://github.com/AI-multimodal/OmniXAS) project, extending its capabilities to support additional X-ray spectroscopy techniques beyond X-ray Absorption Spectroscopy (XAS). Specifically, we have added support for X-ray Emission Spectroscopy (XES) prediction while maintaining the core architecture and functionality of OmniXAS. The XES extension reuses key components like the M3GNet featurizer and neural network architecture, adapting them for XES spectra prediction.
+
+> Below is the original README.md for OmniXAS, for OmniXES specific information, please go to the `omnixes` folder to see the README.md
+
+<div align="left">
+
+## Omnixas
 
 </div>
 
